@@ -11,6 +11,26 @@ export default function Home() {
   const navigate = useNavigate()
   const { isAdmin } = useAuth()
 
+  async function handleRenameSong(e, song) {
+    e.stopPropagation()
+    const newName = window.prompt('Ganti nama lagu jadi:', song.name)
+    if (!newName || newName.trim() === '' || newName === song.name) return
+
+    try {
+      const { error } = await supabase
+        .from('songs')
+        .update({ name: newName.trim() })
+        .eq('id', song.id)
+      if (error) throw error
+      setSongs((prev) =>
+        prev.map((s) => (s.id === song.id ? { ...s, name: newName.trim() } : s))
+      )
+    } catch (err) {
+      console.error('Gagal ganti nama lagu:', err)
+      alert('Gagal ganti nama lagu, coba lagi.')
+    }
+  }
+
   useEffect(() => {
     async function loadSongs() {
       try {
@@ -86,14 +106,28 @@ export default function Home() {
                 <h4>{song.name}</h4>
               </div>
               <span className="song-count">{song.presetCount || 0}</span>
+              {isAdmin && (
+                <button
+                  className="song-edit-btn"
+                  onClick={(e) => handleRenameSong(e, song)}
+                  title="Edit nama lagu"
+                >
+                  ✎
+                </button>
+              )}
             </div>
           ))}
         </div>
 
         {isAdmin && (
-          <button className="admin-shortcut" onClick={() => navigate('/admin/tambah-preset')}>
-            ⚙ Panel Admin
-          </button>
+          <div className="admin-shortcut-row">
+            <button className="admin-shortcut" onClick={() => navigate('/admin/tambah-preset')}>
+              ⚙ Tambah Preset
+            </button>
+            <button className="admin-shortcut admin-shortcut-danger" onClick={() => navigate('/admin/kelola-preset')}>
+              🗑 Hapus Video
+            </button>
+          </div>
         )}
       </div>
       <BottomNav />
