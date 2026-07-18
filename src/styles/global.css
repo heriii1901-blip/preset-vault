@@ -14,6 +14,7 @@
  
 body {
   min-height: 100vh;
+  min-height: 100dvh;
   background:
     radial-gradient(circle at 20% 10%, rgba(124, 92, 255, 0.15), transparent 40%),
     radial-gradient(circle at 80% 90%, rgba(255, 61, 127, 0.12), transparent 40%),
@@ -30,6 +31,7 @@ body {
 .phone {
   width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--surface);
   overflow: hidden;
   display: flex;
@@ -693,16 +695,25 @@ select.finput-real { cursor: pointer; }
   overflow-y: auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 3px;
-  padding: 3px;
+  gap: 10px;
+  padding: 10px;
 }
- 
+
 .grid-cell {
   position: relative;
   aspect-ratio: 4 / 5;
   background: var(--surface-2);
   overflow: hidden;
   cursor: pointer;
+  border-radius: 10px;
+}
+
+@media (min-width: 768px) {
+  .preset-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
 }
  
 .grid-cell video,
