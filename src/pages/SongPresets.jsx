@@ -8,7 +8,8 @@ export default function SongPresets() {
   const [song, setSong] = useState(null)
   const [presets, setPresets] = useState([])
   const [loading, setLoading] = useState(true)
-  const videoRefs = useRef({})
+  const activeVideoRef = useRef(null)
+  const gridRef = useRef(null)
 
   useEffect(() => {
     async function loadData() {
@@ -30,31 +31,34 @@ export default function SongPresets() {
     if (songId) loadData()
   }, [songId])
 
-  // Autoplay video yang lagi keliatan di layar (kayak grid pencarian TikTok),
-  // pause video yang udah keluar dari layar.
+  function pauseActive() {
+    if (activeVideoRef.current) {
+      activeVideoRef.current.pause()
+      activeVideoRef.current = null
+    }
+  }
+
+  function handlePressStart(video) {
+    if (!video) return
+    pauseActive()
+    video.play().catch(() => {})
+    activeVideoRef.current = video
+  }
+
+  function handlePressEnd(video) {
+    if (!video) return
+    video.pause()
+    if (activeVideoRef.current === video) activeVideoRef.current = null
+  }
+
+  // Video kepause otomatis begitu user geser/scroll grid-nya
   useEffect(() => {
-    if (presets.length === 0) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const video = entry.target
-          if (entry.isIntersecting && entry.intersectionRatio > 0.6) {
-            video.play().catch(() => {})
-          } else {
-            video.pause()
-          }
-        })
-      },
-      { threshold: [0, 0.6, 1] }
-    )
-
-    Object.values(videoRefs.current).forEach((v) => {
-      if (v) observer.observe(v)
-    })
-
-    return () => observer.disconnect()
-  }, [presets])
+    const grid = gridRef.current
+    if (!grid) return
+    const onScroll = () => pauseActive()
+    grid.addEventListener('scroll', onScroll, { passive: true })
+    return () => grid.removeEventListener('scroll', onScroll)
+  }, [])
 
   return (
     <div className="screen">
@@ -75,16 +79,19 @@ export default function SongPresets() {
       )}
 
       {!loading && presets.length > 0 && (
-        <div className="preset-grid">
+        <div className="preset-grid" ref={gridRef}>
           {presets.map((preset) => (
             <div
               key={preset.id}
               className="grid-cell"
               onClick={() => navigate(`/preset/${preset.id}`)}
+              onPointerDown={(e) => handlePressStart(e.currentTarget.querySelector('video'))}
+              onPointerUp={(e) => handlePressEnd(e.currentTarget.querySelector('video'))}
+              onPointerLeave={(e) => handlePressEnd(e.currentTarget.querySelector('video'))}
+              onPointerCancel={(e) => handlePressEnd(e.currentTarget.querySelector('video'))}
             >
               {preset.preview_video_url ? (
                 <video
-                  ref={(el) => { videoRefs.current[preset.id] = el }}
                   src={preset.preview_video_url}
                   muted
                   loop
