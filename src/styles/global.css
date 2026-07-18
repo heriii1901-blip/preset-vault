@@ -227,6 +227,61 @@ button:active:not(:disabled) {
   cursor: pointer;
   transition: background .15s ease;
 }
+.song-row.selected {
+  background: rgba(124, 92, 255, 0.15);
+  border-radius: 10px;
+}
+
+.selection-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.selection-cancel {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.selection-count {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.selection-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.selection-edit {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--lime);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.selection-delete {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: #FF5C5C;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
 .song-row:hover { background: var(--surface); border-radius: 10px; }
 .song-row:active {
   transform: scale(0.98);
