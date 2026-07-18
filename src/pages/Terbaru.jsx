@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { BottomNav } from '../components/BottomNav'
 
+const COVER_TIME = 2.5
+
 export default function Terbaru() {
   const navigate = useNavigate()
   const [presets, setPresets] = useState([])
@@ -29,30 +31,31 @@ export default function Terbaru() {
     loadLatest()
   }, [])
 
-  function pauseActive() {
-    if (activeVideoRef.current) {
-      activeVideoRef.current.pause()
-      activeVideoRef.current = null
-    }
+  function resetToCover(video) {
+    if (!video) return
+    video.pause()
+    video.currentTime = COVER_TIME
   }
 
-  function handlePressStart(video) {
-    if (!video) return
-    pauseActive()
+  function handleStartPlay(video) {
+    if (!video || activeVideoRef.current === video) return
+    resetToCover(activeVideoRef.current)
     video.play().catch(() => {})
     activeVideoRef.current = video
   }
 
-  function handlePressEnd(video) {
-    if (!video) return
-    video.pause()
-    if (activeVideoRef.current === video) activeVideoRef.current = null
+  function handleLoadedMetadata(e) {
+    const video = e.currentTarget
+    if (video.currentTime === 0) video.currentTime = COVER_TIME
   }
 
   useEffect(() => {
     const grid = gridRef.current
     if (!grid) return
-    const onScroll = () => pauseActive()
+    const onScroll = () => {
+      resetToCover(activeVideoRef.current)
+      activeVideoRef.current = null
+    }
     grid.addEventListener('scroll', onScroll, { passive: true })
     return () => grid.removeEventListener('scroll', onScroll)
   }, [])
@@ -79,10 +82,8 @@ export default function Terbaru() {
               key={preset.id}
               className="grid-cell"
               onClick={() => navigate(`/preset/${preset.id}`)}
-              onPointerDown={(e) => handlePressStart(e.currentTarget.querySelector('video'))}
-              onPointerUp={(e) => handlePressEnd(e.currentTarget.querySelector('video'))}
-              onPointerLeave={(e) => handlePressEnd(e.currentTarget.querySelector('video'))}
-              onPointerCancel={(e) => handlePressEnd(e.currentTarget.querySelector('video'))}
+              onContextMenu={(e) => e.preventDefault()}
+              onPointerDown={(e) => handleStartPlay(e.currentTarget.querySelector('video'))}
             >
               {preset.preview_video_url ? (
                 <video
@@ -91,6 +92,10 @@ export default function Terbaru() {
                   loop
                   playsInline
                   preload="metadata"
+                  disablePictureInPicture
+                  controlsList="nodownload"
+                  draggable={false}
+                  onLoadedMetadata={handleLoadedMetadata}
                 />
               ) : (
                 <div className="grid-fallback">🎬</div>
