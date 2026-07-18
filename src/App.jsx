@@ -1,0 +1,86 @@
+import { Routes, Route } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext'
+import { ProtectedRoute } from './components/ProtectedRoute'
+import Login from './pages/Login'
+import Home from './pages/Home'
+import AdminAddPreset from './pages/AdminAddPreset'
+import AdminManagePresets from './pages/AdminManagePresets'
+import Profile from './pages/Profile'
+import SongPresets from './pages/SongPresets'
+import PresetFeed from './pages/PresetFeed'
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <div className="phone-wrap">
+        <div className="phone">
+          <Routes>
+            <Route path="/login" element={<Login />} />
+
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/lagu/:songId"
+              element={
+                <ProtectedRoute>
+                  <SongPresets />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/preset/:presetId"
+              element={
+                <ProtectedRoute>
+                  <PresetFeed />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/akun"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* requireAdmin: cuma email admin yang bisa masuk sini */}
+            <Route
+              path="/admin/tambah-preset"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminAddPreset />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/edit-preset/:presetId"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminAddPreset />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/kelola-preset"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminManagePresets />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </div>
+      </div>
+    </AuthProvider>
+  )
+}
