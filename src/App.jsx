@@ -7,6 +7,7 @@ import AdminAddPreset from './pages/AdminAddPreset'
 import AdminManagePresets from './pages/AdminManagePresets'
 import Profile from './pages/Profile'
 import SongPresets from './pages/SongPresets'
+import Terbaru from './pages/Terbaru'
 import PresetFeed from './pages/PresetFeed'
 
 export default function App() {
@@ -19,6 +20,15 @@ export default function App() {
 
             <Route
               path="/"
+              element={
+                <ProtectedRoute>
+                  <Terbaru />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/lagu"
               element={
                 <ProtectedRoute>
                   <Home />
