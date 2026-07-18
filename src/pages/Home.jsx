@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { BottomNav } from '../components/BottomNav'
@@ -8,28 +8,12 @@ export default function Home() {
   const [query, setQuery] = useState('')
   const [songs, setSongs] = useState([])
   const [loading, setLoading] = useState(true)
+  const [selectionMode, setSelectionMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState([])
   const navigate = useNavigate()
   const { isAdmin } = useAuth()
-
-  async function handleRenameSong(e, song) {
-    e.stopPropagation()
-    const newName = window.prompt('Ganti nama lagu jadi:', song.name)
-    if (!newName || newName.trim() === '' || newName === song.name) return
-
-    try {
-      const { error } = await supabase
-        .from('songs')
-        .update({ name: newName.trim() })
-        .eq('id', song.id)
-      if (error) throw error
-      setSongs((prev) =>
-        prev.map((s) => (s.id === song.id ? { ...s, name: newName.trim() } : s))
-      )
-    } catch (err) {
-      console.error('Gagal ganti nama lagu:', err)
-      alert('Gagal ganti nama lagu, coba lagi.')
-    }
-  }
+  const longPressTimer = useRef(null)
+  const longPressTriggered = useRef(false)
 
   useEffect(() => {
     async function loadSongs() {
@@ -37,7 +21,6 @@ export default function Home() {
         const { data: songList, error } = await supabase.from('songs').select('*')
         if (error) throw error
 
-        // Itung jumlah preset ASLI per lagu (bukan pake angka counter yang bisa gak akurat)
         const withRealCount = await Promise.all(
           songList.map(async (song) => {
             const { count } = await supabase
@@ -62,6 +45,89 @@ export default function Home() {
   const filteredSongs = songs.filter((song) =>
     song.name.toLowerCase().includes(query.toLowerCase())
   )
+
+  function startLongPress(song) {
+    if (!isAdmin) return
+    longPressTriggered.current = false
+    longPressTimer.current = setTimeout(() => {
+      longPressTriggered.current = true
+      setSelectionMode(true)
+      setSelectedIds([song.id])
+    }, 450)
+  }
+
+  function cancelLongPress() {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+  }
+
+  function handleRowClick(song) {
+    if (longPressTriggered.current) {
+      longPressTriggered.current = false
+      return
+    }
+    if (selectionMode) {
+      setSelectedIds((prev) =>
+        prev.includes(song.id) ? prev.filter((id) => id !== song.id) : [...prev, song.id]
+      )
+      return
+    }
+    navigate(`/lagu/${song.id}`)
+  }
+
+  function exitSelectionMode() {
+    setSelectionMode(false)
+    setSelectedIds([])
+  }
+
+  async function handleEditSelected() {
+    const song = songs.find((s) => s.id === selectedIds[0])
+    if (!song) return
+    const newName = window.prompt('Ganti nama lagu jadi:', song.name)
+    if (!newName || newName.trim() === '' || newName === song.name) {
+      exitSelectionMode()
+      return
+    }
+    try {
+      const { error } = await supabase
+        .from('songs')
+        .update({ name: newName.trim() })
+        .eq('id', song.id)
+      if (error) throw error
+      setSongs((prev) =>
+        prev.map((s) => (s.id === song.id ? { ...s, name: newName.trim() } : s))
+      )
+    } catch (err) {
+      console.error('Gagal ganti nama lagu:', err)
+      alert('Gagal ganti nama lagu, coba lagi.')
+    } finally {
+      exitSelectionMode()
+    }
+  }
+
+  async function handleDeleteSelected() {
+    const count = selectedIds.length
+    const ok = window.confirm(
+      count === 1
+        ? 'Yakin mau hapus lagu ini? Semua preset di dalamnya ikut kehapus.'
+        : `Yakin mau hapus ${count} lagu? Semua preset di dalamnya ikut kehapus.`
+    )
+    if (!ok) return
+    try {
+      const { error: presetErr } = await supabase.from('presets').delete().in('song_id', selectedIds)
+      if (presetErr) throw presetErr
+      const { error: songErr } = await supabase.from('songs').delete().in('id', selectedIds)
+      if (songErr) throw songErr
+      setSongs((prev) => prev.filter((s) => !selectedIds.includes(s.id)))
+    } catch (err) {
+      console.error('Gagal hapus lagu:', err)
+      alert('Gagal hapus lagu, coba lagi.')
+    } finally {
+      exitSelectionMode()
+    }
+  }
 
   return (
     <div className="screen">
@@ -97,39 +163,43 @@ export default function Home() {
 
           {filteredSongs.map((song) => (
             <div
-              className="song-row"
+              className={`song-row${selectionMode && selectedIds.includes(song.id) ? ' selected' : ''}`}
               key={song.id}
-              onClick={() => navigate(`/lagu/${song.id}`)}
+              onClick={() => handleRowClick(song)}
+              onPointerDown={() => startLongPress(song)}
+              onPointerUp={cancelLongPress}
+              onPointerLeave={cancelLongPress}
+              onContextMenu={(e) => e.preventDefault()}
             >
               <div className="song-thumb" style={{ background: song.color }}>♪</div>
               <div className="song-text">
                 <h4>{song.name}</h4>
               </div>
               <span className="song-count">{song.presetCount || 0}</span>
-              {isAdmin && (
-                <button
-                  className="song-edit-btn"
-                  onClick={(e) => handleRenameSong(e, song)}
-                  title="Edit nama lagu"
-                >
-                  ✎
-                </button>
-              )}
             </div>
           ))}
         </div>
 
-        {isAdmin && (
-          <div className="admin-shortcut-row">
-            <button className="admin-shortcut" onClick={() => navigate('/admin/tambah-preset')}>
-              ⚙ Tambah Preset
-            </button>
-            <button className="admin-shortcut admin-shortcut-danger" onClick={() => navigate('/admin/kelola-preset')}>
-              🗑 Hapus Video
-            </button>
-          </div>
+        {isAdmin && !selectionMode && (
+          <button className="admin-shortcut" onClick={() => navigate('/admin/tambah-preset')}>
+            ⚙ Panel Admin
+          </button>
         )}
       </div>
+
+      {selectionMode && (
+        <div className="selection-bar">
+          <button className="selection-cancel" onClick={exitSelectionMode}>Batal</button>
+          <span className="selection-count">{selectedIds.length} dipilih</span>
+          <div className="selection-actions">
+            {selectedIds.length === 1 && (
+              <button className="selection-edit" onClick={handleEditSelected}>Edit nama</button>
+            )}
+            <button className="selection-delete" onClick={handleDeleteSelected}>Hapus</button>
+          </div>
+        </div>
+      )}
+
       <BottomNav />
     </div>
   )
