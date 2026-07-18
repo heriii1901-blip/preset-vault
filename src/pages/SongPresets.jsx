@@ -89,6 +89,13 @@ export default function SongPresets() {
               onClick={() => navigate(`/preset/${preset.id}`)}
               onContextMenu={(e) => e.preventDefault()}
               onPointerDown={(e) => handleStartPlay(e.currentTarget.querySelector('video'))}
+              onMouseEnter={(e) => handleStartPlay(e.currentTarget.querySelector('video'))}
+              onMouseLeave={(e) => {
+                resetToCover(e.currentTarget.querySelector('video'))
+                if (activeVideoRef.current === e.currentTarget.querySelector('video')) {
+                  activeVideoRef.current = null
+                }
+              }}
             >
               {preset.preview_video_url ? (
                 <video
