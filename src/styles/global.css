@@ -288,9 +288,14 @@ button:active:not(:disabled) {
   transition: 80ms ease;
 }
  
-.admin-shortcut {
+.admin-shortcut-row {
+  display: flex;
+  gap: 8px;
   margin-top: 12px;
-  width: 100%;
+}
+
+.admin-shortcut {
+  flex: 1;
   background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -299,6 +304,19 @@ button:active:not(:disabled) {
   font-weight: 600;
   font-size: 13px;
   padding: 12px;
+  cursor: pointer;
+}
+
+.admin-shortcut-danger {
+  color: #FF5C5C;
+}
+
+.song-edit-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  padding: 6px;
   cursor: pointer;
 }
  
