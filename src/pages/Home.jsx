@@ -46,14 +46,27 @@ export default function Home() {
     song.name.toLowerCase().includes(query.toLowerCase())
   )
 
-  function startLongPress(song) {
+  const touchStartPos = useRef({ x: 0, y: 0 })
+
+  function startLongPress(song, e) {
     if (!isAdmin) return
+    const touch = e.touches ? e.touches[0] : e
+    touchStartPos.current = { x: touch.clientX, y: touch.clientY }
     longPressTriggered.current = false
     longPressTimer.current = setTimeout(() => {
       longPressTriggered.current = true
+      if (navigator.vibrate) navigator.vibrate(30)
       setSelectionMode(true)
-      setSelectedIds([song.id])
-    }, 450)
+      setSelectedIds((prev) => (prev.includes(song.id) ? prev : [...prev, song.id]))
+    }, 400)
+  }
+
+  function moveLongPress(e) {
+    if (!longPressTimer.current) return
+    const touch = e.touches ? e.touches[0] : e
+    const dx = Math.abs(touch.clientX - touchStartPos.current.x)
+    const dy = Math.abs(touch.clientY - touchStartPos.current.y)
+    if (dx > 10 || dy > 10) cancelLongPress()
   }
 
   function cancelLongPress() {
@@ -62,7 +75,6 @@ export default function Home() {
       longPressTimer.current = null
     }
   }
-
   function handleRowClick(song) {
     if (longPressTriggered.current) {
       longPressTriggered.current = false
@@ -166,9 +178,13 @@ export default function Home() {
               className={`song-row${selectionMode && selectedIds.includes(song.id) ? ' selected' : ''}`}
               key={song.id}
               onClick={() => handleRowClick(song)}
-              onPointerDown={() => startLongPress(song)}
-              onPointerUp={cancelLongPress}
-              onPointerLeave={cancelLongPress}
+              onTouchStart={(e) => startLongPress(song, e)}
+              onTouchMove={moveLongPress}
+              onTouchEnd={cancelLongPress}
+              onTouchCancel={cancelLongPress}
+              onMouseDown={(e) => startLongPress(song, e)}
+              onMouseUp={cancelLongPress}
+              onMouseLeave={cancelLongPress}
               onContextMenu={(e) => e.preventDefault()}
             >
               <div className="song-thumb" style={{ background: song.color }}>♪</div>
