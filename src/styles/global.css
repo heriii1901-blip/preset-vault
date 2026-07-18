@@ -39,8 +39,8 @@ body {
 
 .phone {
   width: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
   background: var(--surface);
   overflow: hidden;
   display: flex;
@@ -263,6 +263,7 @@ button:active:not(:disabled) {
 /* ===== BOTTOM NAV ===== */
 .bottom-nav {
   display: flex;
+  flex-shrink: 0;
   border-top: 1px solid var(--line);
   background: var(--surface);
   padding: 10px 0 14px;
