@@ -5,6 +5,13 @@ export function BottomNav() {
     <div className="bottom-nav">
       <NavLink to="/" end className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M12 2v20M2 12h20" />
+          <circle cx="12" cy="12" r="10" />
+        </svg>
+        <span>Terbaru</span>
+      </NavLink>
+      <NavLink to="/lagu" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M9 18V9h6v9M4 10l8-6 8 6v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9z" />
         </svg>
         <span>lagu</span>
