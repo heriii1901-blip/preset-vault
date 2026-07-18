@@ -200,6 +200,13 @@ button:active:not(:disabled) {
   display: flex;
   flex-direction: column;
 }
+@media (min-width: 768px) {
+  .song-list {
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
+  }
+}
 .song-row {
   display: flex;
   align-items: center;
