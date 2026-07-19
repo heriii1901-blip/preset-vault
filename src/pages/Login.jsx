@@ -35,11 +35,6 @@ export default function Login() {
     }
   }
 
-  export default function Login() {
-  // ... state-state yang udah ada (misal: const [loading, setLoading] = useState...)
-
-  if (loading) return <LoadingScreen />;
-    
   return (
     <div className="screen login-screen">
       <div className="waves" ref={waveRef}></div>
