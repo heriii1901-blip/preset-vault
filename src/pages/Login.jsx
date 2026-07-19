@@ -1,3 +1,4 @@
+import LoadingScreen from "../components/LoadingScreen";
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -34,6 +35,11 @@ export default function Login() {
     }
   }
 
+  export default function Login() {
+  // ... state-state yang udah ada (misal: const [loading, setLoading] = useState...)
+
+  if (loading) return <LoadingScreen />;
+    
   return (
     <div className="screen login-screen">
       <div className="waves" ref={waveRef}></div>
