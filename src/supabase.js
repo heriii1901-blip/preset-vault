@@ -7,4 +7,10 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 // (Ini cuma buat tampilan UI aja — keamanan aslinya dijaga sama RLS policy di Supabase)
 export const ADMIN_EMAIL = 'heriii1901@gmail.com'
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: false,
+  },
+})
