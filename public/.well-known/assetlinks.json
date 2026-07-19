@@ -1,8 +1,8 @@
 [{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "com.pam.presetvault",
-        "sha256_cert_fingerprints": ["6C:92:68:A7:2F:07:63:91:41:9D:1F:0A:2F:57:FC:E1:D1:32:8D:9A:21:42:CB:AC:36:49:E8:39:0A:19:64:4B"]
-      }
-    }]
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.pam.preset-vault",
+    "sha256_cert_fingerprints": ["6C:92:68:A7:2F:07:63:91:41:9D:1F:0A:2F:57:FC:E1:D1:32:8D:9A:21:42:CB:AC:36:49:E8:39:0A:19:64:4B"]
+  }
+}]
