@@ -10,25 +10,27 @@
   --line: rgba(242, 241, 245, 0.08);
 }
  
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 html, body {
-  height: 100%;
-  overscroll-behavior: none;
+  min-height: 100vh;
+  min-height: 100dvh;
+  /* Hapus height: 100% dan overscroll-behavior agar scroll normal di HP */
+  background: radial-gradient(circle at 20% 10%, rgba(124, 92, 255, 0.15), transparent 40%),
+              radial-gradient(circle at 80% 90%, rgba(255, 61, 127, 0.12), transparent 40%),
+              var(--bg);
+  font-family: 'Inter', sans-serif;
+  color: var(--text);
 }
 
 #root {
-  height: 100%;
-}
- 
-body {
   min-height: 100vh;
-  min-height: 100dvh;
-  background:
-    radial-gradient(circle at 20% 10%, rgba(124, 92, 255, 0.15), transparent 40%),
-    radial-gradient(circle at 80% 90%, rgba(255, 61, 127, 0.12), transparent 40%),
-    var(--bg);
-  font-family: 'Inter', sans-serif;
-  color: var(--text);
+  display: flex;
+  flex-direction: column;
 }
  
 .phone-wrap {
@@ -1217,4 +1219,50 @@ select.finput-real { cursor: pointer; }
 
 .loading-waves {
   opacity: 0.7;
+}
+
+/* ==========================================
+   FIX: BOTTOM NAV & GRID VIDEO BIAR RAPI
+   ========================================== */
+
+/* 1. Mencegah konten paling bawah ketimpa Bottom Nav */
+main, .page-container, .phone-wrap {
+  padding-bottom: 90px !important; /* Ruang khusus di bawah agar tidak tertutup nav */
+  width: 100%;
+}
+
+/* 2. Mengunci Bottom Navigation di Paling Bawah Layar */
+.bottom-nav, nav {
+  position: fixed !important;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: var(--surface, #15151D);
+}
+
+/* 3. Menata Grid Video / Preset Supaya Sejajar & Tidak Numpuk */
+.preset-grid, .video-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important; /* Jadi 2 kolom rapi */
+  gap: 12px !important;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 4. Menata Item Video/Preset */
+.preset-card, .video-card {
+  position: relative !important; /* HAPUS position: absolute */
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* 5. Menata List Lagu Supaya Berurutan Ke Bawah */
+.song-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px;
+  width: 100%;
 }
