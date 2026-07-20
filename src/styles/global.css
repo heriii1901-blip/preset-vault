@@ -204,12 +204,16 @@ button:active:not(:disabled) {
 }
 .search-bar input::placeholder { color: var(--muted); }
  
+/* GANTI KODE .song-list LAMA DENGAN INI */
 .song-list {
   flex: 1;
-  overflow-y: auto;
+  min-height: 0;            /* PENTING: Batasi tinggi list lagu agar pas di area tengah */
+  overflow-y: auto;         /* Aktifkan scroll khusus untuk daftar lagu saja */
   display: flex;
   flex-direction: column;
+  -webkit-overflow-scrolling: touch; /* Bikin scroll lancar di HP/APK */
 }
+
 @media (min-width: 768px) {
   .song-list {
     max-width: 480px;
