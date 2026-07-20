@@ -319,12 +319,21 @@ export default function PresetFeed() {
               <span>{linkModal.label}</span>
               <button type="button" className="link-modal-close" onClick={closeLinkModal}>×</button>
             </div>
-            <input
-              className="link-modal-input"
-              readOnly
-              value={linkModal.link}
-              onFocus={(e) => e.target.select()}
-            />
+            {linkModal.label === 'Link XML' ? (
+              <textarea
+                className="link-modal-input link-modal-textarea"
+                readOnly
+                value={linkModal.link}
+                onFocus={(e) => e.target.select()}
+              />
+            ) : (
+              <input
+                className="link-modal-input"
+                readOnly
+                value={linkModal.link}
+                onFocus={(e) => e.target.select()}
+              />
+            )}
             <button type="button" className="link-modal-copy-btn" onClick={handleCopy}>
               {copied ? '✓ Tersalin' : 'Salin Link'}
             </button>
