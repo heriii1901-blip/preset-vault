@@ -1266,3 +1266,51 @@ main, .page-container, .phone-wrap {
   gap: 10px;
   width: 100%;
 }
+
+/* ==========================================
+   FIX: COVER 4:5 UNIFORM & NO OVERLAP
+   ========================================== */
+
+/* 1. Mencegah konten paling bawah ketimpa Bottom Nav */
+main, .page-container, .phone-wrap {
+  padding-bottom: 90px !important;
+  width: 100%;
+}
+
+/* 2. Container Grid 2 Kolom Rapi */
+.preset-grid, .video-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 10px !important;
+  padding: 10px 10px 90px 10px !important;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .preset-grid, .video-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 16px !important;
+  }
+}
+
+/* 3. Menilai Rasio Bingkai Luar Wajib 4:5 */
+.grid-cell, .preset-card, .video-card {
+  position: relative !important;
+  width: 100% !important; /* Hapus spasi di 100% */
+  aspect-ratio: 4 / 5 !important; /* WAJIB 4:5 UNTUK COVER DEPAN */
+  background: var(--surface-2, #1a1a1a);
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+/* 4. Memaksa Gambar/Video Mengisi Kotak 4:5 Tanpa Gepeng */
+.grid-cell video, 
+.grid-cell img,
+.preset-card video,
+.preset-card img,
+.video-card video,
+.video-card img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
