@@ -1,12 +1,18 @@
 import { Navigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import LoadingScreen from './LoadingScreen'
 
-// requireAdmin=true dipake khusus buat halaman Panel Admin
 export function ProtectedRoute({ children, requireAdmin = false }) {
   const { user, loading, isAdmin } = useAuth()
+  const [minTimePassed, setMinTimePassed] = useState(false)
 
-  if (loading) {
+  useEffect(() => {
+    const timer = setTimeout(() => setMinTimePassed(true), 900)
+    return () => clearTimeout(timer)
+  }, [])
+
+  if (loading || !minTimePassed) {
     return <LoadingScreen />
   }
 
@@ -15,7 +21,6 @@ export function ProtectedRoute({ children, requireAdmin = false }) {
   }
 
   if (requireAdmin && !isAdmin) {
-    // Bukan admin tapi coba akses panel admin lewat URL langsung -> tendang ke home
     return <Navigate to="/" replace />
   }
 
