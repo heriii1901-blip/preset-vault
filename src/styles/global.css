@@ -1316,12 +1316,12 @@ main, .page-container, .phone-wrap {
 }
 
 /* ==========================================
-   TIKTOK STYLE SEARCH GRID (4:5 CARD)
+   CLEAN FIX: TIKTOK SEARCH GRID (4:5 CARD)
    ========================================== */
 
-/* 1. Mencegah baris paling bawah ketimpa Bottom Nav */
+/* 1. Beri ruang di bawah agar tidak tertutup Bottom Nav */
 main, .page-container, .phone-wrap, .screen {
-  padding-bottom: 80px !important;
+  padding-bottom: 90px !important;
 }
 
 /* 2. Grid 2 Kolom Sejajar khas TikTok */
@@ -1340,19 +1340,17 @@ main, .page-container, .phone-wrap, .screen {
   }
 }
 
-/* 3. Kartu Video Ukuran 4:5 Rapi */
+/* 3. Kartu Wajib Rasio 4:5 */
 .grid-cell {
   position: relative !important;
   width: 100% !important;
-  aspect-ratio: 4 / 5 !important; /* Rasio tegak ala TikTok */
+  aspect-ratio: 4 / 5 !important;
   background: #18181c;
   border-radius: 8px !important;
   overflow: hidden !important;
-  display: flex !important;
-  flex-direction: column !important;
 }
 
-/* 4. Media (Video/Gambar) Memenuhi Kartu Tanpa Gepeng */
+/* 4. Media (Video/Gambar) Crop Tengah Pas 4:5 */
 .grid-cell video, 
 .grid-cell img, 
 .grid-cell .grid-fallback {
@@ -1361,11 +1359,11 @@ main, .page-container, .phone-wrap, .screen {
   left: 0 !important;
   width: 100% !important;
   height: 100% !important;
-  object-fit: cover !important; /* Paksa gambar/video ter-crop rapi di tengah */
+  object-fit: cover !important;
   z-index: 1 !important;
 }
 
-/* 5. Teks Judul & Uploader di Atas Gambar (Gradient Overlay) */
+/* 5. Gradient Overlay Teks */
 .grid-cell-overlay {
   position: absolute !important;
   left: 0 !important;
@@ -1375,19 +1373,4 @@ main, .page-container, .phone-wrap, .screen {
   background: linear-gradient(to top, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%) !important;
   z-index: 2 !important;
   color: #fff !important;
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: flex-end !important;
-}
-
-/* Rapikan Teks Judul & Nama User */
-.grid-cell-overlay h4, 
-.grid-cell-overlay p,
-.grid-cell-overlay span {
-  font-size: 11px !important;
-  line-height: 1.3 !important;
-  margin: 0 !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important; /* Kalau kepanjangan ada titik-titik (...) */
 }
