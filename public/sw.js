@@ -9,6 +9,10 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
+  // Cuma tangani request GET. POST/PATCH/DELETE (kayak nyimpen favorit,
+  // insert preset, dll) dibiarin lewat langsung ke jaringan tanpa dicegat.
+  if (event.request.method !== "GET") return;
+
   event.respondWith(
     fetch(event.request).catch(() => caches.match(event.request))
   );
