@@ -197,9 +197,11 @@ export default function Home() {
         </div>
 
         {isAdmin && !selectionMode && (
-          <button className="admin-shortcut" onClick={() => navigate('/admin/tambah-preset')}>
-            ⚙ Panel Admin
-          </button>
+          <div className="admin-shortcut-row">
+            <button className="admin-shortcut" onClick={() => navigate('/admin/tambah-preset')}>
+              ⚙ Panel Admin
+            </button>
+          </div>
         )}
       </div>
 
