@@ -1205,3 +1205,7 @@ select.finput-real { cursor: pointer; }
   padding: 12px;
   cursor: pointer;
 }
+
+.loading-waves {
+  opacity: 0.7;
+}
