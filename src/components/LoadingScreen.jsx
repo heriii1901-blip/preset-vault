@@ -1,35 +1,48 @@
-import { useEffect, useRef } from 'react'
-
 export default function LoadingScreen() {
-  const waveRef = useRef(null)
-
-  useEffect(() => {
-    const wave = waveRef.current
-    if (!wave) return
-    wave.innerHTML = ''
-    for (let i = 0; i < 28; i++) {
-      const bar = document.createElement('span')
-      bar.style.height = `${14 + Math.random() * 112}px`
-      bar.style.animationDelay = `${Math.random() * 1.5}s`
-      wave.appendChild(bar)
-    }
-  }, [])
-
   return (
     <div style={styles.wrapper}>
-      <div className="waves loading-waves" ref={waveRef}></div>
+      <div style={styles.waveBox}>
+        {[0, 1, 2, 3, 4].map((i) => (
+          <span
+            key={i}
+            style={{
+              ...styles.bar,
+              animationDelay: `${i * 0.12}s`,
+            }}
+          />
+        ))}
+      </div>
+      <style>{`
+        @keyframes wave-bar {
+          0%, 100% { transform: scaleY(0.3); }
+          50% { transform: scaleY(1); }
+        }
+      `}</style>
     </div>
   )
 }
 
 const styles = {
   wrapper: {
-    position: "relative",
+    position: "fixed",
+    inset: 0,
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    height: "100vh",
     background: "#0a0a0a",
-    overflow: "hidden",
+  },
+  waveBox: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    height: "90px",
+  },
+  bar: {
+    width: "10px",
+    height: "80px",
+    borderRadius: "99px",
+    background: "linear-gradient(180deg, #7C5CFF, #FF3D7F)",
+    animation: "wave-bar 0.9s ease-in-out infinite",
+    transformOrigin: "center",
   },
 }
