@@ -201,6 +201,9 @@ export default function Home() {
             <button className="admin-shortcut" onClick={() => navigate('/admin/tambah-preset')}>
               ⚙ Panel Admin
             </button>
+            <button className="admin-shortcut admin-shortcut-danger" onClick={() => navigate('/admin/kelola-preset')}>
+              🗑 Kelola Preset
+            </button>
           </div>
         )}
       </div>
