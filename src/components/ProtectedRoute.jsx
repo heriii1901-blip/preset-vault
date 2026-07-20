@@ -1,12 +1,13 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import LoadingScreen from './LoadingScreen'
 
 // requireAdmin=true dipake khusus buat halaman Panel Admin
 export function ProtectedRoute({ children, requireAdmin = false }) {
   const { user, loading, isAdmin } = useAuth()
 
   if (loading) {
-    return <div className="loading-screen">Memuat...</div>
+    return <LoadingScreen />
   }
 
   if (!user) {
