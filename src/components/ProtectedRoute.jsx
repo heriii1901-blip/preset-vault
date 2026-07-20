@@ -8,7 +8,7 @@ export function ProtectedRoute({ children, requireAdmin = false }) {
   const [minTimePassed, setMinTimePassed] = useState(false)
 
   useEffect(() => {
-    const timer = setTimeout(() => setMinTimePassed(true), 900)
+    const timer = setTimeout(() => setMinTimePassed(true), 400)
     return () => clearTimeout(timer)
   }, [])
 
