@@ -1183,6 +1183,17 @@ select.finput-real { cursor: pointer; }
   outline: none;
 }
 
+.link-modal-textarea {
+  min-height: 90px;
+  max-height: 200px;
+  resize: none;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1.5;
+  overflow-y: auto;
+}
+
 .link-modal-copy-btn {
   width: 100%;
   background: linear-gradient(135deg, var(--violet), var(--pink));
