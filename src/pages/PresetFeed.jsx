@@ -94,6 +94,18 @@ export default function PresetFeed() {
         setPausedIds((prev) => new Set(prev).add(id))
       })
   }
+      .then(() => {
+        setPausedIds((prev) => {
+          if (!prev.has(id)) return prev
+          const next = new Set(prev)
+          next.delete(id)
+          return next
+        })
+      })
+      .catch(() => {
+        setPausedIds((prev) => new Set(prev).add(id))
+      })
+  }
 
   // Autoplay video yang lagi penuh di layar, pause sisanya
   useEffect(() => {
