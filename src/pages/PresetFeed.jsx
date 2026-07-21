@@ -18,7 +18,7 @@ export default function PresetFeed() {
   const [linkModal, setLinkModal] = useState(null) // { label, link } | null
   const [copied, setCopied] = useState(false)
   const [favoritedIds, setFavoritedIds] = useState(new Set())
-  const [pausedIds, setPausedIds] = useState(new Set())
+  const currentlyPlayingId = useRef(null)
   const [videoProgress, setVideoProgress] = useState({}) // Menyimpan progress tiap video { [id]: { current, duration } }
 
   useEffect(() => {
@@ -69,7 +69,32 @@ export default function PresetFeed() {
     }
   }, [loading, presets, presetId])
 
-  // Autoplay video yang lagi penuh di layar (dengan suara), pause sisanya
+  // Fungsi tunggal buat play video tertentu + pause semua video lain
+  function playOnly(id) {
+    if (currentlyPlayingId.current === id) return
+    Object.entries(videoRefs.current).forEach(([otherId, otherVideo]) => {
+      if (otherVideo && otherId !== id) {
+        otherVideo.pause()
+      }
+    })
+    const video = videoRefs.current[id]
+    if (!video) return
+    currentlyPlayingId.current = id
+    video.play()
+      .then(() => {
+        setPausedIds((prev) => {
+          if (!prev.has(id)) return prev
+          const next = new Set(prev)
+          next.delete(id)
+          return next
+        })
+      })
+      .catch(() => {
+        setPausedIds((prev) => new Set(prev).add(id))
+      })
+  }
+
+  // Autoplay video yang lagi penuh di layar, pause sisanya
   useEffect(() => {
     if (presets.length === 0) return
 
@@ -79,39 +104,27 @@ export default function PresetFeed() {
           const video = entry.target
           const id = video.dataset.presetId
           if (entry.isIntersecting && entry.intersectionRatio > 0.75) {
-            // Pause semua video lain dulu, jaga-jaga biar gak ada 2 suara bareng
-            Object.entries(videoRefs.current).forEach(([otherId, otherVideo]) => {
-              if (otherId !== id && otherVideo && !otherVideo.paused) {
-                otherVideo.pause()
-              }
-            })
-            video.currentTime = 0
-            video.play()
-              .then(() => {
-                setPausedIds((prev) => {
-                  if (!prev.has(id)) return prev
-                  const next = new Set(prev)
-                  next.delete(id)
-                  return next
-                })
-              })
-              .catch(() => {
-                // Browser nolak autoplay bersuara, tampilin ikon play biar user tinggal tap
-                setPausedIds((prev) => new Set(prev).add(id))
-              })
-          } else {
+            playOnly(id)
+          } else if (currentlyPlayingId.current === id) {
             video.pause()
+            currentlyPlayingId.current = null
           }
         })
       },
       { threshold: [0, 0.75, 1] }
     )
 
-    Object.values(videoRefs.current).forEach((v) => {
-      if (v) observer.observe(v)
-    })
+    // Delay dikit biar gak tabrakan sama scrollIntoView pas halaman baru kebuka
+    const timer = setTimeout(() => {
+      Object.values(videoRefs.current).forEach((v) => {
+        if (v) observer.observe(v)
+      })
+    }, 150)
 
-    return () => observer.disconnect()
+    return () => {
+      clearTimeout(timer)
+      observer.disconnect()
+    }
   }, [presets])
 
   const togglePlayPause = (id) => {
