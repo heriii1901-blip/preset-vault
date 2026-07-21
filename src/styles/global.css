@@ -334,6 +334,10 @@ button:active:not(:disabled) {
   padding: 10px 0 14px;
 }
 
+.nav-submenu {
+  display: none;
+}
+
 @media (min-width: 768px) {
   /* Ubah .screen jadi row cuma kalo ada bottom-nav di dalemnya */
   .screen:has(> .bottom-nav) {
@@ -386,9 +390,8 @@ button:active:not(:disabled) {
   .profile-header {
     justify-content: flex-start;
   }
-}
 
-.nav-submenu {
+  .nav-submenu {
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -423,6 +426,8 @@ button:active:not(:disabled) {
   .nav-subitem-danger {
     color: var(--pink);
   }
+}
+
 .nav-item {
   flex: 1;
   display: flex;
