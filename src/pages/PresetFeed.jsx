@@ -94,18 +94,6 @@ export default function PresetFeed() {
         setPausedIds((prev) => new Set(prev).add(id))
       })
   }
-      .then(() => {
-        setPausedIds((prev) => {
-          if (!prev.has(id)) return prev
-          const next = new Set(prev)
-          next.delete(id)
-          return next
-        })
-      })
-      .catch(() => {
-        setPausedIds((prev) => new Set(prev).add(id))
-      })
-  }
 
   // Autoplay video yang lagi penuh di layar, pause sisanya
   useEffect(() => {
@@ -255,7 +243,7 @@ export default function PresetFeed() {
           {presets.map((preset) => {
             const isFav = favoritedIds.has(preset.id)
             const isPaused = pausedIds.has(preset.id)
-            
+
             // Ambil info waktu sekarang dan total durasi video ini
             const currentSec = videoProgress[preset.id]?.current || 0
             const durationSec = videoProgress[preset.id]?.duration || 0
