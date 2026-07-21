@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { useAuth } from '../context/AuthContext'
 
 export default function PresetFeed() {
   const { presetId } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
+  const isFromTerbaru = location.state?.source === 'terbaru'
   const { user } = useAuth()
   const [presets, setPresets] = useState([])
   const [songName, setSongName] = useState('')
@@ -35,11 +37,17 @@ export default function PresetFeed() {
 
         setSongName(clickedPreset.songs?.name || '')
 
-        const { data: allPresets, error: listErr } = await supabase
-          .from('presets')
-          .select('*')
-          .eq('song_id', clickedPreset.song_id)
-          .order('created_at', { ascending: true })
+        let query = supabase.from('presets').select('*')
+
+        if (isFromTerbaru) {
+          // Sama kayak query di Terbaru.jsx: preset terbaru lintas lagu
+          query = query.order('created_at', { ascending: false }).limit(20)
+        } else {
+          // Fokus 1 lagu aja
+          query = query.eq('song_id', clickedPreset.song_id).order('created_at', { ascending: true })
+        }
+
+        const { data: allPresets, error: listErr } = await query
         if (listErr) throw listErr
 
         setPresets(allPresets || [])
@@ -59,8 +67,8 @@ export default function PresetFeed() {
     }
     if (presetId) loadFeed()
     hasScrolledRef.current = false
-  }, [presetId, user])
-
+  }, [presetId, user, isFromTerbaru])
+  
   useEffect(() => {
     if (loading || presets.length === 0 || hasScrolledRef.current) return
     const el = itemRefs.current[presetId]
