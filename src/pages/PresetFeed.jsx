@@ -286,7 +286,7 @@ export default function PresetFeed() {
                     </button>
                     {preset.tiktok_link && (
                       <a className="feed-btn" href={preset.tiktok_link} target="_blank" rel="noreferrer">
-                        TikTok Kreator
+                        Vid Kreator
                       </a>
                     )}
                   </div>
