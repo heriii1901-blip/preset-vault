@@ -909,14 +909,14 @@ select.finput-real { cursor: pointer; }
   overflow-y: auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
+  align-items: start;
   gap: 10px;
   padding: 10px;
 }
 
 .grid-cell {
   position: relative;
-  width: 100%;
-  padding-top: 125%;
+  aspect-ratio: 4 / 5;
   background: var(--surface-2);
   overflow: hidden;
   cursor: pointer;
