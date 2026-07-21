@@ -79,6 +79,12 @@ export default function PresetFeed() {
           const video = entry.target
           const id = video.dataset.presetId
           if (entry.isIntersecting && entry.intersectionRatio > 0.75) {
+            // Pause semua video lain dulu, jaga-jaga biar gak ada 2 suara bareng
+            Object.entries(videoRefs.current).forEach(([otherId, otherVideo]) => {
+              if (otherId !== id && otherVideo && !otherVideo.paused) {
+                otherVideo.pause()
+              }
+            })
             video.currentTime = 0
             video.play()
               .then(() => {
@@ -247,7 +253,6 @@ export default function PresetFeed() {
                     playsInline
                     preload="auto"
                     onClick={() => togglePlayPause(preset.id)}
-                    onLoadedData={(e) => e.target.play().catch(() => {})}
                     onTimeUpdate={(e) => handleTimeUpdate(preset.id, e)}
                   />
                 ) : (
