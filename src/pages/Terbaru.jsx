@@ -13,13 +13,14 @@ export default function Terbaru() {
   const gridRef = useRef(null)
 
   useEffect(() => {
-    async function loadLatest() {
+    async function loadLatestPresets() {
+      setLoading(true)
       try {
         const { data, error } = await supabase
           .from('presets')
           .select('*')
           .order('created_at', { ascending: false })
-          .limit(20)
+
         if (error) throw error
         setPresets(data || [])
       } catch (err) {
@@ -28,7 +29,7 @@ export default function Terbaru() {
         setLoading(false)
       }
     }
-    loadLatest()
+    loadLatestPresets()
   }, [])
 
   function resetToCover(video) {
@@ -69,10 +70,12 @@ export default function Terbaru() {
         </div>
       </div>
 
-      {loading && <div className="empty-state" style={{ padding: 30 }}>Memuat...</div>}
+      {loading && (
+        <div className="empty-state" style={{ padding: 30 }}>Memuat...</div>
+      )}
 
       {!loading && presets.length === 0 && (
-        <div className="empty-state" style={{ padding: 30 }}>Belum ada preset.</div>
+        <div className="empty-state" style={{ padding: 30 }}>Belum ada preset terbaru.</div>
       )}
 
       {!loading && presets.length > 0 && (
