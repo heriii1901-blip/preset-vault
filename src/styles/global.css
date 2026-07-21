@@ -335,15 +335,51 @@ button:active:not(:disabled) {
 }
 
 @media (min-width: 768px) {
+  /* Ubah .screen jadi row cuma kalo ada bottom-nav di dalemnya */
+  .screen:has(> .bottom-nav) {
+    flex-direction: row;
+  }
+
+  .screen:has(> .bottom-nav) > *:not(.bottom-nav) {
+    min-width: 0;
+  }
+
   .bottom-nav {
-    padding: 16px 0;
-    max-width: 480px;
-    margin: 0 auto;
-    border-radius: 16px 16px 0 0;
+    order: -1; /* dipindah ke kiri walau di JSX-nya taro paling bawah/akhir */
+    flex-direction: column;
+    flex-shrink: 0;
+    width: 220px;
+    height: 100%;
+    padding: 24px 14px;
+    gap: 6px;
+    border-top: none;
+    border-right: 1px solid var(--line);
+    justify-content: flex-start;
+  }
+
+  .nav-item {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 10px;
+  }
+
+  .nav-item:hover {
+    background: var(--surface-2);
   }
 
   .nav-item span {
-    font-size: 12px;
+    font-size: 13.5px;
+  }
+
+  /* Profile: pastiin pp + nama tetep rata kiri, gak melar liar di layar lebar */
+  .profile-content {
+    max-width: 640px;
+  }
+
+  .profile-header {
+    justify-content: flex-start;
   }
 }
 .nav-item {
