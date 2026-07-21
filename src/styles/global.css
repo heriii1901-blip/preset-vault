@@ -916,6 +916,7 @@ select.finput-real { cursor: pointer; }
 
 .grid-cell {
   position: relative;
+  min-width: 0;
   aspect-ratio: 4 / 5;
   background: var(--surface-2);
   overflow: hidden;
