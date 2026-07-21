@@ -81,7 +81,7 @@ export default function Terbaru() {
             <div
               key={preset.id}
               className="grid-cell"
-              onClick={() => navigate(`/preset/${preset.id}`)}
+              onClick={() => navigate(`/preset/${preset.id}`, { state: { source: 'terbaru' } })}
               onContextMenu={(e) => e.preventDefault()}
               onPointerDown={(e) => handleStartPlay(e.currentTarget.querySelector('video'))}
               onMouseEnter={(e) => handleStartPlay(e.currentTarget.querySelector('video'))}
