@@ -387,6 +387,42 @@ button:active:not(:disabled) {
     justify-content: flex-start;
   }
 }
+
+.nav-submenu {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-left: 18px;
+    margin-bottom: 6px;
+  }
+
+  .nav-subitem {
+    display: block;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 12.5px;
+    color: var(--muted);
+    text-decoration: none;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .nav-subitem:hover {
+    background: var(--surface-2);
+    color: var(--text);
+  }
+
+  .nav-subitem.active {
+    color: var(--text);
+    background: var(--surface-2);
+  }
+
+  .nav-subitem-danger {
+    color: var(--pink);
+  }
 .nav-item {
   flex: 1;
   display: flex;
