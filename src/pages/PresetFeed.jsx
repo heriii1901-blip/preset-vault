@@ -81,6 +81,7 @@ export default function PresetFeed() {
     const video = videoRefs.current[id]
     if (!video) return
     currentlyPlayingId.current = id
+    video.currentTime = 0
     video.play()
       .then(() => {
         setPausedIds((prev) => {
