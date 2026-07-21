@@ -339,7 +339,6 @@ button:active:not(:disabled) {
 }
 
 @media (min-width: 768px) {
-  /* Ubah .screen jadi row cuma kalo ada bottom-nav di dalemnya */
   .screen:has(> .bottom-nav) {
     flex-direction: row;
   }
@@ -349,25 +348,33 @@ button:active:not(:disabled) {
   }
 
   .bottom-nav {
-    order: -1; /* dipindah ke kiri walau di JSX-nya taro paling bawah/akhir */
+    order: -1;
     flex-direction: column;
     flex-shrink: 0;
-    width: 220px;
+    width: 200px;
     height: 100%;
-    padding: 24px 14px;
-    gap: 6px;
+    padding: 20px 10px;
+    gap: 2px;
     border-top: none;
     border-right: 1px solid var(--line);
     justify-content: flex-start;
   }
 
   .nav-item {
+    flex: none;
     flex-direction: row;
+    align-items: center;
     justify-content: flex-start;
-    gap: 12px;
-    padding: 11px 16px;
-    border-radius: 24px; /* pill shape kayak YT */
+    gap: 14px;
+    padding: 9px 12px;
+    border-radius: 20px;
     width: 100%;
+  }
+
+  .nav-item svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
   }
 
   .nav-item.active {
@@ -379,10 +386,9 @@ button:active:not(:disabled) {
   }
 
   .nav-item span {
-    font-size: 13.5px;
+    font-size: 13px;
   }
 
-  /* Profile: pastiin pp + nama tetep rata kiri, gak melar liar di layar lebar */
   .profile-content {
     max-width: 640px;
   }
@@ -394,16 +400,16 @@ button:active:not(:disabled) {
   .nav-submenu {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding-left: 18px;
-    margin-bottom: 6px;
+    gap: 1px;
+    padding-left: 32px;
+    margin-bottom: 4px;
   }
 
   .nav-subitem {
     display: block;
-    padding: 8px 14px;
-    border-radius: 20px;
-    font-size: 12.5px;
+    padding: 7px 12px;
+    border-radius: 16px;
+    font-size: 12px;
     color: var(--muted);
     text-decoration: none;
     background: none;
