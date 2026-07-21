@@ -18,6 +18,7 @@ export default function PresetFeed() {
   const [linkModal, setLinkModal] = useState(null) // { label, link } | null
   const [copied, setCopied] = useState(false)
   const [favoritedIds, setFavoritedIds] = useState(new Set())
+  const [pausedIds, setPausedIds] = useState(new Set())
   const currentlyPlayingId = useRef(null)
   const [videoProgress, setVideoProgress] = useState({}) // Menyimpan progress tiap video { [id]: { current, duration } }
 
@@ -131,14 +132,10 @@ export default function PresetFeed() {
     const video = videoRefs.current[id]
     if (!video) return
     if (video.paused) {
-      video.play().catch(() => {})
-      setPausedIds((prev) => {
-        const next = new Set(prev)
-        next.delete(id)
-        return next
-      })
+      playOnly(id)
     } else {
       video.pause()
+      currentlyPlayingId.current = null
       setPausedIds((prev) => new Set(prev).add(id))
     }
   }
