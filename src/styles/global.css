@@ -454,6 +454,12 @@ button:active:not(:disabled) {
   margin-top: 12px;
 }
 
+@media (min-width: 768px) {
+  .admin-shortcut-row {
+    display: none;
+  }
+}
+
 .admin-shortcut {
   flex: 1;
   background: var(--surface-2);
@@ -867,6 +873,13 @@ select.finput-real { cursor: pointer; }
   padding: 13px;
   cursor: pointer;
 }
+
+@media (min-width: 768px) {
+  .logout-btn {
+    display: none;
+  }
+}
+
 /* ===== Song Preset Grid (4:5 video thumbnails) ===== */
 .grid-header {
   display: flex;
