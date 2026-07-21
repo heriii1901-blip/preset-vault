@@ -794,7 +794,8 @@ select.finput-real { cursor: pointer; }
 
 .grid-cell {
   position: relative;
-  aspect-ratio: 4 / 5;
+  width: 100%;
+  padding-top: 125%; /* 4:5 ratio pake trik padding, lebih kompatibel di WebView APK */
   background: var(--surface-2);
   overflow: hidden;
   cursor: pointer;
