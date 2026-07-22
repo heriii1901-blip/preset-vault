@@ -16,6 +16,8 @@ export default function AdminAddPreset() {
   const [songs, setSongs] = useState([])
   const [songMode, setSongMode] = useState('existing')
   const [selectedSongId, setSelectedSongId] = useState('')
+  const [songDropdownOpen, setSongDropdownOpen] = useState(false)
+  const songDropdownRef = useRef(null)
   const [newSongName, setNewSongName] = useState('')
   const [xmlLink, setXmlLink] = useState('')
   const [mbLink, setMbLink] = useState('')
@@ -44,6 +46,20 @@ export default function AdminAddPreset() {
     }
     loadSongs()
   }, [])
+
+  useEffect(() => {
+  function handleClickOutside(e) {
+    if (songDropdownRef.current && !songDropdownRef.current.contains(e.target)) {
+      setSongDropdownOpen(false)
+    }
+  }
+  document.addEventListener('mousedown', handleClickOutside)
+  document.addEventListener('touchstart', handleClickOutside)
+  return () => {
+    document.removeEventListener('mousedown', handleClickOutside)
+    document.removeEventListener('touchstart', handleClickOutside)
+  }
+}, [])
 
   const resetForm = () => {
     setXmlLink('')
@@ -260,19 +276,33 @@ export default function AdminAddPreset() {
 
             {songMode === 'existing' ? (
               songs.length > 0 ? (
-                <select
-                  className="finput-real"
-                  value={selectedSongId}
-                  onChange={(e) => setSelectedSongId(e.target.value)}
-                >
-                  {songs.map((s) => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
-                </select>
+                <div className="custom-select" ref={songDropdownRef}>
+                  <button
+                    type="button"
+                    className="custom-select-trigger"
+                    onClick={() => setSongDropdownOpen((prev) => !prev)}
+                  >
+                    <span>{songs.find((s) => s.id === selectedSongId)?.name || 'Pilih lagu...'}</span>
+                    <span className={songDropdownOpen ? 'custom-select-arrow open' : 'custom-select-arrow'}>▾</span>
+                  </button>
+                  {songDropdownOpen && (
+                    <div className="custom-select-menu">
+                      {songs.map((s) => (
+                        <div
+                          key={s.id}
+                          className={s.id === selectedSongId ? 'custom-select-option active' : 'custom-select-option'}
+                          onClick={() => {
+                            setSelectedSongId(s.id)
+                            setSongDropdownOpen(false)
+                          }}
+                        >
+                          {s.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ) : (
-                <p className="hint" style={{ color: 'var(--muted)' }}>Belum ada lagu tersimpen. Pilih "Lagu baru" dulu.</p>
-              )
-            ) : (
               <div className="input-wrap">
                 <input
                   className="finput-real"
