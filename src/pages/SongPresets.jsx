@@ -86,7 +86,7 @@ export default function SongPresets() {
             <div
               key={preset.id}
               className="grid-cell"
-              onClick={() => navigate(`/preset/${preset.id}`, { state: { source: 'terbaru' } })}
+              onClick={() => navigate(`/preset/${preset.id}`)}
               onContextMenu={(e) => e.preventDefault()}
               onPointerDown={(e) => handleStartPlay(e.currentTarget.querySelector('video'))}
               onMouseEnter={(e) => handleStartPlay(e.currentTarget.querySelector('video'))}
