@@ -18,12 +18,19 @@ export default function SongPresets() {
       setLoading(true)
       try {
         const [{ data: songData }, { data: presetsData, error }] = await Promise.all([
-          supabase.from('songs').select('*').eq('id', songId).single(),
-          supabase.from('presets').select('*').eq('song_id', songId).order('created_at', { ascending: true }),
-        ])
-        if (error) throw error
-        setSong(songData)
-        setPresets(presetsData || [])
+  supabase.from('songs').select('*').eq('id', songId).single(),
+  supabase.from('presets').select('*').eq('song_id', songId),
+])
+if (error) throw error
+setSong(songData)
+
+// Acak urutan preset (Fisher-Yates shuffle) biar gak sesuai tanggal upload
+const shuffled = [...(presetsData || [])]
+for (let i = shuffled.length - 1; i > 0; i--) {
+  const j = Math.floor(Math.random() * (i + 1))
+  ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+}
+setPresets(shuffled)
       } catch (err) {
         console.error('Gagal ambil preset lagu:', err)
       } finally {
