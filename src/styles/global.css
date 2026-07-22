@@ -1402,3 +1402,11 @@ select.finput-real { cursor: pointer; }
   color: var(--lime);
   font-weight: 600;
 }
+
+.home-tagline {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  margin-top: 4px;
+  margin-bottom: 2px;
+}
