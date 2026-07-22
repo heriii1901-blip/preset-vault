@@ -327,6 +327,30 @@ export default function AdminAddPreset() {
             )}
           </div>
               ) : (
+                <p className="hint" style={{ color: 'var(--muted)' }}>Belum ada lagu tersimpen. Pilih "Lagu baru" dulu.</p>
+              )
+            ) : (
+              <div className="input-wrap">
+                <input
+                  className="finput-real"
+                  placeholder="Nama lagu baru..."
+                  value={newSongName}
+                  onChange={(e) => setNewSongName(e.target.value)}
+                />
+                {newSongName && (
+                  <button
+                    type="button"
+                    className="input-clear-btn"
+                    onClick={() => setNewSongName('')}
+                    aria-label="Hapus isi"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+              ) : (
               <div className="input-wrap">
                 <input
                   className="finput-real"
