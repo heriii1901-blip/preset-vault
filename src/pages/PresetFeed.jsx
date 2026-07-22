@@ -37,7 +37,7 @@ export default function PresetFeed() {
 
         setSongName(clickedPreset.songs?.name || '')
 
-        let query = supabase.from('presets').select('*')
+        let query = supabase.from('presets').select('*, songs(name)')
 
         if (isFromTerbaru) {
           // Sama kayak query di Terbaru.jsx: preset terbaru lintas lagu
@@ -283,7 +283,7 @@ export default function PresetFeed() {
                 )}
 
                 <div className="feed-overlay">
-                  <h4>{songName}</h4>
+                  <h4>{preset.songs?.name || songName}</h4>
                   <p>@{preset.creator_username}</p>
                   <div className="feed-actions">
                     <button
