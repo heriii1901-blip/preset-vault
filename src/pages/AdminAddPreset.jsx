@@ -48,18 +48,18 @@ export default function AdminAddPreset() {
   }, [])
 
   useEffect(() => {
-  function handleClickOutside(e) {
-    if (songDropdownRef.current && !songDropdownRef.current.contains(e.target)) {
-      setSongDropdownOpen(false)
+    function handleClickOutside(e) {
+      if (songDropdownRef.current && !songDropdownRef.current.contains(e.target)) {
+        setSongDropdownOpen(false)
+      }
     }
-  }
-  document.addEventListener('mousedown', handleClickOutside)
-  document.addEventListener('touchstart', handleClickOutside)
-  return () => {
-    document.removeEventListener('mousedown', handleClickOutside)
-    document.removeEventListener('touchstart', handleClickOutside)
-  }
-}, [])
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('touchstart', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
+    }
+  }, [])
 
   const resetForm = () => {
     setXmlLink('')
@@ -115,8 +115,6 @@ export default function AdminAddPreset() {
       if (previewFile) {
         setSaveStage('Ngupload video contoh...')
 
-        // Supabase Storage gak ngasih progress per-byte kayak Firebase,
-        // jadi ini animasi estimasi biar user tau prosesnya jalan.
         progressIntervalRef.current = setInterval(() => {
           setSaveProgress((prev) => (prev < 75 ? prev + 2 : prev))
         }, 300)
@@ -306,51 +304,6 @@ export default function AdminAddPreset() {
                 <p className="hint" style={{ color: 'var(--muted)' }}>Belum ada lagu tersimpen. Pilih "Lagu baru" dulu.</p>
               )
             ) : (
-              <div className="input-wrap">
-                <input
-                  className="finput-real"
-                  placeholder="Nama lagu baru..."
-                  value={newSongName}
-                  onChange={(e) => setNewSongName(e.target.value)}
-                />
-                {newSongName && (
-                  <button
-                    type="button"
-                    className="input-clear-btn"
-                    onClick={() => setNewSongName('')}
-                    aria-label="Hapus isi"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-              ) : (
-                <p className="hint" style={{ color: 'var(--muted)' }}>Belum ada lagu tersimpen. Pilih "Lagu baru" dulu.</p>
-              )
-            ) : (
-              <div className="input-wrap">
-                <input
-                  className="finput-real"
-                  placeholder="Nama lagu baru..."
-                  value={newSongName}
-                  onChange={(e) => setNewSongName(e.target.value)}
-                />
-                {newSongName && (
-                  <button
-                    type="button"
-                    className="input-clear-btn"
-                    onClick={() => setNewSongName('')}
-                    aria-label="Hapus isi"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-              ) : (
               <div className="input-wrap">
                 <input
                   className="finput-real"
