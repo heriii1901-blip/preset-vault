@@ -324,22 +324,6 @@ export default function PresetFeed() {
                   <div className="feed-actions">
                     <button
                       type="button"
-                      className={isFav ? 'feed-fav-btn active' : 'feed-fav-btn'}
-                      onClick={() => toggleFavorite(preset.id)}
-                      aria-label="Favoritkan"
-                    >
-                      {isFav ? '♥' : '♡'}
-                    </button>
-                    <button
-                      type="button"
-                      className="feed-fav-btn"
-                      onClick={() => handleShare(preset)}
-                      aria-label="Bagikan"
-                    >
-                      ↗
-                    </button>
-                    <button
-                      type="button"
                       className="feed-btn"
                       onClick={() => openLinkModal('Link XML', preset.xml_link)}
                     >
@@ -358,6 +342,30 @@ export default function PresetFeed() {
                       </a>
                     )}
                   </div>
+                </div>
+
+                <div className="feed-side-actions">
+                  <button
+                    type="button"
+                    className={isFav ? 'feed-icon-btn love active' : 'feed-icon-btn love'}
+                    onClick={() => toggleFavorite(preset.id)}
+                    aria-label="Favoritkan"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    className="feed-icon-btn"
+                    onClick={() => handleShare(preset)}
+                    aria-label="Bagikan"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="22" y1="2" x2="11" y2="13" />
+                      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                    </svg>
+                  </button>
                 </div>
 
                 {/* Progress Bar dengan Teks Angka Detik */}
