@@ -21,7 +21,7 @@ export default function PresetFeed() {
   const [copied, setCopied] = useState(false)
   const [favoritedIds, setFavoritedIds] = useState(new Set())
   const [pausedIds, setPausedIds] = useState(new Set())
-  const currentlyPlayingId = useRef(null)
+  const activeVideoIdRef = useRef(null)
   const [videoProgress, setVideoProgress] = useState({}) // Menyimpan progress tiap video { [id]: { current, duration } }
 
   useEffect(() => {
@@ -78,17 +78,16 @@ export default function PresetFeed() {
     }
   }, [loading, presets, presetId])
 
-  // Fungsi tunggal buat play video tertentu + pause semua video lain
-  function playOnly(id) {
-    if (currentlyPlayingId.current === id) return
-    Object.entries(videoRefs.current).forEach(([otherId, otherVideo]) => {
-      if (otherVideo && otherId !== id) {
-        otherVideo.pause()
-      }
-    })
+  // Cuma dipanggil pas scroll pindah ke video lain, bukan pas pause/play manual
+  function switchToVideo(id) {
+    if (activeVideoIdRef.current === id) return
+    const oldId = activeVideoIdRef.current
+    if (oldId && videoRefs.current[oldId]) {
+      videoRefs.current[oldId].pause()
+    }
+    activeVideoIdRef.current = id
     const video = videoRefs.current[id]
     if (!video) return
-    currentlyPlayingId.current = id
     video.currentTime = 0
     video.play()
       .then(() => {
@@ -114,10 +113,10 @@ export default function PresetFeed() {
           const video = entry.target
           const id = video.dataset.presetId
           if (entry.isIntersecting && entry.intersectionRatio > 0.75) {
-            playOnly(id)
-          } else if (currentlyPlayingId.current === id) {
+            switchToVideo(id)
+          } else if (activeVideoIdRef.current === id) {
             video.pause()
-            currentlyPlayingId.current = null
+            activeVideoIdRef.current = null
           }
         })
       },
@@ -141,10 +140,20 @@ export default function PresetFeed() {
     const video = videoRefs.current[id]
     if (!video) return
     if (video.paused) {
-      playOnly(id)
+      activeVideoIdRef.current = id
+      video.play()
+        .then(() => {
+          setPausedIds((prev) => {
+            const next = new Set(prev)
+            next.delete(id)
+            return next
+          })
+        })
+        .catch(() => {
+          setPausedIds((prev) => new Set(prev).add(id))
+        })
     } else {
       video.pause()
-      currentlyPlayingId.current = null
       setPausedIds((prev) => new Set(prev).add(id))
     }
   }
