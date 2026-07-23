@@ -1071,8 +1071,13 @@ select.finput-real { cursor: pointer; }
 .feed-actions {
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
   margin-bottom: 34px;
+}
+
+.feed-actions .feed-btn {
+  flex: 1;
+  text-align: center;
+  white-space: nowrap;
 }
  
 .feed-btn {
@@ -1092,27 +1097,40 @@ select.finput-real { cursor: pointer; }
   border-color: var(--violet);
 }
  
-/* ===== Tombol favorit di halaman video ===== */
-.feed-fav-btn {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text);
-  font-size: 17px;
+/* ===== Tombol love & share ala sosmed (pojok kanan) ===== */
+.feed-side-actions {
+  position: absolute;
+  right: 10px;
+  bottom: 60px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.feed-icon-btn {
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-}
- 
-.feed-fav-btn.active {
-  background: var(--pink);
-  border-color: var(--pink);
+  background: none;
+  border: none;
   color: #fff;
+  cursor: pointer;
+  padding: 0;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+}
+
+.feed-icon-btn svg {
+  width: 28px;
+  height: 28px;
+}
+
+.feed-icon-btn.love.active svg {
+  fill: var(--pink);
+  stroke: var(--pink);
 }
  
 /* ===== Edit nama di halaman Profil ===== */
