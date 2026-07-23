@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 
 const THUMB_COLORS = [
@@ -12,6 +12,8 @@ const THUMB_COLORS = [
 
 export default function AdminAddPreset() {
   const navigate = useNavigate()
+  const { presetId } = useParams()
+  const isEditMode = Boolean(presetId)
 
   const [songs, setSongs] = useState([])
   const [songMode, setSongMode] = useState('existing')
@@ -24,12 +26,15 @@ export default function AdminAddPreset() {
   const [creatorUsername, setCreatorUsername] = useState('')
   const [tiktokLink, setTiktokLink] = useState('')
   const [previewFile, setPreviewFile] = useState(null)
+  const [existingPreviewUrl, setExistingPreviewUrl] = useState('')
   const [saving, setSaving] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
   const [saveProgress, setSaveProgress] = useState(0)
   const [saveStage, setSaveStage] = useState('')
+  const [loadingPreset, setLoadingPreset] = useState(isEditMode)
   const cancelledRef = useRef(false)
   const progressIntervalRef = useRef(null)
+  const originalSongIdRef = useRef('')
 
   useEffect(() => {
     async function loadSongs() {
@@ -38,14 +43,45 @@ export default function AdminAddPreset() {
         if (error) throw error
         const list = [...data].sort((a, b) => a.name.localeCompare(b.name))
         setSongs(list)
-        if (list.length > 0) setSelectedSongId(list[0].id)
+        if (list.length > 0 && !isEditMode) setSelectedSongId(list[0].id)
       } catch (err) {
         console.error('Gagal ambil daftar lagu:', err)
         setStatusMsg('Gagal ambil daftar lagu. Cek koneksi / setting Supabase.')
       }
     }
     loadSongs()
-  }, [])
+  }, [isEditMode])
+
+  // Mode edit: ambil data preset yang mau diubah, isi form-nya
+  useEffect(() => {
+    if (!isEditMode) return
+    async function loadPreset() {
+      setLoadingPreset(true)
+      try {
+        const { data, error } = await supabase
+          .from('presets')
+          .select('*')
+          .eq('id', presetId)
+          .single()
+        if (error) throw error
+
+        setXmlLink(data.xml_link || '')
+        setMbLink(data.mb_link || '')
+        setCreatorUsername(data.creator_username || '')
+        setTiktokLink(data.tiktok_link || '')
+        setExistingPreviewUrl(data.preview_video_url || '')
+        setSelectedSongId(data.song_id || '')
+        originalSongIdRef.current = data.song_id || ''
+        setSongMode('existing')
+      } catch (err) {
+        console.error('Gagal ambil data preset:', err)
+        setStatusMsg('Gagal ambil data preset yang mau diedit.')
+      } finally {
+        setLoadingPreset(false)
+      }
+    }
+    loadPreset()
+  }, [isEditMode, presetId])
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -111,7 +147,7 @@ export default function AdminAddPreset() {
       }
       setSaveProgress(15)
 
-      let previewVideoUrl = ''
+      let previewVideoUrl = isEditMode ? existingPreviewUrl : ''
       if (previewFile) {
         setSaveStage('Ngupload video contoh...')
 
@@ -137,35 +173,79 @@ export default function AdminAddPreset() {
         setSaveProgress(80)
       }
 
-      setSaveStage('Nyimpen preset...')
-      const { error: presetErr } = await supabase.from('presets').insert({
-        song_id: songId,
-        xml_link: xmlLink.trim(),
-        mb_link: mbLink.trim(),
-        creator_username: creatorUsername.trim(),
-        tiktok_link: tiktokLink.trim(),
-        preview_video_url: previewVideoUrl,
-      })
-      if (presetErr) throw presetErr
-      setSaveProgress(92)
+      if (isEditMode) {
+        setSaveStage('Update preset...')
+        const { error: updateErr } = await supabase
+          .from('presets')
+          .update({
+            song_id: songId,
+            xml_link: xmlLink.trim(),
+            mb_link: mbLink.trim(),
+            creator_username: creatorUsername.trim(),
+            tiktok_link: tiktokLink.trim(),
+            preview_video_url: previewVideoUrl,
+          })
+          .eq('id', presetId)
+        if (updateErr) throw updateErr
 
-      setSaveStage('Update jumlah preset...')
-      const { data: songRow } = await supabase
-        .from('songs')
-        .select('preset_count')
-        .eq('id', songId)
-        .single()
-      await supabase
-        .from('songs')
-        .update({ preset_count: (songRow?.preset_count || 0) + 1 })
-        .eq('id', songId)
-      setSaveProgress(100)
+        // Kalau lagu-nya diganti, betulin preset_count lagu lama & lagu baru
+        if (originalSongIdRef.current && originalSongIdRef.current !== songId) {
+          const { data: oldSongRow } = await supabase
+            .from('songs')
+            .select('preset_count')
+            .eq('id', originalSongIdRef.current)
+            .single()
+          await supabase
+            .from('songs')
+            .update({ preset_count: Math.max((oldSongRow?.preset_count || 1) - 1, 0) })
+            .eq('id', originalSongIdRef.current)
 
-      setStatusMsg('✅ Preset berhasil disimpen!')
-      resetForm()
+          const { data: newSongRow } = await supabase
+            .from('songs')
+            .select('preset_count')
+            .eq('id', songId)
+            .single()
+          await supabase
+            .from('songs')
+            .update({ preset_count: (newSongRow?.preset_count || 0) + 1 })
+            .eq('id', songId)
+
+          originalSongIdRef.current = songId
+        }
+
+        setSaveProgress(100)
+        setStatusMsg('✅ Preset berhasil diupdate!')
+      } else {
+        setSaveStage('Nyimpen preset...')
+        const { error: presetErr } = await supabase.from('presets').insert({
+          song_id: songId,
+          xml_link: xmlLink.trim(),
+          mb_link: mbLink.trim(),
+          creator_username: creatorUsername.trim(),
+          tiktok_link: tiktokLink.trim(),
+          preview_video_url: previewVideoUrl,
+        })
+        if (presetErr) throw presetErr
+        setSaveProgress(92)
+
+        setSaveStage('Update jumlah preset...')
+        const { data: songRow } = await supabase
+          .from('songs')
+          .select('preset_count')
+          .eq('id', songId)
+          .single()
+        await supabase
+          .from('songs')
+          .update({ preset_count: (songRow?.preset_count || 0) + 1 })
+          .eq('id', songId)
+        setSaveProgress(100)
+
+        setStatusMsg('✅ Preset berhasil disimpen!')
+        resetForm()
+      }
     } catch (err) {
       console.error('Gagal simpen preset:', err)
-      setStatusMsg('❌ Gagal simpen. Cek koneksi / setting Supabase.')
+      setStatusMsg(isEditMode ? '❌ Gagal update. Cek koneksi / setting Supabase.' : '❌ Gagal simpen. Cek koneksi / setting Supabase.')
     } finally {
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current)
       setSaving(false)
@@ -183,6 +263,16 @@ export default function AdminAddPreset() {
     setStatusMsg('Proses simpen dibatalin.')
   }
 
+  if (loadingPreset) {
+    return (
+      <div className="screen">
+        <div className="admin-content">
+          <div className="empty-state">Memuat data preset...</div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="screen">
       <div className="admin-content">
@@ -192,7 +282,7 @@ export default function AdminAddPreset() {
 
         <div className="admin-header">
           <span className="admin-tag">PANEL ADMIN</span>
-          <h2>Tambah Preset Baru</h2>
+          <h2>{isEditMode ? 'Edit Preset' : 'Tambah Preset Baru'}</h2>
         </div>
 
         <form onSubmit={handleSave}>
@@ -241,9 +331,15 @@ export default function AdminAddPreset() {
           </div>
 
           <div className="form-field">
-            <label>Video contoh (opsional, buat preview di app)</label>
+            <label>
+              Video contoh {isEditMode ? '(kosongin biar video lama tetep dipake)' : '(opsional, buat preview di app)'}
+            </label>
             <label className="upload-box" style={{ display: 'block', cursor: 'pointer' }}>
-              {previewFile ? `✅ ${previewFile.name}` : '⬆ Pilih video dari HP'}
+              {previewFile
+                ? `✅ ${previewFile.name}`
+                : existingPreviewUrl
+                ? '🎬 Ada video lama · pilih file buat ganti'
+                : '⬆ Pilih video dari HP'}
               <input
                 type="file"
                 accept="video/*"
@@ -255,22 +351,24 @@ export default function AdminAddPreset() {
 
           <div className="form-field">
             <label>Lagu</label>
-            <div className="song-mode-toggle">
-              <button
-                type="button"
-                className={songMode === 'existing' ? 'mode-btn active' : 'mode-btn'}
-                onClick={() => setSongMode('existing')}
-              >
-                Pilih yang ada
-              </button>
-              <button
-                type="button"
-                className={songMode === 'new' ? 'mode-btn active' : 'mode-btn'}
-                onClick={() => setSongMode('new')}
-              >
-                Lagu baru
-              </button>
-            </div>
+            {!isEditMode && (
+              <div className="song-mode-toggle">
+                <button
+                  type="button"
+                  className={songMode === 'existing' ? 'mode-btn active' : 'mode-btn'}
+                  onClick={() => setSongMode('existing')}
+                >
+                  Pilih yang ada
+                </button>
+                <button
+                  type="button"
+                  className={songMode === 'new' ? 'mode-btn active' : 'mode-btn'}
+                  onClick={() => setSongMode('new')}
+                >
+                  Lagu baru
+                </button>
+              </div>
+            )}
 
             {songMode === 'existing' ? (
               songs.length > 0 ? (
@@ -376,7 +474,7 @@ export default function AdminAddPreset() {
           )}
 
           <button className="save-btn" type="submit" disabled={saving}>
-            {saving ? 'Nyimpen...' : 'Simpan Preset'}
+            {saving ? (isEditMode ? 'Ngupdate...' : 'Nyimpen...') : (isEditMode ? 'Update Preset' : 'Simpan Preset')}
           </button>
         </form>
 
