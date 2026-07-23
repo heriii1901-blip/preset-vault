@@ -1072,6 +1072,7 @@ select.finput-real { cursor: pointer; }
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  margin-bottom: 34px;
 }
  
 .feed-btn {
