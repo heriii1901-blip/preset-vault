@@ -246,6 +246,33 @@ export default function PresetFeed() {
     }
   }
 
+  const handleShare = async (preset) => {
+    const shareUrl = `${window.location.origin}/preset/${preset.id}`
+    const shareData = {
+      title: preset.songs?.name || songName || 'Preset PAM',
+      text: `Cobain preset ini di PAM, dari @${preset.creator_username}`,
+      url: shareUrl,
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch (err) {
+        // User batalin share, ngga usah dianggep error
+        if (err.name !== 'AbortError') console.error('Gagal share:', err)
+      }
+    } else {
+      // Fallback buat browser yang ngga support Web Share API (misal desktop)
+      try {
+        await navigator.clipboard.writeText(shareUrl)
+        setCopied(true)
+        setLinkModal({ label: 'Link Preset', link: shareUrl })
+      } catch (err) {
+        console.error('Gagal nyalin link share:', err)
+      }
+    }
+  }
+
   return (
     <div className="screen">
       <button className="feed-back-btn" onClick={() => navigate(-1)}>←</button>
@@ -302,6 +329,14 @@ export default function PresetFeed() {
                       aria-label="Favoritkan"
                     >
                       {isFav ? '♥' : '♡'}
+                    </button>
+                    <button
+                      type="button"
+                      className="feed-fav-btn"
+                      onClick={() => handleShare(preset)}
+                      aria-label="Bagikan"
+                    >
+                      ↗
                     </button>
                     <button
                       type="button"
