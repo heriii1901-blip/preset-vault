@@ -10,6 +10,8 @@ import SongPresets from './pages/SongPresets'
 import Terbaru from './pages/Terbaru'
 import CariKreator from './pages/CariKreator'
 import PresetFeed from './pages/PresetFeed'
+import CariKreator from './pages/CariKreator'
+import Kreator from './pages/Kreator'
 
 export default function App() {
   return (
@@ -102,6 +104,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <CariKreator />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/kreator"
+              element={
+                <ProtectedRoute>
+                  <Kreator />
                 </ProtectedRoute>
               }
             />
