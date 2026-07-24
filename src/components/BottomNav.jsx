@@ -39,14 +39,6 @@ export function BottomNav() {
         <span>lagu</span>
       </NavLink>
 
-      <NavLink to="/kreator" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 8l4 3 5-6 5 6 4-3-1.5 10h-15L3 8z" />
-          <path d="M6.5 18h11" />
-        </svg>
-        <span>Kreator</span>
-      </NavLink>
-
       {isLaguActive && isAdmin && (
         <div className="nav-submenu">
           <NavLink to="/admin/tambah-preset" className={({ isActive }) => `nav-subitem${isActive ? ' active' : ''}`}>
@@ -57,6 +49,14 @@ export function BottomNav() {
           </NavLink>
         </div>
       )}
+
+      <NavLink to="/kreator" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 8l4 3 5-6 5 6 4-3-1.5 10h-15L3 8z" />
+          <path d="M6.5 18h11" />
+        </svg>
+        <span>Kreator</span>
+      </NavLink>
 
       <NavLink to="/akun" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
