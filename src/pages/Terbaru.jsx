@@ -63,6 +63,7 @@ export default function Terbaru() {
 
   return (
     <div className="screen">
+      <div className="grid-page">
       <div className="grid-header">
         <div>
           <h3>Terbaru</h3>
@@ -122,6 +123,7 @@ export default function Terbaru() {
           </div>
         </div>
       )}
+      </div>
       <BottomNav />
     </div>
   )
