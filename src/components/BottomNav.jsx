@@ -5,7 +5,6 @@ export function BottomNav() {
   const location = useLocation()
   const navigate = useNavigate()
   const { isAdmin, logout } = useAuth()
-
   const isLaguActive = location.pathname.startsWith('/lagu')
   const isAkunActive = location.pathname.startsWith('/akun')
 
@@ -23,6 +22,14 @@ export function BottomNav() {
           <path d="M12 7v5l3 2" />
         </svg>
         <span>Terbaru</span>
+      </NavLink>
+
+      <NavLink to="/cari" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <span>Cari</span>
       </NavLink>
 
       <NavLink to="/lagu" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
