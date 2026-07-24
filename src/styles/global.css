@@ -629,6 +629,19 @@ select.finput-real { cursor: pointer; }
   background: rgba(255, 61, 127, 0.2);
   color: var(--pink);
 }
+.finput-multiline {
+  min-height: 70px;
+  resize: vertical;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.5;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.input-wrap:has(.finput-multiline) .input-clear-btn {
+  top: 14px;
+  transform: none;
+}
  
 /* ===== SAVE OVERLAY (kayak layar ekspor Alight Motion) ===== */
 .save-overlay {
