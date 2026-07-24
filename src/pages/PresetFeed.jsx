@@ -395,6 +395,7 @@ export default function PresetFeed() {
               <span>{linkModal.label}</span>
               <button type="button" className="link-modal-close" onClick={closeLinkModal}>×</button>
             </div>
+            <a
             href={linkModal.link}
               target="_blank"
               rel="noreferrer"
