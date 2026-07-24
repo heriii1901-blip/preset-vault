@@ -117,7 +117,6 @@ export default function Profile() {
   return (
     <div className="screen">
       <div className="profile-content">
-        <div className="profile-scroll">
         <div className="profile-header">
           {photoUrl ? (
             <img className="avatar-img" src={photoUrl} alt="Foto profil" />
@@ -148,7 +147,8 @@ export default function Profile() {
             <p>{user?.email}</p>
           </div>
         </div>
-
+        
+        <div className="profile-scroll">
         <div className="section-label">
           <span className="eyebrow" style={{ color: 'var(--lime)' }}>TERSIMPAN</span>
           <h4>Preset Favorit</h4>
