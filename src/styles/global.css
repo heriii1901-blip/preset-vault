@@ -1456,6 +1456,7 @@ select.finput-real { cursor: pointer; }
   gap: 8px;
   padding: 12px 16px;
 }
+
 .search-input {
   flex: 1;
   padding: 12px 14px;
@@ -1467,8 +1468,11 @@ select.finput-real { cursor: pointer; }
   font-family: 'Inter', sans-serif;
   outline: none;
 }
+
 .search-input:focus { border-color: var(--violet); }
+
 .search-input::placeholder { color: var(--muted); }
+
 .search-go-btn {
   padding: 12px 20px;
   border-radius: 11px;
