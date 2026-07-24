@@ -39,9 +39,9 @@ export function BottomNav() {
       </NavLink>
 
       <NavLink to="/kreator" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="7" r="3.5" />
-          <path d="M4 20c0-4.5 3.5-7 8-7s8 2.5 8 7" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 8l4 3 5-6 5 6 4-3-1.5 10h-15L3 8z" />
+          <path d="M6.5 18h11" />
         </svg>
         <span>Kreator</span>
       </NavLink>
