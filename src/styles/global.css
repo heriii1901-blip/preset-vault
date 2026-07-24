@@ -100,6 +100,30 @@ button:active:not(:disabled) {
   opacity: 0.8;
   transition: 80ms ease;
 }
+
+/* Scrollbar tema gelap, berlaku di semua elemen scroll di seluruh app */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface-2) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--surface-2);
+  border-radius: 99px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--line);
+}
  
 /* ===== LOGIN ===== */
 .login-screen { position: relative; }
@@ -226,9 +250,8 @@ button:active:not(:disabled) {
 
 @media (min-width: 768px) {
   .song-list {
-    max-width: 480px;
-    margin: 0 auto;
     width: 100%;
+    padding: 0 24px;
   }
 }
 .song-row {
