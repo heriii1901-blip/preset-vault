@@ -62,6 +62,7 @@ export default function CariKreator() {
         </button>
       </div>
 
+      <div className="search-body">
       {!searched && (
         <div className="empty-state" style={{ padding: 30 }}>
           Cari kreator dulu buat liat presetnya di sini.
@@ -106,6 +107,7 @@ export default function CariKreator() {
           ))}
         </div>
       )}
+    </div>
 
       <BottomNav />
     </div>
