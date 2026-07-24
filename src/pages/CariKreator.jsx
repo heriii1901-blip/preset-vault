@@ -40,78 +40,74 @@ export default function CariKreator() {
     }
   }
 
-    return (
-      <div className="screen">
-        <div className="grid-page">
+  return (
+    <div className="screen">
+      <div className="grid-page">
         <div className="grid-header">
           <h3>CARI KREATOR</h3>
         </div>
-      </div>
 
-      <div className="search-input-wrap">
-        <input
-          type="text"
-          className="search-input"
-          placeholder="Ketik nama kreator..."
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-        />
-        <button type="button" className="search-go-btn" onClick={runSearch}>
-          Cari
-        </button>
-      </div>
-
-      <div className="search-body">
-      {!searched && (
-        <div className="empty-state" style={{ padding: 30 }}>
-          Cari kreator dulu buat liat presetnya di sini.
+        <div className="search-input-wrap">
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Ketik nama kreator..."
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+          <button type="button" className="search-go-btn" onClick={runSearch}>
+            Cari
+          </button>
         </div>
-      )}
 
-      {searched && loading && (
-        <div className="empty-state" style={{ padding: 30 }}>Memuat...</div>
-      )}
-
-      {searched && !loading && results.length === 0 && (
-        <div className="empty-state" style={{ padding: 30 }}>
-          Kreator "{searchTerm}" ngga ketemu.
-        </div>
-      )}
-
-      {searched && !loading && results.length > 0 && (
-        <div className="preset-grid">
-          {results.map((preset) => (
-            <div
-              key={preset.id}
-              className="grid-cell"
-              onClick={() => navigate(`/preset/${preset.id}`, { state: { source: 'terbaru' } })}
-              onContextMenu={(e) => e.preventDefault()}
-            >
-              {preset.preview_video_url ? (
-                <video
-                  src={preset.preview_video_url}
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  disablePictureInPicture
-                  controlsList="nodownload"
-                  draggable={false}
-                  onLoadedMetadata={(e) => {
-                    const video = e.currentTarget
-                    if (video.currentTime === 0) video.currentTime = 2.5
-                  }}
-                />
-              ) : (
-                <div className="grid-fallback">🎬</div>
-              )}
-              <div className="grid-cell-overlay">@{preset.creator_username}</div>
+        <div className="search-body">
+          {!searched && (
+            <div className="empty-state" style={{ padding: 30 }}>
+              Cari kreator dulu buat liat presetnya di sini.
             </div>
-          ))}
+          )}
+          {searched && loading && (
+            <div className="empty-state" style={{ padding: 30 }}>Memuat...</div>
+          )}
+          {searched && !loading && results.length === 0 && (
+            <div className="empty-state" style={{ padding: 30 }}>
+              Kreator "{searchTerm}" ngga ketemu.
+            </div>
+          )}
+          {searched && !loading && results.length > 0 && (
+            <div className="preset-grid">
+              {results.map((preset) => (
+                <div
+                  key={preset.id}
+                  className="grid-cell"
+                  onClick={() => navigate(`/preset/${preset.id}`, { state: { source: 'terbaru' } })}
+                  onContextMenu={(e) => e.preventDefault()}
+                >
+                  {preset.preview_video_url ? (
+                    <video
+                      src={preset.preview_video_url}
+                      muted
+                      loop
+                      playsInline
+                      preload="metadata"
+                      disablePictureInPicture
+                      controlsList="nodownload"
+                      draggable={false}
+                      onLoadedMetadata={(e) => {
+                        const video = e.currentTarget
+                        if (video.currentTime === 0) video.currentTime = 2.5
+                      }}
+                    />
+                  ) : (
+                    <div className="grid-fallback">🎬</div>
+                  )}
+                  <div className="grid-cell-overlay">@{preset.creator_username}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-       )}
-    </div>
       </div>
       <BottomNav />
     </div>
