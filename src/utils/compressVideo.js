@@ -72,16 +72,42 @@ export async function compressVideoIfNeeded(file, onProgress) {
       outputName,
     ])
 
-    const data = await ffmpeg.readFile(outputName)
-    const compressedBlob = new Blob([data.buffer], { type: 'video/mp4' })
+    let data = await ffmpeg.readFile(outputName)
+    let compressedBlob = new Blob([data.buffer], { type: 'video/mp4' })
+
+    // Terus nyoba turunin bitrate sampe di bawah target, maksimal 4 percobaan
+    // biar ga infinite loop kalo emang video-nya ga bisa ditekan lagi
+    let attempt = 1
+    let currentBitrateKbps = videoBitrateKbps
+    const MAX_ATTEMPTS = 4
+
+    while (compressedBlob.size > MAX_SIZE_BYTES && attempt < MAX_ATTEMPTS) {
+      attempt++
+      currentBitrateKbps = Math.max(Math.floor(currentBitrateKbps * 0.7), MIN_VIDEO_BITRATE_KBPS)
+      console.warn(`Percobaan ${attempt}: masih ${(compressedBlob.size / 1024 / 1024).toFixed(2)}MB, nurunin bitrate ke ${currentBitrateKbps}k...`)
+
+      await ffmpeg.exec([
+        '-i', inputName,
+        '-vf', "scale='min(1280,iw)':-2",
+        '-c:v', 'libx264',
+        '-b:v', `${currentBitrateKbps}k`,
+        '-maxrate', `${currentBitrateKbps}k`,
+        '-bufsize', `${currentBitrateKbps}k`,
+        '-preset', 'fast',
+        '-c:a', 'aac',
+        '-b:a', `${AUDIO_BITRATE_KBPS}k`,
+        '-movflags', '+faststart',
+        outputName,
+      ])
+      data = await ffmpeg.readFile(outputName)
+      compressedBlob = new Blob([data.buffer], { type: 'video/mp4' })
+
+      // Kalo udah mentok di bitrate minimum tapi masih kegedean, stop aja
+      // (biar ga muter-muter sia-sia dengan bitrate yang sama)
+      if (currentBitrateKbps <= MIN_VIDEO_BITRATE_KBPS) break
+    }
+
     await ffmpeg.deleteFile(inputName)
     await ffmpeg.deleteFile(outputName)
 
-    // Jaga-jaga: kalo hasil kompres malah lebih gede, pake file asli aja
-    if (compressedBlob.size >= file.size) return file
-    return new File([compressedBlob], file.name.replace(/\.\w+$/, '.mp4'), { type: 'video/mp4' })
-  } catch (err) {
-    console.error('Gagal kompres video, pake file asli:', err)
-    return file
-  }
-}
+    console.log(`Hasil kompresi akhir (percobaan ke-${attempt}): ${(compressedBlob.size / 1024 / 1024).toFixed(2)}MB`)
