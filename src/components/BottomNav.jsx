@@ -1,6 +1,5 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-
 export function BottomNav() {
   const location = useLocation()
   const navigate = useNavigate()
