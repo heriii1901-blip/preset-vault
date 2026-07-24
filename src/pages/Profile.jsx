@@ -172,7 +172,16 @@ export default function Profile() {
                   onClick={() => navigate(`/preset/${preset.id}`)}
                 >
                   {preset.preview_video_url ? (
-                    <video src={preset.preview_video_url} muted preload="metadata" playsInline />
+                    <video
+                      src={preset.preview_video_url}
+                      muted
+                      preload="metadata"
+                      playsInline
+                      onLoadedMetadata={(e) => {
+                        const video = e.currentTarget
+                        if (video.currentTime === 0) video.currentTime = 2.5
+                      }}
+                    />
                   ) : (
                     <div className="grid-fallback">🎬</div>
                   )}
