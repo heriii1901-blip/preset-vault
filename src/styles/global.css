@@ -1394,6 +1394,14 @@ select.finput-real { cursor: pointer; }
   cursor: pointer;
 }
 
+.link-modal-clickable {
+  display: block;
+  color: var(--lime, #D4FF3D);
+  text-decoration: underline;
+  word-break: break-all;
+  cursor: pointer;
+}
+
 .loading-waves {
   opacity: 0.7;
 }
