@@ -287,13 +287,14 @@ export default function AdminAddPreset() {
 
         <form onSubmit={handleSave}>
           <div className="form-field">
-            <label>Link XML</label>
+            <label>Link XML (satu link per baris kalau lebih dari satu)</label>
             <div className="input-wrap">
-              <input
-                className="finput-real"
+              <textarea
+                className="finput-real finput-multiline"
                 placeholder="Paste link XML dari AM..."
                 value={xmlLink}
                 onChange={(e) => setXmlLink(e.target.value)}
+                rows={3}
               />
               {xmlLink && (
                 <button
@@ -309,13 +310,14 @@ export default function AdminAddPreset() {
           </div>
 
           <div className="form-field">
-            <label>Link 5MB (Alight Creative)</label>
+            <label>Link 5MB (satu link per baris kalau lebih dari satu)</label>
             <div className="input-wrap">
-              <input
-                className="finput-real"
+              <textarea
+                className="finput-real finput-multiline"
                 placeholder="Paste link 5MB / Alight Creative..."
                 value={mbLink}
                 onChange={(e) => setMbLink(e.target.value)}
+                rows={3}
               />
               {mbLink && (
                 <button
