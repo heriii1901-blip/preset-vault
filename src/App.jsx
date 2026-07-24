@@ -8,6 +8,7 @@ import AdminManagePresets from './pages/AdminManagePresets'
 import Profile from './pages/Profile'
 import SongPresets from './pages/SongPresets'
 import Terbaru from './pages/Terbaru'
+import CariKreator from './pages/CariKreator'
 import PresetFeed from './pages/PresetFeed'
 
 export default function App() {
@@ -85,6 +86,22 @@ export default function App() {
               element={
                 <ProtectedRoute requireAdmin>
                   <AdminManagePresets />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Terbaru />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/cari"
+              element={
+                <ProtectedRoute>
+                  <CariKreator />
                 </ProtectedRoute>
               }
             />
