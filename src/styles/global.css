@@ -1470,9 +1470,7 @@ select.finput-real { cursor: pointer; }
 }
 
 .search-input:focus { border-color: var(--violet); }
-
 .search-input::placeholder { color: var(--muted); }
-
 .search-go-btn {
   padding: 12px 20px;
   border-radius: 11px;
