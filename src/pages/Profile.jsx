@@ -224,6 +224,7 @@ export default function Profile() {
             <button type="button" className="profile-menu-item">Pengaturan</button>
             <button type="button" className="profile-menu-item">Bahasa</button>
             <button type="button" className="profile-menu-item">Tentang Aplikasi</button>
+            <button type="button" className="profile-menu-item">Kreator</button>
           </div>
         </div>
       )}
