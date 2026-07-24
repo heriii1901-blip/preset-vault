@@ -98,6 +98,10 @@ export default function CariKreator() {
                   disablePictureInPicture
                   controlsList="nodownload"
                   draggable={false}
+                  onLoadedMetadata={(e) => {
+                    const video = e.currentTarget
+                    if (video.currentTime === 0) video.currentTime = 2.5
+                  }}
                 />
               ) : (
                 <div className="grid-fallback">🎬</div>
