@@ -10,7 +10,6 @@ import SongPresets from './pages/SongPresets'
 import Terbaru from './pages/Terbaru'
 import CariKreator from './pages/CariKreator'
 import PresetFeed from './pages/PresetFeed'
-import CariKreator from './pages/CariKreator'
 import Kreator from './pages/Kreator'
 
 export default function App() {
