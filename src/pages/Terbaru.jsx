@@ -20,7 +20,7 @@ export default function Terbaru() {
           .from('presets')
           .select('*')
           .order('created_at', { ascending: false })
-
+          .limit(15)
         if (error) throw error
         setPresets(data || [])
       } catch (err) {
@@ -113,9 +113,15 @@ export default function Terbaru() {
               <div className="grid-cell-overlay">@{preset.creator_username}</div>
             </div>
           ))}
+          <div
+            className="grid-cell grid-cell-viewall"
+            onClick={() => navigate('/lagu')}
+          >
+            <div className="grid-fallback" style={{ fontSize: 28 }}>🎵</div>
+            <div className="grid-cell-overlay">Lihat Semua</div>
+          </div>
         </div>
       )}
-
       <BottomNav />
     </div>
   )
