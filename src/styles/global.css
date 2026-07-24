@@ -916,6 +916,13 @@ select.finput-real { cursor: pointer; }
   font-size: 12px;
   color: var(--muted);
 }
+
+.grid-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
  
 .preset-grid {
   flex: 1;
