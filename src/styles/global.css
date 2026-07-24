@@ -900,6 +900,11 @@ select.finput-real { cursor: pointer; }
   align-items: center;
   gap: 12px;
   padding: 16px 16px 10px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg);
+  flex-shrink: 0;
 }
  
 .grid-header h3 {
