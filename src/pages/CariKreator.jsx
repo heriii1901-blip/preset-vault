@@ -40,10 +40,10 @@ export default function CariKreator() {
     }
   }
 
-  return (
-    <div className="screen">
-      <div className="grid-header">
-        <div>
+    return (
+      <div className="screen">
+        <div className="grid-page">
+        <div className="grid-header">
           <h3>CARI KREATOR</h3>
         </div>
       </div>
@@ -110,9 +110,9 @@ export default function CariKreator() {
             </div>
           ))}
         </div>
-      )}
+       )}
     </div>
-
+      </div>
       <BottomNav />
     </div>
   )
