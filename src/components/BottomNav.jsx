@@ -33,7 +33,8 @@ export function BottomNav() {
 
       <NavLink to="/lagu" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9z" />
+          <path d="M4.5 11.5l6.7-6.2a1.2 1.2 0 0 1 1.6 0l6.7 6.2" />
+          <path d="M5.5 10.5V19a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-8.5" />
         </svg>
         <span>lagu</span>
       </NavLink>
