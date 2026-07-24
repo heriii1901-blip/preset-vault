@@ -18,6 +18,7 @@ export default function Profile() {
 
   const [favorites, setFavorites] = useState([])
   const [loadingFavs, setLoadingFavs] = useState(true)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   const photoUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture
 
@@ -117,6 +118,19 @@ export default function Profile() {
   return (
     <div className="screen">
       <div className="profile-content">
+        <button
+          type="button"
+          className="profile-menu-btn"
+          onClick={() => setMenuOpen(true)}
+          aria-label="Menu"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <line x1="4" y1="7" x2="20" y2="7" />
+            <line x1="4" y1="12" x2="20" y2="12" />
+            <line x1="4" y1="17" x2="20" y2="17" />
+          </svg>
+        </button>
+
         <div className="profile-header">
           {photoUrl ? (
             <img className="avatar-img" src={photoUrl} alt="Foto profil" />
@@ -199,6 +213,21 @@ export default function Profile() {
           Keluar Akun
         </button>
       </div>
+
+      {menuOpen && (
+        <div className="profile-menu-backdrop" onClick={() => setMenuOpen(false)}>
+          <div className="profile-menu-drawer" onClick={(e) => e.stopPropagation()}>
+            <div className="profile-menu-header">
+              <span>Menu</span>
+              <button type="button" className="link-modal-close" onClick={() => setMenuOpen(false)}>×</button>
+            </div>
+            <button type="button" className="profile-menu-item">Pengaturan</button>
+            <button type="button" className="profile-menu-item">Bahasa</button>
+            <button type="button" className="profile-menu-item">Tentang Aplikasi</button>
+          </div>
+        </div>
+      )}
+
       <BottomNav />
     </div>
   )
