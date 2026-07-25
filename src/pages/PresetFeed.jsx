@@ -419,8 +419,9 @@ export default function PresetFeed() {
               <span>{linkModal.label}</span>
               <button type="button" className="link-modal-close" onClick={closeLinkModal}>×</button>
             </div>
-            
-            href={linkModal.link}
+
+            <a
+              href={linkModal.link}
               target="_blank"
               rel="noreferrer"
               className={
@@ -431,6 +432,7 @@ export default function PresetFeed() {
             >
               {linkModal.link}
             </a>
+            
             <button type="button" className="link-modal-copy-btn" onClick={handleCopy}>
               {copied ? '✓ Tersalin' : 'Salin Link'}
             </button>
