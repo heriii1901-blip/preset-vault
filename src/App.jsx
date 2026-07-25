@@ -94,14 +94,6 @@ export default function App() {
               }
             />
             <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <Terbaru />
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/cari"
               element={
                 <ProtectedRoute>
