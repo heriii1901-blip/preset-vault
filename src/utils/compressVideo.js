@@ -2,8 +2,16 @@ import { FFmpeg } from '@ffmpeg/ffmpeg'
 import { fetchFile, toBlobURL } from '@ffmpeg/util'
 
 let ffmpegInstance = null
-async function getFFmpeg(onProgress) {
-  if (ffmpegInstance) return ffmpegInstance
+export async function getFFmpeg(onProgress) {
+  if (ffmpegInstance) {
+    // Instance udah ada (dipake fitur lain sebelumnya), tinggal pasang ulang
+    // progress handler-nya biar callback yang sekarang yang kepanggil.
+    if (onProgress) {
+      ffmpegInstance.off?.('progress')
+      ffmpegInstance.on('progress', ({ progress }) => onProgress(progress))
+    }
+    return ffmpegInstance
+  }
   const ffmpeg = new FFmpeg()
   if (onProgress) {
     ffmpeg.on('progress', ({ progress }) => onProgress(progress))
