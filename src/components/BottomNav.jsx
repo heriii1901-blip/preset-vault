@@ -1,11 +1,14 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+
 export function BottomNav() {
   const location = useLocation()
   const navigate = useNavigate()
   const { isAdmin, logout } = useAuth()
+
+  // Cek persis halaman aktif biar submenu nggak bocor ke mana-mana
   const isLaguActive = location.pathname.startsWith('/lagu')
-  const isAkunActive = location.pathname.startsWith('/akun')
+  const isAkunActive = location.pathname === '/akun'
 
   const handleLogout = async () => {
     await logout()
@@ -39,6 +42,7 @@ export function BottomNav() {
         <span>lagu</span>
       </NavLink>
 
+      {/* Submenu Admin hanya aktif jika benar-benar di area /lagu */}
       {isLaguActive && isAdmin && (
         <div className="nav-submenu">
           <NavLink to="/admin/tambah-preset" className={({ isActive }) => `nav-subitem${isActive ? ' active' : ''}`}>
@@ -66,6 +70,7 @@ export function BottomNav() {
         <span>Akun</span>
       </NavLink>
 
+      {/* Submenu Logout hanya aktif jika persis di halaman /akun */}
       {isAkunActive && (
         <div className="nav-submenu">
           <button type="button" className="nav-subitem nav-subitem-danger" onClick={handleLogout}>
