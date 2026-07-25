@@ -2,19 +2,24 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { BottomNav } from '../components/BottomNav'
+import { usePresetCache } from '../context/PresetCacheContext'
 
 const COVER_TIME = 2.5
+const CACHE_KEY = 'terbaru'
 
 export default function Terbaru() {
   const navigate = useNavigate()
-  const [presets, setPresets] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { getCache, setCache } = usePresetCache()
+  const cached = getCache(CACHE_KEY)
+  const [presets, setPresets] = useState(cached?.data || [])
+  const [loading, setLoading] = useState(!cached)
   const activeVideoRef = useRef(null)
   const gridRef = useRef(null)
 
   useEffect(() => {
     async function loadLatestPresets() {
-      setLoading(true)
+      // Kalo udah ada cache, tampilin dulu tanpa loading, terus refresh diem-diem
+      if (!getCache(CACHE_KEY)) setLoading(true)
       try {
         const { data, error } = await supabase
           .from('presets')
@@ -23,6 +28,7 @@ export default function Terbaru() {
           .limit(15)
         if (error) throw error
         setPresets(data || [])
+        setCache(CACHE_KEY, data || [])
       } catch (err) {
         console.error('Gagal ambil preset terbaru:', err)
       } finally {
@@ -30,6 +36,7 @@ export default function Terbaru() {
       }
     }
     loadLatestPresets()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function resetToCover(video) {
