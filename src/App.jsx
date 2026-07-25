@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { PresetCacheProvider } from './context/PresetCacheContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import Login from './pages/Login'
 import Home from './pages/Home'
@@ -11,10 +12,12 @@ import Terbaru from './pages/Terbaru'
 import CariKreator from './pages/CariKreator'
 import PresetFeed from './pages/PresetFeed'
 import Kreator from './pages/Kreator'
+import DownloadPage from './pages/DownloadPage'
 
 export default function App() {
   return (
     <AuthProvider>
+      <PresetCacheProvider>
       <div className="phone-wrap">
         <div className="phone">
           <Routes>
@@ -114,9 +117,18 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/download/:presetId"
+              element={
+                <ProtectedRoute>
+                  <DownloadPage />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </div>
       </div>
+      </PresetCacheProvider>
     </AuthProvider>
   )
 }
