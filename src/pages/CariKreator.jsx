@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
-import { BottomNav } from '../components/BottomNav'
 import { usePresetCache } from '../context/PresetCacheContext'
 
 const CACHE_KEY = 'cari-kreator'
