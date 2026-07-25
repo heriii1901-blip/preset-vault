@@ -1,7 +1,9 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { PresetCacheProvider } from './context/PresetCacheContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { BottomNav } from './components/BottomNav'
+
 import Login from './pages/Login'
 import Home from './pages/Home'
 import AdminAddPreset from './pages/AdminAddPreset'
@@ -15,113 +17,121 @@ import Kreator from './pages/Kreator'
 import DownloadPage from './pages/DownloadPage'
 
 export default function App() {
+  const location = useLocation()
+
+  // Daftar route yang WAJIB nampilin BottomNav
+  const showNavRoutes = ['/', '/lagu', '/cari', '/kreator', '/akun']
+  const shouldShowNav = showNavRoutes.includes(location.pathname)
+
   return (
     <AuthProvider>
       <PresetCacheProvider>
-      <div className="phone-wrap">
-        <div className="phone">
-          <Routes>
-            <Route path="/login" element={<Login />} />
+        <div className="phone-wrap">
+          <div className="phone">
+            <Routes>
+              <Route path="/login" element={<Login />} />
 
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <Terbaru />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <Terbaru />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/lagu"
-              element={
-                <ProtectedRoute>
-                  <Home />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/lagu"
+                element={
+                  <ProtectedRoute>
+                    <Home />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/lagu/:songId"
-              element={
-                <ProtectedRoute>
-                  <SongPresets />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/lagu/:songId"
+                element={
+                  <ProtectedRoute>
+                    <SongPresets />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/preset/:presetId"
-              element={
-                <ProtectedRoute>
-                  <PresetFeed />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/preset/:presetId"
+                element={
+                  <ProtectedRoute>
+                    <PresetFeed />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/akun"
-              element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/akun"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* requireAdmin: cuma email admin yang bisa masuk sini */}
-            <Route
-              path="/admin/tambah-preset"
-              element={
-                <ProtectedRoute requireAdmin>
-                  <AdminAddPreset />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/edit-preset/:presetId"
-              element={
-                <ProtectedRoute requireAdmin>
-                  <AdminAddPreset />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/kelola-preset"
-              element={
-                <ProtectedRoute requireAdmin>
-                  <AdminManagePresets />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/cari"
-              element={
-                <ProtectedRoute>
-                  <CariKreator />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/kreator"
-              element={
-                <ProtectedRoute>
-                  <Kreator />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/download/:presetId"
-              element={
-                <ProtectedRoute>
-                  <DownloadPage />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
+              {/* requireAdmin: cuma email admin yang bisa masuk sini */}
+              <Route
+                path="/admin/tambah-preset"
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminAddPreset />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/edit-preset/:presetId"
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminAddPreset />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/kelola-preset"
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminManagePresets />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/cari"
+                element={
+                  <ProtectedRoute>
+                    <CariKreator />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/kreator"
+                element={
+                  <ProtectedRoute>
+                    <Kreator />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/download/:presetId"
+                element={
+                  <ProtectedRoute>
+                    <DownloadPage />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+
+            {/* BottomNav dirender di sini agar tidak hilang saat refresh */}
+            {shouldShowNav && <BottomNav />}
+          </div>
         </div>
-      </div>
       </PresetCacheProvider>
     </AuthProvider>
   )
 }
-
