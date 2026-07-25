@@ -153,9 +153,16 @@ export default function Home() {
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
+              type="search"
+              className="search-input"
               placeholder="Cari lagu..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="none"
+              spellCheck="false"
+              data-lpignore="true"
             />
           </div>
         </div>
