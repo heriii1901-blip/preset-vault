@@ -2,17 +2,22 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { BottomNav } from '../components/BottomNav'
+import { usePresetCache } from '../context/PresetCacheContext'
+
+const CACHE_KEY = 'cari-kreator'
 
 export default function CariKreator() {
   const navigate = useNavigate()
-  const [inputValue, setInputValue] = useState('')
-  const [searchTerm, setSearchTerm] = useState('')
-  const [results, setResults] = useState([])
+  const { getCache, setCache } = usePresetCache()
+  const cached = getCache(CACHE_KEY)
+  const [inputValue, setInputValue] = useState(cached?.data?.searchTerm || '')
+  const [searchTerm, setSearchTerm] = useState(cached?.data?.searchTerm || '')
+  const [results, setResults] = useState(cached?.data?.results || [])
   const [loading, setLoading] = useState(false)
-  const [searched, setSearched] = useState(false)
+  const [searched, setSearched] = useState(Boolean(cached?.data?.searchTerm))
 
-  const runSearch = async () => {
-    const keyword = inputValue.trim()
+  const runSearch = async (keywordOverride) => {
+    const keyword = (keywordOverride ?? inputValue).trim()
     if (!keyword) return
     setSearchTerm(keyword)
     setSearched(true)
@@ -25,6 +30,7 @@ export default function CariKreator() {
         .order('created_at', { ascending: false })
       if (error) throw error
       setResults(data || [])
+      setCache(CACHE_KEY, { searchTerm: keyword, results: data || [] })
     } catch (err) {
       console.error('Gagal cari kreator:', err)
       setResults([])
@@ -56,7 +62,7 @@ export default function CariKreator() {
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
           />
-          <button type="button" className="search-go-btn" onClick={runSearch}>
+          <button type="button" className="search-go-btn" onClick={() => runSearch()}>
             Cari
           </button>
         </div>
@@ -81,7 +87,7 @@ export default function CariKreator() {
                 <div
                   key={preset.id}
                   className="grid-cell"
-                  onClick={() => navigate(`/preset/${preset.id}`, { state: { source: 'terbaru' } })}
+                  onClick={() => navigate(`/preset/${preset.id}`, { state: { source: 'kreator', creatorUsername: preset.creator_username } })}
                   onContextMenu={(e) => e.preventDefault()}
                 >
                   {preset.preview_video_url ? (
