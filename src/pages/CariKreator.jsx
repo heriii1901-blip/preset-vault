@@ -55,12 +55,17 @@ export default function CariKreator() {
 
         <div className="search-input-wrap">
           <input
-            type="text"
+            type="search"
             className="search-input"
             placeholder="Ketik nama kreator..."
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="none"
+            spellCheck="false"
+            data-lpignore="true"
           />
           <button type="button" className="search-go-btn" onClick={() => runSearch()}>
             Cari
