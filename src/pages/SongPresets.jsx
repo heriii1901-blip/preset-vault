@@ -1,21 +1,25 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
+import { usePresetCache } from '../context/PresetCacheContext'
 
 const COVER_TIME = 2.5
 
 export default function SongPresets() {
   const { songId } = useParams()
   const navigate = useNavigate()
-  const [song, setSong] = useState(null)
-  const [presets, setPresets] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { getCache, setCache } = usePresetCache()
+  const cacheKey = `song:${songId}`
+  const cached = getCache(cacheKey)
+  const [song, setSong] = useState(cached?.data?.song || null)
+  const [presets, setPresets] = useState(cached?.data?.presets || [])
+  const [loading, setLoading] = useState(!cached)
   const activeVideoRef = useRef(null)
   const gridRef = useRef(null)
 
   useEffect(() => {
     async function loadData() {
-      setLoading(true)
+      if (!getCache(cacheKey)) setLoading(true)
       try {
         const [{ data: songData }, { data: presetsData, error }] = await Promise.all([
   supabase.from('songs').select('*').eq('id', songId).single(),
@@ -31,6 +35,7 @@ for (let i = shuffled.length - 1; i > 0; i--) {
   ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
 }
 setPresets(shuffled)
+setCache(cacheKey, { song: songData, presets: shuffled })
       } catch (err) {
         console.error('Gagal ambil preset lagu:', err)
       } finally {
@@ -38,6 +43,7 @@ setPresets(shuffled)
       }
     }
     if (songId) loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [songId])
 
   function resetToCover(video) {
