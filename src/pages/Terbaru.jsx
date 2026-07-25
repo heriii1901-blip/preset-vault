@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
-import { BottomNav } from '../components/BottomNav'
 import { usePresetCache } from '../context/PresetCacheContext'
 
 const COVER_TIME = 2.5
