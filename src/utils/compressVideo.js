@@ -119,3 +119,14 @@ export async function compressVideoIfNeeded(file, onProgress) {
     await ffmpeg.deleteFile(outputName)
 
     console.log(`Hasil kompresi akhir (percobaan ke-${attempt}): ${(compressedBlob.size / 1024 / 1024).toFixed(2)}MB`)
+
+    // Kalo abis dikompres malah lebih gede dari file asli (jarang, tapi bisa
+    // kejadian di video pendek), mending pake file asli aja.
+    if (compressedBlob.size >= file.size) return file
+
+    return new File([compressedBlob], file.name.replace(/\.\w+$/, '.mp4'), { type: 'video/mp4' })
+  } catch (err) {
+    console.error('Gagal kompres video, pake file asli:', err)
+    return file
+  }
+}
