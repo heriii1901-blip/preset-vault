@@ -8,6 +8,8 @@ export default function PresetFeed() {
   const navigate = useNavigate()
   const location = useLocation()
   const isFromTerbaru = location.state?.source === 'terbaru'
+  const isFromKreator = location.state?.source === 'kreator'
+  const filterCreatorUsername = location.state?.creatorUsername
   const { user } = useAuth()
   const [presets, setPresets] = useState([])
   const [songName, setSongName] = useState('')
@@ -42,6 +44,9 @@ export default function PresetFeed() {
         if (isFromTerbaru) {
           // Sama kayak query di Terbaru.jsx: preset terbaru lintas lagu
           query = query.order('created_at', { ascending: false }).limit(20)
+        } else if (isFromKreator && filterCreatorUsername) {
+          // Kejebak di kreator yang sama aja, jangan nyasar ke video lain
+          query = query.eq('creator_username', filterCreatorUsername).order('created_at', { ascending: false })
         } else {
           // Fokus 1 lagu aja
           query = query.eq('song_id', clickedPreset.song_id).order('created_at', { ascending: true })
@@ -67,7 +72,7 @@ export default function PresetFeed() {
     }
     if (presetId) loadFeed()
     hasScrolledRef.current = false
-  }, [presetId, user, isFromTerbaru])
+  }, [presetId, user, isFromTerbaru, isFromKreator, filterCreatorUsername])
   
   useEffect(() => {
     if (loading || presets.length === 0 || hasScrolledRef.current) return
@@ -358,6 +363,25 @@ export default function PresetFeed() {
                   <button
                     type="button"
                     className="feed-icon-btn"
+                    onClick={() =>
+                      navigate(`/download/${preset.id}`, {
+                        state: {
+                          videoUrl: preset.preview_video_url,
+                          songName: preset.songs?.name || songName,
+                        },
+                      })
+                    }
+                    aria-label="Download"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 3v12" />
+                      <path d="M7.5 10.5L12 15l4.5-4.5" />
+                      <path d="M5 21h14" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    className="feed-icon-btn"
                     onClick={() => handleShare(preset)}
                     aria-label="Bagikan"
                   >
@@ -395,7 +419,7 @@ export default function PresetFeed() {
               <span>{linkModal.label}</span>
               <button type="button" className="link-modal-close" onClick={closeLinkModal}>×</button>
             </div>
-            <a
+            
             href={linkModal.link}
               target="_blank"
               rel="noreferrer"
