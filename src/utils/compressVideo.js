@@ -122,3 +122,4 @@ export async function compressVideoIfNeeded(file, onProgress) {
     return file
   }
 }
+
