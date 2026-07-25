@@ -54,8 +54,9 @@ html, body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  position: relative; /* Pastikan ada ini */
 }
- 
+
 .screen {
   background: var(--bg);
   flex: 1;
@@ -389,9 +390,10 @@ button:active:not(:disabled) {
 }
 
 /* ===== BOTTOM NAV -> SIDEBAR (desktop override, HARUS di bawah biar menang) ===== */
-@media (min-width: 768px) {
-  .screen:has(> .bottom-nav) {
-    flex-direction: row;
+  @media (min-width: 768px) {
+    .screen:has(> .bottom-nav) {
+      flex-direction: row;
+    }
   }
 
   .screen:has(> .bottom-nav) > *:not(.bottom-nav) {
