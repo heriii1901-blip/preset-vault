@@ -390,10 +390,9 @@ button:active:not(:disabled) {
 }
 
 /* ===== BOTTOM NAV -> SIDEBAR (desktop override, HARUS di bawah biar menang) ===== */
-  @media (min-width: 768px) {
-    .screen:has(> .bottom-nav) {
-      flex-direction: row;
-    }
+@media (min-width: 768px) {
+  .screen:has(> .bottom-nav) {
+    flex-direction: row;
   }
 
   .screen:has(> .bottom-nav) > *:not(.bottom-nav) {
