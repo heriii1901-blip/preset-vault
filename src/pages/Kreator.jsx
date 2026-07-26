@@ -5,7 +5,6 @@ export default function Kreator() {
       <div className="empty-state" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700 }}>
         Akan Hadir!!!
       </div>
-      <BottomNav />
     </div>
   )
 }
