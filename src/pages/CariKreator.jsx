@@ -119,7 +119,6 @@ export default function CariKreator() {
           )}
         </div>
       </div>
-      <BottomNav />
     </div>
   )
 }
