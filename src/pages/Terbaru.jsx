@@ -130,7 +130,6 @@ export default function Terbaru() {
         </div>
       )}
       </div>
-      <BottomNav />
     </div>
   )
 }
