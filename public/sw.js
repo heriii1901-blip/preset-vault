@@ -1,17 +1,14 @@
-const CACHE_NAME = "pam-cache-v2"
+const CACHE_NAME = "pam-cache-v3"
 const APP_SHELL = "/index.html"
 
 self.addEventListener("install", (event) => {
   self.skipWaiting()
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.add(APP_SHELL)).catch(() => {})
-  )
 })
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     Promise.all([
-      // Buang cache versi lama biar ngga ada sisa yang bikin bingung
+      // Buang semua cache versi lama (termasuk cache rusak dari versi sebelumnya)
       caches.keys().then((keys) =>
         Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
       ),
@@ -26,13 +23,18 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return
 
   // Navigasi halaman (refresh/reload di route mana pun kayak /lagu/123):
-  // coba jaringan dulu, kalo gagal balikin index.html dari cache biar React Router
-  // yang nentuin halaman mana yang harus dirender, bukan 404 dari server/browser.
+  // coba jaringan dulu, kalo BERHASIL langsung update cache app-shell biar
+  // gak pernah kebekukan di versi build lama. Kalo GAGAL (offline/APK baru
+  // dibuka jaringan belum siap), baru jatuh ke cache yang paling baru ke-update.
   if (event.request.mode === "navigate") {
     event.respondWith(
-      fetch(event.request).catch(() =>
-        caches.match(APP_SHELL).then((cached) => cached || fetch(APP_SHELL))
-      )
+      fetch(event.request)
+        .then((response) => {
+          const clone = response.clone()
+          caches.open(CACHE_NAME).then((cache) => cache.put(APP_SHELL, clone)).catch(() => {})
+          return response
+        })
+        .catch(() => caches.match(APP_SHELL))
     )
     return
   }
