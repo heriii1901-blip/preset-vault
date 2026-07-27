@@ -247,7 +247,7 @@ export default function Profile() {
               <button
                 type="button"
                 className="profile-menu-item"
-                onClick={() => window.open('LINK_GOOGLE_DRIVE_APK_LO', '_blank')}
+                onClick={() => window.open('sha256:58e59623a6e7b11a4a995bf29f7458c3b9244ad0c1341fc51bf39873c29ef2ad')}
               >
                 Download Apk
               </button>
