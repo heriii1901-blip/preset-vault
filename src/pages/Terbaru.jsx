@@ -5,7 +5,6 @@ import { usePresetCache } from '../context/PresetCacheContext'
 
 const COVER_TIME = 2.5
 const CACHE_KEY = 'terbaru'
-
 function captureThumb(video, presetId, setCache) {
   try {
     const canvas = document.createElement('canvas')
