@@ -4,6 +4,18 @@ import { supabase } from '../supabase'
 import { usePresetCache } from '../context/PresetCacheContext'
 
 const CACHE_KEY = 'cari-kreator'
+function captureThumb(video, presetId, setCache) {
+  try {
+    const canvas = document.createElement('canvas')
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    if (!canvas.width || !canvas.height) return
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height)
+    setCache(`thumb:${presetId}`, canvas.toDataURL('image/jpeg', 0.6))
+  } catch {
+    // video beda origin tanpa izin CORS baca pixel, skip aja
+  }
+}
 
 export default function CariKreator() {
   const navigate = useNavigate()
@@ -104,10 +116,12 @@ export default function CariKreator() {
                       disablePictureInPicture
                       controlsList="nodownload"
                       draggable={false}
+                      poster={getCache(`thumb:${preset.id}`)?.data}
                       onLoadedMetadata={(e) => {
                         const video = e.currentTarget
                         if (video.currentTime === 0) video.currentTime = 2.5
                       }}
+                      onSeeked={(e) => captureThumb(e.currentTarget, preset.id, setCache)}
                     />
                   ) : (
                     <div className="grid-fallback">🎬</div>
