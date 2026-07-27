@@ -206,7 +206,7 @@ export default function Profile() {
                     <video
                       src={preset.preview_video_url}
                       muted
-                      preload="metadata"
+                      preload="none"
                       playsInline
                       poster={getCache(`thumb:${preset.id}`)?.data}
                       onLoadedMetadata={(e) => {
