@@ -1,3 +1,4 @@
+import { isRunningAsApk } from '../utils/isTWA'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -33,7 +34,8 @@ export default function Profile() {
   const [favorites, setFavorites] = useState([])
   const [loadingFavs, setLoadingFavs] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
-
+  const isApk = isRunningAsApk()
+  
   const photoUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture
 
   // Update nama lokal jika data user auth berubah
@@ -241,8 +243,15 @@ export default function Profile() {
             <button type="button" className="profile-menu-item">Bahasa</button>
             <button type="button" className="profile-menu-item">Tentang Aplikasi</button>
             <button type="button" className="profile-menu-item">Kreator</button>
-            <button type="button" className="profile-menu-item">Donwload Apk</button>
-          </div>
+            {!isApk && (
+            <button
+              type="button"
+              className="profile-menu-item"
+              onClick={() => window.open('LINK_GOOGLE_DRIVE_APK_LO', '_blank')}
+            >
+              Download Apk
+            </button>
+          )}
         </div>
       )}
     </div>
