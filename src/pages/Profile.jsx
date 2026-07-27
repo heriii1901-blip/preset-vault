@@ -244,14 +244,15 @@ export default function Profile() {
             <button type="button" className="profile-menu-item">Tentang Aplikasi</button>
             <button type="button" className="profile-menu-item">Kreator</button>
             {!isApk && (
-            <button
-              type="button"
-              className="profile-menu-item"
-              onClick={() => window.open('LINK_GOOGLE_DRIVE_APK_LO', '_blank')}
-            >
-              Download Apk
-            </button>
-          )}
+              <button
+                type="button"
+                className="profile-menu-item"
+                onClick={() => window.open('LINK_GOOGLE_DRIVE_APK_LO', '_blank')}
+              >
+                Download Apk
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
