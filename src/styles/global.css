@@ -1178,12 +1178,15 @@ select.finput-real { cursor: pointer; }
 }
 
 .feed-icon-btn {
-  margin: 0; /* hapus margin-top/margin-bottom manual kalo ada */
+  margin: 0;
   width: 44px;
   height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: transparent; /* ini yang ilangin kotak putih */
+  border: none;
+  color: var(--text); /* biar icon-nya putih/terang, bukan default hitam browser */
 }
 
 .feed-icon-btn svg {
