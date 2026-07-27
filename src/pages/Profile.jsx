@@ -34,6 +34,7 @@ export default function Profile() {
   const [favorites, setFavorites] = useState([])
   const [loadingFavs, setLoadingFavs] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [aboutOpen, setAboutOpen] = useState(false)
   const isApk = isRunningAsApk()
   
   const photoUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture
@@ -239,10 +240,10 @@ export default function Profile() {
               <span>Menu</span>
               <button type="button" className="link-modal-close" onClick={() => setMenuOpen(false)}>×</button>
             </div>
-            <button type="button" className="profile-menu-item">Pengaturan</button>
-            <button type="button" className="profile-menu-item">Bahasa</button>
-            <button type="button" className="profile-menu-item">Tentang Aplikasi</button>
-            <button type="button" className="profile-menu-item">Kreator</button>
+            <button type="button" className="profile-menu-item" onClick={() => alert('Coming Soon')}>Pengaturan</button>
+            <button type="button" className="profile-menu-item" onClick={() => alert('Coming Soon')}>Bahasa</button>
+            <button type="button" className="profile-menu-item" onClick={() => { setMenuOpen(false); setAboutOpen(true) }}>Tentang Aplikasi</button>
+            <button type="button" className="profile-menu-item" onClick={() => alert('Coming Soon')}>Kreator</button>
             {!isApk && (
               <button
                 type="button"
@@ -252,6 +253,23 @@ export default function Profile() {
                 Download Apk
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {aboutOpen && (
+        <div className="link-modal-backdrop" onClick={() => setAboutOpen(false)}>
+          <div className="link-modal-box" onClick={(e) => e.stopPropagation()}>
+            <div className="link-modal-header">
+              <span>Tentang Aplikasi</span>
+              <button type="button" className="link-modal-close" onClick={() => setAboutOpen(false)}>×</button>
+            </div>
+            <div style={{ textAlign: 'center', padding: '10px 0 18px' }}>
+              <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, marginBottom: 4 }}>PAM</h3>
+              <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>Preset Alight Motion</p>
+              <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>Versi 1.0.0</p>
+              <p style={{ fontSize: 11.5, color: 'var(--muted)' }}>Dibuat oleh Heri</p>
+            </div>
           </div>
         </div>
       )}
