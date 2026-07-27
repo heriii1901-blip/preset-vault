@@ -1171,10 +1171,11 @@ select.finput-real { cursor: pointer; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px; /* jarak sama rata semua icon, tinggal atur angka ini */
+  gap: 20px;
   position: absolute;
   right: 12px;
-  bottom: 100px; /* sesuaikan sama posisi lo sekarang, jangan diubah kalo udah pas */
+  bottom: 100px;
+  z-index: 5; /* ini yang bikin dia selalu di atas video */
 }
 
 .feed-icon-btn {
