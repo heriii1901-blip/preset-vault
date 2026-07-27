@@ -17,6 +17,7 @@
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent; /* ini yang hilangin kotak putih pas disentuh */
 }
 
 /* Kecualiin input & textarea biar tetep bisa diketik & disalin (misal link modal) */
@@ -100,6 +101,14 @@ button:active:not(:disabled) {
   transform: scale(0.95);
   opacity: 0.8;
   transition: 80ms ease;
+}
+button, a {
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+button:focus, a:focus {
+  outline: none;
 }
 
 /* Scrollbar tema gelap, berlaku di semua elemen scroll di seluruh app */
