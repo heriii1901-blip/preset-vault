@@ -247,7 +247,7 @@ export default function Profile() {
               <button
                 type="button"
                 className="profile-menu-item"
-                onClick={() => window.open('sha256:58e59623a6e7b11a4a995bf29f7458c3b9244ad0c1341fc51bf39873c29ef2ad')}
+                onClick={() => window.open('https://github.com/heriii1901-blip/preset-vault/releases/download/v1.0.0/PAM.-.Preset.Alight.Motion.apk')}
               >
                 Download Apk
               </button>
