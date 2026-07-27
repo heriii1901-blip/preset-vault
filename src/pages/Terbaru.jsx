@@ -6,6 +6,19 @@ import { usePresetCache } from '../context/PresetCacheContext'
 const COVER_TIME = 2.5
 const CACHE_KEY = 'terbaru'
 
+function captureThumb(video, presetId, setCache) {
+  try {
+    const canvas = document.createElement('canvas')
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    if (!canvas.width || !canvas.height) return
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height)
+    setCache(`thumb:${presetId}`, canvas.toDataURL('image/jpeg', 0.6))
+  } catch {
+    // video beda origin tanpa izin CORS baca pixel, skip aja
+  }
+}
+
 export default function Terbaru() {
   const navigate = useNavigate()
   const { getCache, setCache } = usePresetCache()
@@ -112,7 +125,9 @@ export default function Terbaru() {
                   disablePictureInPicture
                   controlsList="nodownload"
                   draggable={false}
+                  poster={getCache(`thumb:${preset.id}`)?.data}
                   onLoadedMetadata={handleLoadedMetadata}
+                  onSeeked={(e) => captureThumb(e.currentTarget, preset.id, setCache)}
                 />
               ) : (
                 <div className="grid-fallback">🎬</div>
