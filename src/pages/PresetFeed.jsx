@@ -25,7 +25,8 @@ export default function PresetFeed() {
   const [pausedIds, setPausedIds] = useState(new Set())
   const activeVideoIdRef = useRef(null)
   const [videoProgress, setVideoProgress] = useState({}) // Menyimpan progress tiap video { [id]: { current, duration } }
-
+  const [loadedIds, setLoadedIds] = useState(new Set())
+  
   useEffect(() => {
     async function loadFeed() {
       setLoading(true)
@@ -110,36 +111,56 @@ export default function PresetFeed() {
 
   // Autoplay video yang lagi penuh di layar, pause sisanya
   useEffect(() => {
-    if (presets.length === 0) return
+  if (presets.length === 0) return
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const video = entry.target
-          const id = video.dataset.presetId
-          if (entry.isIntersecting && entry.intersectionRatio > 0.75) {
-            switchToVideo(id)
-          } else if (activeVideoIdRef.current === id) {
-            video.pause()
-            activeVideoIdRef.current = null
-          }
-        })
-      },
-      { threshold: [0, 0.75, 1] }
-    )
-
-    // Delay dikit biar gak tabrakan sama scrollIntoView pas halaman baru kebuka
-    const timer = setTimeout(() => {
-      Object.values(videoRefs.current).forEach((v) => {
-        if (v) observer.observe(v)
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        const video = entry.target
+        const id = video.dataset.presetId
+        if (entry.isIntersecting && entry.intersectionRatio > 0.75) {
+          switchToVideo(id)
+        } else if (activeVideoIdRef.current === id) {
+          video.pause()
+          activeVideoIdRef.current = null
+        }
       })
-    }, 150)
+    },
+    { threshold: [0, 0.75, 1] }
+  )
 
-    return () => {
-      clearTimeout(timer)
-      observer.disconnect()
-    }
-  }, [presets])
+  // Observer kedua, khusus buat nentuin video mana yang boleh mulai load
+  // rootMargin dikasih jarak biar video sebelum/sesudah current udah mulai preload
+  const loadObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        const id = entry.target.dataset.presetId
+        if (entry.isIntersecting) {
+          setLoadedIds((prev) => {
+            if (prev.has(id)) return prev
+            return new Set(prev).add(id)
+          })
+        }
+      })
+    },
+    { rootMargin: '100% 0px 100% 0px' } // load video 1 layar sebelum/sesudah kelihatan
+  )
+
+  const timer = setTimeout(() => {
+    Object.values(itemRefs.current).forEach((el) => {
+      if (el) loadObserver.observe(el)
+    })
+    Object.values(videoRefs.current).forEach((v) => {
+      if (v) observer.observe(v)
+    })
+  }, 150)
+
+  return () => {
+    clearTimeout(timer)
+    observer.disconnect()
+    loadObserver.disconnect()
+  }
+}, [presets])
 
   const togglePlayPause = (id) => {
     const video = videoRefs.current[id]
@@ -308,17 +329,16 @@ export default function PresetFeed() {
                   <video
                     ref={(el) => { videoRefs.current[preset.id] = el }}
                     data-preset-id={preset.id}
-                    src={preset.preview_video_url}
+                    src={loadedIds.has(preset.id) ? preset.preview_video_url : undefined}
                     loop
                     playsInline
-                    preload="auto"
+                    preload={loadedIds.has(preset.id) ? 'auto' : 'none'}
                     onClick={() => togglePlayPause(preset.id)}
                     onTimeUpdate={(e) => handleTimeUpdate(preset.id, e)}
                   />
                 ) : (
                   <div className="grid-fallback" style={{ fontSize: 40 }}>🎬</div>
                 )}
-
                 {isPaused && (
                   <div className="feed-pause-icon" onClick={() => togglePlayPause(preset.id)}>▶</div>
                 )}
