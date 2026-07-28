@@ -2,6 +2,9 @@ const CACHE_NAME = "pam-cache-v3"
 const APP_SHELL = "/index.html"
 
 self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.add(APP_SHELL))
+  )
   self.skipWaiting()
 })
 
