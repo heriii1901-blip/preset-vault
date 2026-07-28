@@ -339,6 +339,7 @@ export default function PresetFeed() {
               <div
                 key={preset.id}
                 className="feed-item"
+                data-preset-id={preset.id}
                 ref={(el) => { itemRefs.current[preset.id] = el }}
               >
                 {preset.preview_video_url ? (
