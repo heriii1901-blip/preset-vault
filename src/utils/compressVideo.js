@@ -47,12 +47,18 @@ function getVideoDuration(file) {
 
 const MAX_SIZE_BYTES = 3 * 1024 * 1024 // Target akhir: 3MB
 const AUDIO_BITRATE_KBPS = 64
-const MIN_VIDEO_BITRATE_KBPS = 150 
-const SAFETY_MARGIN = 0.92 
+const MIN_VIDEO_BITRATE_KBPS = 150
+const SAFETY_MARGIN = 0.92
+const RESOLUTION_STEPS = [1280, 960, 720] // sisi terpanjang (px), turun kalo bitrate floor masih kurang
+const MAX_ATTEMPTS = 6
+
+// Cap sisi terpanjang (landscape: width, portrait: height), gak upscale video kecil
+function buildScaleFilter(maxDim) {
+  return `if(gt(iw\\,ih)\\,min(iw\\,${maxDim})\\,-2):if(gt(iw\\,ih)\\,-2\\,min(ih\\,${maxDim}))`
+}
 
 export async function compressVideoIfNeeded(file, onProgress) {
   if (!file || file.size <= MAX_SIZE_BYTES) return file
-
   try {
     const duration = await getVideoDuration(file)
     if (!duration || duration <= 0) throw new Error('Durasi video ngga valid')
@@ -64,62 +70,55 @@ export async function compressVideoIfNeeded(file, onProgress) {
     const ffmpeg = await getFFmpeg(onProgress)
     const inputName = 'input' + (file.name.match(/\.\w+$/)?.[0] || '.mp4')
     const outputName = 'output.mp4'
-
     await ffmpeg.writeFile(inputName, await fetchFile(file))
 
-    await ffmpeg.exec([
-      '-i', inputName,
-      '-vf', 'scale=min(1280\\,iw):-2',
-      '-c:v', 'libx264',
-      '-b:v', `${videoBitrateKbps}k`,
-      '-maxrate', `${videoBitrateKbps}k`,
-      '-bufsize', `${videoBitrateKbps * 2}k`,
-      '-preset', 'fast',
-      '-c:a', 'aac',
-      '-b:a', `${AUDIO_BITRATE_KBPS}k`,
-      '-movflags', '+faststart',
-      outputName,
-    ])
-
-    let data = await ffmpeg.readFile(outputName)
-    let compressedBlob = new Blob([data.buffer], { type: 'video/mp4' })
-
-    let attempt = 1
+    let compressedBlob = null
     let currentBitrateKbps = videoBitrateKbps
-    const MAX_ATTEMPTS = 4
+    let resIndex = 0 // mulai dari 1280
+    let attempt = 0
 
-    while (compressedBlob.size > MAX_SIZE_BYTES && attempt < MAX_ATTEMPTS) {
+    while (attempt < MAX_ATTEMPTS) {
       attempt++
-      currentBitrateKbps = Math.max(Math.floor(currentBitrateKbps * 0.7), MIN_VIDEO_BITRATE_KBPS)
-
+      const maxDim = RESOLUTION_STEPS[resIndex]
       await ffmpeg.exec([
         '-i', inputName,
-        '-vf', 'scale=min(1280\\,iw):-2',
+        '-vf', `scale=${buildScaleFilter(maxDim)}`,
         '-c:v', 'libx264',
         '-b:v', `${currentBitrateKbps}k`,
         '-maxrate', `${currentBitrateKbps}k`,
-        '-bufsize', `${currentBitrateKbps}k`,
+        '-bufsize', `${currentBitrateKbps * 2}k`,
         '-preset', 'fast',
         '-c:a', 'aac',
         '-b:a', `${AUDIO_BITRATE_KBPS}k`,
         '-movflags', '+faststart',
         outputName,
       ])
-      data = await ffmpeg.readFile(outputName)
+
+      const data = await ffmpeg.readFile(outputName)
       compressedBlob = new Blob([data.buffer], { type: 'video/mp4' })
 
-      if (currentBitrateKbps <= MIN_VIDEO_BITRATE_KBPS) break
+      if (compressedBlob.size <= MAX_SIZE_BYTES) break
+
+      if (currentBitrateKbps > MIN_VIDEO_BITRATE_KBPS) {
+        // Masih kegedean → turunin bitrate dulu di resolusi yang sama
+        currentBitrateKbps = Math.max(Math.floor(currentBitrateKbps * 0.7), MIN_VIDEO_BITRATE_KBPS)
+      } else if (resIndex < RESOLUTION_STEPS.length - 1) {
+        // Bitrate udah mentok di floor tapi masih kegedean → turunin resolusi, reset bitrate ke target awal
+        resIndex++
+        currentBitrateKbps = videoBitrateKbps
+      } else {
+        // Udah di resolusi & bitrate paling minimal (720p) → stop, jangan dipaksa lagi
+        break
+      }
     }
 
     await ffmpeg.deleteFile(inputName)
     await ffmpeg.deleteFile(outputName)
 
-    if (compressedBlob.size >= file.size) return file
-
+    if (!compressedBlob || compressedBlob.size >= file.size) return file
     return new File([compressedBlob], file.name.replace(/\.\w+$/, '.mp4'), { type: 'video/mp4' })
   } catch (err) {
     console.error('Gagal kompres video, pake file asli:', err)
     return file
   }
 }
-
