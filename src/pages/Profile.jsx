@@ -24,9 +24,9 @@ export default function Profile() {
   const { getCache, setCache } = usePresetCache()
 
   // Ambil nama bawaan dari data metadata Supabase Auth yang sudah ada sebelumnya
-  const defaultName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Tanpa nama'
+  const fallbackName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Tanpa nama'
 
-  const [profileName, setProfileName] = useState(defaultName)
+  const [profileName, setProfileName] = useState(fallbackName)
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const [savingName, setSavingName] = useState(false)
@@ -41,10 +41,23 @@ export default function Profile() {
 
   // Update nama lokal jika data user auth berubah
   useEffect(() => {
-    if (user) {
-      setProfileName(user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Tanpa nama')
+  async function loadProfileName() {
+    if (!user) return
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .single()
+      if (error) throw error
+      setProfileName(data?.username || fallbackName)
+    } catch (err) {
+      console.error('Gagal ambil username profile:', err)
+      setProfileName(fallbackName)
     }
-  }, [user])
+  }
+  loadProfileName()
+}, [user])
 
   // Load data Favorit
   useEffect(() => {
@@ -100,30 +113,26 @@ export default function Profile() {
 
   // Fungsi simpan nama langsung ke metadata Supabase Auth agar permanen melekat di akun
   const saveName = async () => {
-    const trimmed = nameInput.trim()
-    if (!trimmed) return
-    setSavingName(true)
-    try {
-      // Mengubah user_metadata internal Supabase agar permanen meskipun di-logout
-      const { data, error } = await supabase.auth.updateUser({
-        data: { 
-          full_name: trimmed,
-          name: trimmed // Di-set dua-duanya biar aman
-        }
-      })
-        
-      if (error) throw error
-      
-      // Update state tampilan layar
-      setProfileName(trimmed)
-      setEditingName(false)
-    } catch (err) {
-      console.error('Gagal ubah nama:', err)
-      alert('Gagal ubah nama, silakan coba lagi.')
-    } finally {
-      setSavingName(false)
-    }
+  const trimmed = nameInput.trim()
+  if (!trimmed) return
+  setSavingName(true)
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ username: trimmed })
+      .eq('id', user.id)
+
+    if (error) throw error
+
+    setProfileName(trimmed)
+    setEditingName(false)
+  } catch (err) {
+    console.error('Gagal ubah nama:', err)
+    alert('Gagal ubah nama, silakan coba lagi.')
+  } finally {
+    setSavingName(false)
   }
+}
 
   const initials = (profileName || '?')
     .split(' ')
