@@ -148,6 +148,14 @@ export default function PresetFeed() {
             if (prev.has(id)) return prev
             return new Set(prev).add(id)
           })
+        } else {
+          // Video udah jauh dari layar, lepas src-nya biar ngga numpuk di memori
+          setLoadedIds((prev) => {
+            if (!prev.has(id)) return prev
+            const next = new Set(prev)
+            next.delete(id)
+            return next
+          })
         }
       })
     },
