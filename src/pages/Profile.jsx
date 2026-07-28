@@ -277,7 +277,7 @@ export default function Profile() {
               <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, marginBottom: 4 }}>PAM</h3>
               <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>Preset Alight Motion</p>
               <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>Versi 1.0.0</p>
-              <p style={{ fontSize: 11.5, color: 'var(--muted)' }}>Dibuat oleh Heri</p>
+              <p style={{ fontSize: 11.5, color: 'var(--muted)' }}>kalo masih suka bug login ulang aja</p>
             </div>
           </div>
         </div>
