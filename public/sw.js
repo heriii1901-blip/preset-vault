@@ -45,7 +45,9 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(APP_SHELL, clone)).catch(() => {})
           return response
         })
-        .catch(() => caches.match(APP_SHELL))
+        .catch(() =>
+          caches.match(APP_SHELL).then((cached) => cached || Response.error())
+        )
     )
     return
   }
@@ -58,6 +60,7 @@ self.addEventListener("fetch", (event) => {
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone)).catch(() => {})
         return response
       })
-      .catch(() => caches.match(event.request))
+      .catch(() =>
+        caches.match(event.request).then((cached) => cached || Response.error())
+      )
   )
-})
