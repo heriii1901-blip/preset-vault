@@ -22,6 +22,14 @@ self.addEventListener("fetch", (event) => {
   // insert preset, dll) dibiarin lewat langsung ke jaringan tanpa dicegat.
   if (event.request.method !== "GET") return
 
+  // Video/media request dibiarin lewat langsung ke jaringan, JANGAN dicegat SW.
+  // Video pake Range request buat streaming/seek, dan kalo request itu ke-abort
+  // (misal video-nya di-unload pas discroll lewat), sw.js bakal error karena
+  // promise fetch-nya reject terus fallback cache-nya kosong.
+  if (event.request.destination === "video" || event.request.headers.has("range")) {
+    return
+  }
+
   // Navigasi halaman (refresh/reload di route mana pun kayak /lagu/123):
   // coba jaringan dulu, kalo BERHASIL langsung update cache app-shell biar
   // gak pernah kebekukan di versi build lama. Kalo GAGAL (offline/APK baru
