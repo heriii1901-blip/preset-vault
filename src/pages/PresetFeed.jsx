@@ -85,6 +85,7 @@ export default function PresetFeed() {
   }, [loading, presets, presetId])
 
   // Cuma dipanggil pas scroll pindah ke video lain, bukan pas pause/play manual
+  // Cuma dipanggil pas scroll pindah ke video lain, bukan pas pause/play manual
   function switchToVideo(id) {
     if (activeVideoIdRef.current === id) return
     const oldId = activeVideoIdRef.current
@@ -95,6 +96,13 @@ export default function PresetFeed() {
     const video = videoRefs.current[id]
     if (!video) return
     video.currentTime = 0
+
+    if (!video.src) {
+      // Video belom keload (loadedIds belom keupdate), nanti auto-play
+      // sendiri lewat onLoadedData pas src-nya udah siap
+      return
+    }
+
     video.play()
       .then(() => {
         setPausedIds((prev) => {
@@ -335,6 +343,22 @@ export default function PresetFeed() {
                     preload={loadedIds.has(preset.id) ? 'auto' : 'none'}
                     onClick={() => togglePlayPause(preset.id)}
                     onTimeUpdate={(e) => handleTimeUpdate(preset.id, e)}
+                    onLoadedData={() => {
+                      if (activeVideoIdRef.current === preset.id) {
+                        videoRefs.current[preset.id]?.play()
+                          .then(() => {
+                            setPausedIds((prev) => {
+                              if (!prev.has(preset.id)) return prev
+                              const next = new Set(prev)
+                              next.delete(preset.id)
+                              return next
+                            })
+                          })
+                          .catch(() => {
+                            setPausedIds((prev) => new Set(prev).add(preset.id))
+                          })
+                      }
+                    }}
                   />
                 ) : (
                   <div className="grid-fallback" style={{ fontSize: 40 }}>🎬</div>
