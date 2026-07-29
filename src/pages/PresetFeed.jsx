@@ -24,6 +24,7 @@ export default function PresetFeed() {
   const [favoritedIds, setFavoritedIds] = useState(new Set())
   const [pausedIds, setPausedIds] = useState(new Set())
   const activeVideoIdRef = useRef(null)
+  const retryCountRef = useRef({})
   const [videoProgress, setVideoProgress] = useState({}) // Menyimpan progress tiap video { [id]: { current, duration } }
   const [loadedIds, setLoadedIds] = useState(new Set())
   
@@ -315,6 +316,22 @@ export default function PresetFeed() {
     }
   }
 
+  function handleVideoError(id, e) {
+  const video = e.currentTarget
+  const attempts = retryCountRef.current[id] || 0
+  if (attempts >= 2) return // udah nyoba 2x tetep gagal, nyerah biar gak infinite loop
+  retryCountRef.current[id] = attempts + 1
+  setTimeout(() => {
+    if (!video) return
+    video.load()
+    if (activeVideoIdRef.current === id) {
+      video.play().catch(() => {
+        setPausedIds((prev) => new Set(prev).add(id))
+      })
+    }
+  }, 800)
+}
+
   return (
     <div className="screen">
       <button className="feed-back-btn" onClick={() => navigate(-1)}>←</button>
@@ -352,6 +369,7 @@ export default function PresetFeed() {
                     preload={loadedIds.has(preset.id) ? 'auto' : 'none'}
                     onClick={() => togglePlayPause(preset.id)}
                     onTimeUpdate={(e) => handleTimeUpdate(preset.id, e)}
+                    onError={(e) => handleVideoError(preset.id, e)}
                     onLoadedData={() => {
                       if (activeVideoIdRef.current === preset.id) {
                         videoRefs.current[preset.id]?.play()
