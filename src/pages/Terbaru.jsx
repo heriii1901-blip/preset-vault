@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { usePresetCache } from '../context/PresetCacheContext'
 
-const COVER_TIME = 2.5
+const COVER_TIME = 2
 const CACHE_KEY = 'terbaru'
 function captureThumb(video, presetId, setCache) {
   try {
