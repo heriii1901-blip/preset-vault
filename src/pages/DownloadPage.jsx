@@ -29,10 +29,10 @@ export default function DownloadPage() {
         if (error) throw error
         setVideoUrl(data.preview_video_url || '')
         setSoundName(data.songs?.name || '')
-    } catch (err) {
-      console.error('Gagal convert ke MP3:', err)
-      setStatusMsg(`❌ ${err.message || 'Gagal convert ke MP3. Coba lagi.'}`)
-    } finally {
+      } catch (err) {
+        console.error('Gagal ambil data video:', err)
+        setStatusMsg('❌ Gagal ambil data video.')
+      } finally {
         setLoadingPreset(false)
       }
     }
@@ -61,7 +61,7 @@ export default function DownloadPage() {
       setStatusMsg('✅ Berhasil didownload!')
     } catch (err) {
       console.error('Gagal convert ke MP3:', err)
-      setStatusMsg('❌ Gagal convert ke MP3. Coba lagi.')
+      setStatusMsg(`❌ ${err.message || 'Gagal convert ke MP3. Coba lagi.'}`)
     } finally {
       setConverting(false)
     }
