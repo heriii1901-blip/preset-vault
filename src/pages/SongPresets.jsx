@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { usePresetCache } from '../context/PresetCacheContext'
 
-const COVER_TIME = 2.5
+const COVER_TIME = 2
 function captureThumb(video, presetId, setCache) {
   try {
     const canvas = document.createElement('canvas')
