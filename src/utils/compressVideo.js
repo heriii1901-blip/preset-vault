@@ -18,10 +18,14 @@ export async function getFFmpeg(onProgress) {
   }
 
   const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd'
-  await ffmpeg.load({
-    coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-    wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-  })
+  try {
+    const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript')
+    const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm')
+    await ffmpeg.load({ coreURL, wasmURL })
+  } catch (err) {
+    console.error('RAW error pas load ffmpeg core:', err)
+    throw new Error(`Gagal fetch ffmpeg-core dari unpkg: ${err?.message || String(err)}`)
+  }
 
   ffmpegInstance = ffmpeg
   return ffmpeg
