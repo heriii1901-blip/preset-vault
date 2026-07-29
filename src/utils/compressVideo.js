@@ -17,7 +17,7 @@ export async function getFFmpeg(onProgress) {
     ffmpeg.on('progress', ({ progress }) => onProgress(progress))
   }
 
-  const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd'
+  const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm'
   try {
     const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript')
     const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm')
