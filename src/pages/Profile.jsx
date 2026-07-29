@@ -220,7 +220,7 @@ export default function Profile() {
                       poster={getCache(`thumb:${preset.id}`)?.data}
                       onLoadedMetadata={(e) => {
                         const video = e.currentTarget
-                        if (video.currentTime === 0) video.currentTime = 2.5
+                        if (video.currentTime === 0) video.currentTime = 2
                       }}
                       onSeeked={(e) => captureThumb(e.currentTarget, preset.id, setCache)}
                     />
