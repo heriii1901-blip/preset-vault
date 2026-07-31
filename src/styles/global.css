@@ -1643,12 +1643,12 @@ select.finput-real { cursor: pointer; }
   flex: 1;
   min-height: 0;
   width: 100%;
-  animation: pageEnter .32s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: pageEnter .15s ease-out;
 }
 @keyframes pageEnter {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
