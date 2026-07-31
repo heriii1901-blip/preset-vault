@@ -6,7 +6,6 @@ export function BottomNav() {
   const navigate = useNavigate()
   const { isAdmin, logout } = useAuth()
 
-  // Cek persis halaman aktif biar submenu nggak bocor ke mana-mana
   const isLaguActive = location.pathname.startsWith('/lagu')
   const isAkunActive = location.pathname === '/akun'
 
@@ -18,31 +17,49 @@ export function BottomNav() {
   return (
     <div className="bottom-nav">
       <NavLink to="/" end className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 12a9 9 0 1 0 2.6-6.3" />
-          <path d="M3 5v4h4" />
-          <path d="M12 7v5l3 2" />
-        </svg>
+        <span className="nav-icon">
+          <svg className="icon-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 12a9 9 0 1 0 2.6-6.3" />
+            <path d="M3 5v4h4" />
+            <path d="M12 7v5l3 2" />
+          </svg>
+          <svg className="icon-fill" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 12a9 9 0 1 0 2.6-6.3" />
+            <path d="M3 5v4h4" />
+            <path d="M12 7v5l3 2" />
+          </svg>
+        </span>
         <span>Terbaru</span>
       </NavLink>
 
       <NavLink to="/cari" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
+        <span className="nav-icon">
+          <svg className="icon-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <svg className="icon-fill" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </span>
         <span>Cari</span>
       </NavLink>
 
       <NavLink to="/lagu" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M4.5 11.5l6.7-6.2a1.2 1.2 0 0 1 1.6 0l6.7 6.2" />
-          <path d="M5.5 10.5V19a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-8.5" />
-        </svg>
+        <span className="nav-icon">
+          <svg className="icon-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4.5 11.5l6.7-6.2a1.2 1.2 0 0 1 1.6 0l6.7 6.2" />
+            <path d="M5.5 10.5V19a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-8.5" />
+          </svg>
+          <svg className="icon-fill" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4.5 11.5l6.7-6.2a1.2 1.2 0 0 1 1.6 0l6.7 6.2" />
+            <path d="M5.5 10.5V19a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-8.5" />
+          </svg>
+        </span>
         <span>lagu</span>
       </NavLink>
 
-      {/* Submenu Admin hanya aktif jika benar-benar di area /lagu */}
       {isLaguActive && isAdmin && (
         <div className="nav-submenu">
           <NavLink to="/admin/tambah-preset" className={({ isActive }) => `nav-subitem${isActive ? ' active' : ''}`}>
@@ -55,22 +72,33 @@ export function BottomNav() {
       )}
 
       <NavLink to="/kreator" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 8l4 3 5-6 5 6 4-3-1.5 10h-15L3 8z" />
-          <path d="M6.5 18h11" />
-        </svg>
+        <span className="nav-icon">
+          <svg className="icon-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 8l4 3 5-6 5 6 4-3-1.5 10h-15L3 8z" />
+            <path d="M6.5 18h11" />
+          </svg>
+          <svg className="icon-fill" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 8l4 3 5-6 5 6 4-3-1.5 10h-15L3 8z" />
+            <path d="M6.5 18h11" />
+          </svg>
+        </span>
         <span>Kreator</span>
       </NavLink>
 
       <NavLink to="/akun" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="8" r="4" />
-          <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
-        </svg>
+        <span className="nav-icon">
+          <svg className="icon-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
+          </svg>
+          <svg className="icon-fill" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
+          </svg>
+        </span>
         <span>Akun</span>
       </NavLink>
 
-      {/* Submenu Logout hanya aktif jika persis di halaman /akun */}
       {isAkunActive && (
         <div className="nav-submenu">
           <button type="button" className="nav-subitem nav-subitem-danger" onClick={handleLogout}>
