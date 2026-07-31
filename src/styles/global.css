@@ -1638,6 +1638,11 @@ select.finput-real { cursor: pointer; }
 
 /* Transisi halaman pas pindah menu */
 .page-transition {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
   animation: pageEnter .32s cubic-bezier(0.22, 1, 0.36, 1);
 }
 @keyframes pageEnter {
