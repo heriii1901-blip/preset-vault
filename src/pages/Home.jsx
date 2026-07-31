@@ -2,11 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { useAuth } from '../context/AuthContext'
+import { usePresetCache } from '../context/PresetCacheContext'
+
+const CACHE_KEY = 'lagu-list'
 
 export default function Home() {
   const [query, setQuery] = useState('')
-  const [songs, setSongs] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { getCache, setCache } = usePresetCache()
+  const cached = getCache(CACHE_KEY)
+  const [songs, setSongs] = useState(cached?.data || [])
+  const [loading, setLoading] = useState(!cached)
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState([])
   const navigate = useNavigate()
@@ -16,22 +21,27 @@ export default function Home() {
 
   useEffect(() => {
     async function loadSongs() {
+      // Kalo udah ada cache, tampilin dulu tanpa loading, terus refresh diem-diem
+      if (!getCache(CACHE_KEY)) setLoading(true)
       try {
-        const { data: songList, error } = await supabase.from('songs').select('*')
-        if (error) throw error
+        const [{ data: songList, error: songErr }, { data: presetRows, error: presetErr }] = await Promise.all([
+          supabase.from('songs').select('*'),
+          supabase.from('presets').select('song_id'),
+        ])
+        if (songErr) throw songErr
+        if (presetErr) throw presetErr
 
-        const withRealCount = await Promise.all(
-          songList.map(async (song) => {
-            const { count } = await supabase
-              .from('presets')
-              .select('*', { count: 'exact', head: true })
-              .eq('song_id', song.id)
-            return { ...song, presetCount: count ?? song.preset_count ?? 0 }
-          })
-        )
+        const countMap = {}
+        for (const row of presetRows || []) {
+          countMap[row.song_id] = (countMap[row.song_id] || 0) + 1
+        }
 
-        withRealCount.sort((a, b) => a.name.localeCompare(b.name))
+        const withRealCount = songList
+          .map((song) => ({ ...song, presetCount: countMap[song.id] ?? song.preset_count ?? 0 }))
+          .sort((a, b) => a.name.localeCompare(b.name))
+
         setSongs(withRealCount)
+        setCache(CACHE_KEY, withRealCount)
       } catch (err) {
         console.error('Gagal ambil daftar lagu:', err)
       } finally {
@@ -39,6 +49,7 @@ export default function Home() {
       }
     }
     loadSongs()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const filteredSongs = songs.filter((song) =>
