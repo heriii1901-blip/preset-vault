@@ -1,9 +1,11 @@
 import { isRunningAsApk } from '../utils/isTWA'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabase'
 import { usePresetCache } from '../context/PresetCacheContext'
+
+const COVER_TIME = 2
 
 function captureThumb(video, presetId, setCache) {
   try {
@@ -36,6 +38,20 @@ export default function Profile() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
   const isApk = isRunningAsApk()
+  const activeVideoRef = useRef(null)
+
+  function resetToCover(video) {
+    if (!video) return
+    video.pause()
+    video.currentTime = COVER_TIME
+  }
+
+  function handleStartPlay(video) {
+    if (!video || activeVideoRef.current === video) return
+    resetToCover(activeVideoRef.current)
+    video.play().catch(() => {})
+    activeVideoRef.current = video
+  }
   
   const photoUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture
 
@@ -210,17 +226,30 @@ export default function Profile() {
                   key={preset.id}
                   className="grid-cell"
                   onClick={() => navigate(`/preset/${preset.id}`)}
+                  onContextMenu={(e) => e.preventDefault()}
+                  onPointerDown={(e) => handleStartPlay(e.currentTarget.querySelector('video'))}
+                  onMouseEnter={(e) => handleStartPlay(e.currentTarget.querySelector('video'))}
+                  onMouseLeave={(e) => {
+                    resetToCover(e.currentTarget.querySelector('video'))
+                    if (activeVideoRef.current === e.currentTarget.querySelector('video')) {
+                      activeVideoRef.current = null
+                    }
+                  }}
                 >
                   {preset.preview_video_url ? (
                     <video
                       src={preset.preview_video_url}
                       muted
-                      preload="none"
+                      loop
+                      preload="metadata"
                       playsInline
+                      disablePictureInPicture
+                      controlsList="nodownload"
+                      draggable={false}
                       poster={getCache(`thumb:${preset.id}`)?.data}
                       onLoadedMetadata={(e) => {
                         const video = e.currentTarget
-                        if (video.currentTime === 0) video.currentTime = 2
+                        if (video.currentTime === 0) video.currentTime = COVER_TIME
                       }}
                       onSeeked={(e) => captureThumb(e.currentTarget, preset.id, setCache)}
                     />
