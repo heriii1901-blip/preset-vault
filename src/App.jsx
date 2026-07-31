@@ -28,104 +28,106 @@ export default function App() {
       <PresetCacheProvider>
         <div className="phone-wrap">
           <div className="phone">
-            <Routes>
-              <Route path="/login" element={<Login />} />
+            <div className="page-transition" key={location.pathname}>
+              <Routes>
+                <Route path="/login" element={<Login />} />
 
-              <Route
-                path="/"
-                element={
-                  <ProtectedRoute>
-                    <Terbaru />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/"
+                  element={
+                    <ProtectedRoute>
+                      <Terbaru />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route
-                path="/lagu"
-                element={
-                  <ProtectedRoute>
-                    <Home />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/lagu"
+                  element={
+                    <ProtectedRoute>
+                      <Home />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route
-                path="/lagu/:songId"
-                element={
-                  <ProtectedRoute>
-                    <SongPresets />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/lagu/:songId"
+                  element={
+                    <ProtectedRoute>
+                      <SongPresets />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route
-                path="/preset/:presetId"
-                element={
-                  <ProtectedRoute>
-                    <PresetFeed />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/preset/:presetId"
+                  element={
+                    <ProtectedRoute>
+                      <PresetFeed />
+                    </ProtectedRoute>
+                  }
+                />
 
-              <Route
-                path="/akun"
-                element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                }
-              />
+                <Route
+                  path="/akun"
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* requireAdmin: cuma email admin yang bisa masuk sini */}
-              <Route
-                path="/admin/tambah-preset"
-                element={
-                  <ProtectedRoute requireAdmin>
-                    <AdminAddPreset />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/edit-preset/:presetId"
-                element={
-                  <ProtectedRoute requireAdmin>
-                    <AdminAddPreset />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/kelola-preset"
-                element={
-                  <ProtectedRoute requireAdmin>
-                    <AdminManagePresets />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/cari"
-                element={
-                  <ProtectedRoute>
-                    <CariKreator />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/kreator"
-                element={
-                  <ProtectedRoute>
-                    <Kreator />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/download/:presetId"
-                element={
-                  <ProtectedRoute>
-                    <DownloadPage />
-                  </ProtectedRoute>
-                }
-              />
-            </Routes>
+                {/* requireAdmin: cuma email admin yang bisa masuk sini */}
+                <Route
+                  path="/admin/tambah-preset"
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <AdminAddPreset />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/edit-preset/:presetId"
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <AdminAddPreset />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/kelola-preset"
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <AdminManagePresets />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/cari"
+                  element={
+                    <ProtectedRoute>
+                      <CariKreator />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/kreator"
+                  element={
+                    <ProtectedRoute>
+                      <Kreator />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/download/:presetId"
+                  element={
+                    <ProtectedRoute>
+                      <DownloadPage />
+                    </ProtectedRoute>
+                  }
+                />
+              </Routes>
+            </div>
 
             {/* BottomNav dirender di sini agar tidak hilang saat refresh */}
             {shouldShowNav && <BottomNav />}
