@@ -86,7 +86,6 @@ export default function PresetFeed() {
   }, [loading, presets, presetId])
 
   // Cuma dipanggil pas scroll pindah ke video lain, bukan pas pause/play manual
-  // Cuma dipanggil pas scroll pindah ke video lain, bukan pas pause/play manual
   function switchToVideo(id) {
     if (activeVideoIdRef.current === id) return
     const oldId = activeVideoIdRef.current
@@ -99,8 +98,6 @@ export default function PresetFeed() {
     video.currentTime = 0
 
     if (!video.src) {
-      // Video belom keload (loadedIds belom keupdate), nanti auto-play
-      // sendiri lewat onLoadedData pas src-nya udah siap
       return
     }
 
@@ -138,8 +135,6 @@ export default function PresetFeed() {
     { threshold: [0, 0.75, 1] }
   )
 
-  // Observer kedua, khusus buat nentuin video mana yang boleh mulai load
-  // rootMargin dikasih jarak biar video sebelum/sesudah current udah mulai preload
   const loadObserver = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -150,7 +145,6 @@ export default function PresetFeed() {
             return new Set(prev).add(id)
           })
         } else {
-          // Video udah jauh dari layar, lepas src-nya biar ngga numpuk di memori
           setLoadedIds((prev) => {
             if (!prev.has(id)) return prev
             const next = new Set(prev)
@@ -160,7 +154,7 @@ export default function PresetFeed() {
         }
       })
     },
-    { rootMargin: '100% 0px 100% 0px' } // load video 1 layar sebelum/sesudah kelihatan
+    { rootMargin: '100% 0px 100% 0px' }
   )
 
   const timer = setTimeout(() => {
@@ -201,7 +195,6 @@ export default function PresetFeed() {
     }
   }
 
-  // Fungsi untuk update posisi progress bar saat video jalan
   const handleTimeUpdate = (id, e) => {
     const video = e.target
     setVideoProgress((prev) => ({
@@ -213,7 +206,6 @@ export default function PresetFeed() {
     }))
   }
 
-  // Fungsi saat user menggeser/mengklik garis durasi (Scrubber)
   const handleScrub = (id, value) => {
     const video = videoRefs.current[id]
     if (!video) return
@@ -227,7 +219,6 @@ export default function PresetFeed() {
     }))
   }
 
-  // Fungsi pembantu untuk mengubah detik ke format MM:SS (Contoh: 75 detik -> 01:15)
   const formatTime = (timeInSeconds) => {
     if (isNaN(timeInSeconds)) return '00:00'
     const mins = Math.floor(timeInSeconds / 60)
@@ -311,11 +302,9 @@ export default function PresetFeed() {
       try {
         await navigator.share(shareData)
       } catch (err) {
-        // User batalin share, ngga usah dianggep error
         if (err.name !== 'AbortError') console.error('Gagal share:', err)
       }
     } else {
-      // Fallback buat browser yang ngga support Web Share API (misal desktop)
       try {
         await navigator.clipboard.writeText(shareUrl)
         setCopied(true)
@@ -329,7 +318,7 @@ export default function PresetFeed() {
   function handleVideoError(id, e) {
   const video = e.currentTarget
   const attempts = retryCountRef.current[id] || 0
-  if (attempts >= 2) return // udah nyoba 2x tetep gagal, nyerah biar gak infinite loop
+  if (attempts >= 2) return
   retryCountRef.current[id] = attempts + 1
   setTimeout(() => {
     if (!video) return
@@ -358,7 +347,6 @@ export default function PresetFeed() {
             const isFav = favoritedIds.has(preset.id)
             const isPaused = pausedIds.has(preset.id)
 
-            // Ambil info waktu sekarang dan total durasi video ini
             const currentSec = videoProgress[preset.id]?.current || 0
             const durationSec = videoProgress[preset.id]?.duration || 0
 
@@ -483,7 +471,6 @@ export default function PresetFeed() {
                   </button>
                 </div>
 
-                {/* Progress Bar dengan Teks Angka Detik */}
                 <div className="feed-progress-container">
                   <div className="feed-time-text">
                     {formatTime(currentSec)} / {formatTime(durationSec)}
@@ -510,9 +497,8 @@ export default function PresetFeed() {
               <span>{linkModal.label}</span>
               <button type="button" className="link-modal-close" onClick={closeLinkModal}>×</button>
             </div>
-            
-            <a  
-              {isValidUrl(linkModal.link) ? (
+
+            {isValidUrl(linkModal.link) ? (
               
                 href={linkModal.link}
                 target="_blank"
