@@ -121,6 +121,7 @@ export default function Terbaru() {
                   loop
                   playsInline
                   preload="metadata"
+                  crossOrigin="anonymous"
                   disablePictureInPicture
                   controlsList="nodownload"
                   draggable={false}
