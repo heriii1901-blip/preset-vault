@@ -1181,7 +1181,7 @@ select.finput-real { cursor: pointer; }
 .feed-btn {
   padding: 8px 14px;
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
   background: transparent;
   color: var(--text);
   font-size: 12px;
