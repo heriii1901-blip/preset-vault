@@ -14,8 +14,12 @@ export function PresetCacheProvider({ children }) {
     cacheRef.current[key] = { data, timestamp: Date.now() }
   }
 
+  const clearCache = (key) => {
+    delete cacheRef.current[key]
+  }
+
   return (
-    <PresetCacheContext.Provider value={{ getCache, setCache }}>
+    <PresetCacheContext.Provider value={{ getCache, setCache, clearCache }}>
       {children}
     </PresetCacheContext.Provider>
   )
