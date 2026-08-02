@@ -45,7 +45,7 @@ export default function PresetFeed() {
 
         if (isFromTerbaru) {
           // Sama kayak query di Terbaru.jsx: preset terbaru lintas lagu
-          query = query.order('created_at', { ascending: false }).limit(20)
+          query = query.order('created_at', { ascending: false }).limit(15)
         } else if (isFromKreator && filterCreatorUsername) {
           // Kejebak di kreator yang sama aja, jangan nyasar ke video lain
           query = query.eq('creator_username', filterCreatorUsername).order('created_at', { ascending: false })
@@ -235,6 +235,16 @@ export default function PresetFeed() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
+  const isValidUrl = (str) => {
+    if (!str) return false
+    try {
+      const url = new URL(str)
+      return url.protocol === 'http:' || url.protocol === 'https:'
+    } catch {
+      return false
+    }
+  }
+
   const openLinkModal = (label, link) => {
     setCopied(false)
     setLinkModal({ label, link })
@@ -413,9 +423,19 @@ export default function PresetFeed() {
                       Link 5MB
                     </button>
                     {preset.tiktok_link && (
-                      <a className="feed-btn" href={preset.tiktok_link} target="_blank" rel="noreferrer">
-                        Vid Kreator
-                      </a>
+                      isValidUrl(preset.tiktok_link) ? (
+                        <a className="feed-btn" href={preset.tiktok_link} target="_blank" rel="noreferrer">
+                          Vid Kreator
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          className="feed-btn"
+                          onClick={() => openLinkModal('Vid Kreator', preset.tiktok_link)}
+                        >
+                          Vid Kreator
+                        </button>
+                      )
                     )}
                   </div>
                 </div>
@@ -492,17 +512,30 @@ export default function PresetFeed() {
             </div>
 
             <a
-              href={linkModal.link}
-              target="_blank"
-              rel="noreferrer"
-              className={
-                linkModal.label === 'Link XML'
-                  ? 'link-modal-input link-modal-textarea link-modal-clickable'
-                  : 'link-modal-input link-modal-clickable'
-              }
-            >
-              {linkModal.link}
-            </a>
+              {isValidUrl(linkModal.link) ? (
+              
+                href={linkModal.link}
+                target="_blank"
+                rel="noreferrer"
+                className={
+                  linkModal.label === 'Link XML'
+                    ? 'link-modal-input link-modal-textarea link-modal-clickable'
+                    : 'link-modal-input link-modal-clickable'
+                }
+              >
+                {linkModal.link}
+              </a>
+            ) : (
+              <div
+                className={
+                  linkModal.label === 'Link XML'
+                    ? 'link-modal-input link-modal-textarea'
+                    : 'link-modal-input'
+                }
+              >
+                {linkModal.link}
+              </div>
+            )}
             
             <button type="button" className="link-modal-copy-btn" onClick={handleCopy}>
               {copied ? '✓ Tersalin' : 'Salin Link'}
