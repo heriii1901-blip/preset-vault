@@ -499,7 +499,7 @@ export default function PresetFeed() {
             </div>
 
             {isValidUrl(linkModal.link) ? (
-              
+             <a
                 href={linkModal.link}
                 target="_blank"
                 rel="noreferrer"
