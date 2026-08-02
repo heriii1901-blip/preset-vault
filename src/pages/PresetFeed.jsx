@@ -510,8 +510,8 @@ export default function PresetFeed() {
               <span>{linkModal.label}</span>
               <button type="button" className="link-modal-close" onClick={closeLinkModal}>×</button>
             </div>
-
             <a
+              
               {isValidUrl(linkModal.link) ? (
               
                 href={linkModal.link}
