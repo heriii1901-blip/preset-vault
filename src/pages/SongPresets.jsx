@@ -20,7 +20,7 @@ function captureThumb(video, presetId, setCache) {
 export default function SongPresets() {
   const { songId } = useParams()
   const navigate = useNavigate()
-  const { getCache, setCache } = usePresetCache()
+  const { getCache, setCache, clearCache } = usePresetCache()
   const cacheKey = `song:${songId}`
   const cached = getCache(cacheKey)
   const [song, setSong] = useState(cached?.data?.song || null)
@@ -31,7 +31,9 @@ export default function SongPresets() {
 
   useEffect(() => {
     async function loadData() {
-      if (!getCache(cacheKey)) setLoading(true)
+      // Udah ada cache buat lagu ini -> skip, biar urutan grid stabil selama user masih di halaman ini
+      if (getCache(cacheKey)) return
+      setLoading(true)
       try {
         const [{ data: songData }, { data: presetsData, error }] = await Promise.all([
   supabase.from('songs').select('*').eq('id', songId).single(),
@@ -90,7 +92,7 @@ setCache(cacheKey, { song: songData, presets: shuffled })
   return (
     <div className="screen">
       <div className="grid-header">
-        <button className="back-btn ghost-static" onClick={() => navigate(-1)}>← Balik</button>
+        <button className="back-btn ghost-static" onClick={() => { clearCache(cacheKey); navigate(-1) }}>← Balik</button>
         <div>
           <h3>{song?.name || 'Memuat...'}</h3>
           <p>{presets.length} preset</p>
@@ -129,6 +131,7 @@ setCache(cacheKey, { song: songData, presets: shuffled })
                   loop
                   playsInline
                   preload="metadata"
+                  crossOrigin="anonymous"
                   disablePictureInPicture
                   controlsList="nodownload"
                   draggable={false}
