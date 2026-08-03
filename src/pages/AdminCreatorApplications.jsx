@@ -136,7 +136,7 @@ export default function AdminCreatorApplications() {
               }}
             >
               <div style={{ fontWeight: 700, marginBottom: 4 }}>@{app.tiktok_username}</div>
-              
+              <a
                 href={app.tiktok_link}
                 target="_blank"
                 rel="noreferrer"
