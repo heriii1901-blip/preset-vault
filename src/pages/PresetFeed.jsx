@@ -25,6 +25,7 @@ export default function PresetFeed() {
   const [pausedIds, setPausedIds] = useState(new Set())
   const activeVideoIdRef = useRef(null)
   const retryCountRef = useRef({})
+  const videoUrlsRef = useRef({})
   const [videoProgress, setVideoProgress] = useState({}) // Menyimpan progress tiap video { [id]: { current, duration } }
   const [loadedIds, setLoadedIds] = useState(new Set())
   
@@ -98,7 +99,14 @@ export default function PresetFeed() {
     video.currentTime = 0
 
     if (!video.src) {
-      return
+      const url = videoUrlsRef.current[id]
+      if (!url) return
+      video.src = url
+      video.load()
+      setLoadedIds((prev) => {
+        if (prev.has(id)) return prev
+        return new Set(prev).add(id)
+      })
     }
 
     video.play()
@@ -349,6 +357,7 @@ export default function PresetFeed() {
 
             const currentSec = videoProgress[preset.id]?.current || 0
             const durationSec = videoProgress[preset.id]?.duration || 0
+            videoUrlsRef.current[preset.id] = preset.preview_video_url
 
             return (
               <div
