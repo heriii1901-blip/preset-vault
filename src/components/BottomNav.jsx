@@ -7,6 +7,7 @@ export function BottomNav() {
   const { isAdmin, logout } = useAuth()
 
   const isLaguActive = location.pathname.startsWith('/lagu')
+  const isKreatorActive = location.pathname.startsWith('/kreator')
   const isAkunActive = location.pathname === '/akun'
 
   const handleLogout = async () => {
@@ -67,6 +68,13 @@ export function BottomNav() {
           </NavLink>
           <NavLink to="/admin/kelola-preset" className={({ isActive }) => `nav-subitem${isActive ? ' active' : ''}`}>
             <span>Kelola Preset</span>
+          </NavLink>
+        </div>
+      )}
+      {isKreatorActive && isAdmin && (
+        <div className="nav-submenu">
+          <NavLink to="/admin/kreator-pengajuan" className={({ isActive }) => `nav-subitem${isActive ? ' active' : ''}`}>
+            <span>Review Pengajuan</span>
           </NavLink>
         </div>
       )}
