@@ -14,6 +14,7 @@ import Terbaru from './pages/Terbaru'
 import CariKreator from './pages/CariKreator'
 import PresetFeed from './pages/PresetFeed'
 import Kreator from './pages/Kreator'
+import AdminCreatorApplications from './pages/AdminCreatorApplications'
 import DownloadPage from './pages/DownloadPage'
 
 export default function App() {
@@ -99,6 +100,14 @@ export default function App() {
                   element={
                     <ProtectedRoute requireAdmin>
                       <AdminManagePresets />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/kreator-pengajuan"
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <AdminCreatorApplications />
                     </ProtectedRoute>
                   }
                 />
