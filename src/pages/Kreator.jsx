@@ -78,6 +78,16 @@ export default function Kreator() {
     )
   }
 
+  if (!isAdmin) {
+    return (
+      <div className="screen">
+        <div className="empty-state" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700 }}>
+          Akan Hadir!!!
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="screen">
       <div className="admin-content">
