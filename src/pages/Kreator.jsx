@@ -139,7 +139,7 @@ export default function Kreator() {
                 <div className="input-wrap">
                   <textarea
                     className="finput-real finput-multiline"
-                    placeholder="Ceritain dikit kenapa mau jadi kreator di PAM..."
+                    placeholder="lagi review fiturnya dulu rek"
                     value={alasan}
                     onChange={(e) => setAlasan(e.target.value)}
                     rows={3}
