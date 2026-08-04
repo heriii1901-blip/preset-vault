@@ -4,6 +4,19 @@ import { supabase } from '../supabase'
 import { usePresetCache } from '../context/PresetCacheContext'
 
 const COVER_TIME = 2
+
+const THUMB_COLORS = [
+  'linear-gradient(135deg,#7C5CFF,#4A32C9)',
+  'linear-gradient(135deg,#FF3D7F,#C91E5A)',
+  'linear-gradient(135deg,#D4FF3D,#8FB800)',
+  'linear-gradient(135deg,#7C5CFF,#FF3D7F)',
+  'linear-gradient(135deg,#4A32C9,#15151D)',
+]
+function colorFor(username) {
+  let hash = 0
+  for (let i = 0; i < username.length; i++) hash = username.charCodeAt(i) + ((hash << 5) - hash)
+  return THUMB_COLORS[Math.abs(hash) % THUMB_COLORS.length]
+}
 function captureThumb(video, presetId, setCache) {
   try {
     const canvas = document.createElement('canvas')
@@ -82,11 +95,32 @@ export default function KreatorPresets() {
 
   return (
     <div className="screen">
-      <div className="grid-header">
-        <button className="back-btn ghost-static" onClick={() => { clearCache(cacheKey); navigate(-1) }}>← Balik</button>
-        <div>
+      <button
+        className="back-btn ghost-static"
+        style={{ margin: '14px 0 0 16px', width: 'fit-content' }}
+        onClick={() => { clearCache(cacheKey); navigate(-1) }}
+      >
+        ← Balik
+      </button>
+
+      <div className="kreator-profile-header">
+        <div className="kreator-profile-avatar" style={{ background: colorFor(creatorUsername) }}>
+          {creatorUsername.charAt(0).toUpperCase()}
+        </div>
+        <div className="kreator-profile-info">
           <h3>@{creatorUsername}</h3>
           <p>{presets.length} preset</p>
+          {presets[0]?.tiktok_link && (
+            
+              href={presets[0].tiktok_link}
+              target="_blank"
+              rel="noreferrer"
+              className="kreator-profile-link"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Liat TikTok →
+            </a>
+          )}
         </div>
       </div>
 
