@@ -166,27 +166,51 @@ export default function Kreator() {
   }
 
   // --- swipe (pointer, jalan buat touch & mouse) ---
+  // Capture baru dipasang pas beneran ke-detect geser (>10px), bukan pas nyentuh doang,
+  // biar tap/klik biasa ke button/song-row di dalamnya tetep jalan normal.
   function onPointerDown(e) {
-    e.currentTarget.setPointerCapture(e.pointerId)
-    dragState.current = { startX: e.clientX, dragging: true, deltaX: 0 }
-    setIsDragging(true)
+    dragState.current = {
+      startX: e.clientX,
+      dragging: true,
+      deltaX: 0,
+      captured: false,
+      pointerId: e.pointerId,
+      target: e.currentTarget,
+    }
   }
   function onPointerMove(e) {
     if (!dragState.current.dragging) return
     const delta = e.clientX - dragState.current.startX
+
+    if (!dragState.current.captured) {
+      if (Math.abs(delta) < 10) return
+      dragState.current.captured = true
+      setIsDragging(true)
+      try {
+        dragState.current.target.setPointerCapture(dragState.current.pointerId)
+      } catch {}
+    }
+
     dragState.current.deltaX = delta
     setDragX(delta)
   }
-  function endDrag() {
+  function endDrag(e) {
     if (!dragState.current.dragging) return
     const delta = dragState.current.deltaX
+    const wasCaptured = dragState.current.captured
     dragState.current.dragging = false
+    dragState.current.captured = false
     setIsDragging(false)
     setDragX(0)
-    if (delta < -60 && panel === 0) setPanel(1)
-    else if (delta > 60 && panel === 1) setPanel(0)
-  }
 
+    if (wasCaptured) {
+      if (delta < -60 && panel === 0) setPanel(1)
+      else if (delta > 60 && panel === 1) setPanel(0)
+      try {
+        e.currentTarget.releasePointerCapture(dragState.current.pointerId)
+      } catch {}
+    }
+  }
   const trackStyle = {
     transform: `translateX(calc(${-panel * 50}% + ${dragX}px))`,
   }
