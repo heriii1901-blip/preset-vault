@@ -203,6 +203,9 @@ export default function Kreator() {
 
   return (
     <div className="screen">
+      <div className="kreator-page-header">
+        <div className="eyebrow">KREATOR</div>
+      </div>
       <div
         className="kreator-tabs"
         onPointerDown={onPointerDown}
