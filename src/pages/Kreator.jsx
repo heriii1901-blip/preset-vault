@@ -201,12 +201,19 @@ export default function Kreator() {
 
   return (
     <div className="screen">
-      <div className="kreator-tabs">
+      <div
+        className="kreator-tabs"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onPointerLeave={endDrag}
+      >
         <button className={panel === 0 ? 'kreator-tab active' : 'kreator-tab'} onClick={() => setPanel(0)}>
           Kreator
         </button>
         <button className={panel === 1 ? 'kreator-tab active' : 'kreator-tab'} onClick={() => setPanel(1)}>
-          Anda
+          Kamu
         </button>
         <div className="kreator-tabs-indicator" style={{ transform: `translateX(${panel * 100}%)` }} />
       </div>
