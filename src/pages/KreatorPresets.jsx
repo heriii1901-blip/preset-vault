@@ -111,7 +111,7 @@ export default function KreatorPresets() {
           <h3>@{creatorUsername}</h3>
           <p>{presets.length} preset</p>
           {presets[0]?.tiktok_link && (
-            
+            <a
               href={presets[0].tiktok_link}
               target="_blank"
               rel="noreferrer"
