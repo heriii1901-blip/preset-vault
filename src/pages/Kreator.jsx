@@ -19,6 +19,19 @@ function captureThumb(video, key, setCache) {
   }
 }
 
+const THUMB_COLORS = [
+  'linear-gradient(135deg,#7C5CFF,#4A32C9)',
+  'linear-gradient(135deg,#FF3D7F,#C91E5A)',
+  'linear-gradient(135deg,#D4FF3D,#8FB800)',
+  'linear-gradient(135deg,#7C5CFF,#FF3D7F)',
+  'linear-gradient(135deg,#4A32C9,#15151D)',
+]
+function colorFor(username) {
+  let hash = 0
+  for (let i = 0; i < username.length; i++) hash = username.charCodeAt(i) + ((hash << 5) - hash)
+  return THUMB_COLORS[Math.abs(hash) % THUMB_COLORS.length]
+}
+
 export default function Kreator() {
   const { user, isAdmin } = useAuth()
   const navigate = useNavigate()
@@ -193,10 +206,10 @@ export default function Kreator() {
           Kreator
         </button>
         <button className={panel === 1 ? 'kreator-tab active' : 'kreator-tab'} onClick={() => setPanel(1)}>
-          Kamu
+          Anda
         </button>
+        <div className="kreator-tabs-indicator" style={{ transform: `translateX(${panel * 100}%)` }} />
       </div>
-
       <div
         className="kreator-swipe-viewport"
         onPointerDown={onPointerDown}
@@ -206,47 +219,30 @@ export default function Kreator() {
         onPointerLeave={endDrag}
       >
         <div className={isDragging ? 'kreator-swipe-track dragging' : 'kreator-swipe-track'} style={trackStyle}>
-          {/* PANEL 1: List semua kreator */}
+          {/* PANEL 1: List semua kreator, style kek list Lagu */}
           <div className="kreator-panel">
-            <div className="grid-header" style={{ padding: '0 18px 10px' }}>
-              <h3>KREATOR</h3>
+            <div className="list-header" style={{ padding: '16px 18px 4px', margin: 0 }}>
+              <div className="eyebrow">KREATOR</div>
             </div>
             {loadingList && <div className="empty-state">Memuat...</div>}
             {!loadingList && creatorList.length === 0 && (
               <div className="empty-state">Belum ada kreator.</div>
             )}
             {!loadingList && creatorList.length > 0 && (
-              <div className="preset-grid">
+              <div className="song-list" style={{ padding: '0 18px' }}>
                 {creatorList.map((c) => (
                   <div
                     key={c.creator_username}
-                    className="grid-cell"
+                    className="song-row"
                     onClick={() => navigate(`/preset/${c.id}`, { state: { source: 'kreator', creatorUsername: c.creator_username } })}
-                    onContextMenu={(e) => e.preventDefault()}
                   >
-                    {c.preview_video_url ? (
-                      <video
-                        src={c.preview_video_url}
-                        muted
-                        loop
-                        playsInline
-                        preload="metadata"
-                        disablePictureInPicture
-                        controlsList="nodownload"
-                        draggable={false}
-                        poster={getCache(`thumb:${c.creator_username}`)?.data}
-                        onLoadedMetadata={(e) => {
-                          const video = e.currentTarget
-                          if (video.currentTime === 0) video.currentTime = 2
-                        }}
-                        onSeeked={(e) => captureThumb(e.currentTarget, c.creator_username, setCache)}
-                      />
-                    ) : (
-                      <div className="grid-fallback">🎬</div>
-                    )}
-                    <div className="grid-cell-overlay">
-                      @{c.creator_username} · {c.count} preset
+                    <div className="song-thumb" style={{ background: colorFor(c.creator_username) }}>
+                      {c.creator_username.charAt(0).toUpperCase()}
                     </div>
+                    <div className="song-text">
+                      <h4>@{c.creator_username}</h4>
+                    </div>
+                    <span className="song-count">{c.count}</span>
                   </div>
                 ))}
               </div>
