@@ -57,6 +57,7 @@ export default function Kreator() {
   // list kreator
   const [creatorList, setCreatorList] = useState([])
   const [loadingList, setLoadingList] = useState(true)
+  const [showRegisForm, setShowRegisForm] = useState(false)
 
   // dashboard kreator
   const [ownPresets, setOwnPresets] = useState([])
@@ -364,49 +365,66 @@ export default function Kreator() {
                     </>
                   )}
 
-                  {!application && (
-                    <form onSubmit={handleSubmit}>
-                      <div className="empty-state" style={{ marginBottom: 16, textAlign: 'left' }}>
-                        Mau jadi kreator dan pajang preset kamu sendiri di PAM? Isi form di bawah, nanti direview manual dulu ya.
-                      </div>
-                      <div className="form-field">
-                        <label>Username TikTok</label>
-                        <div className="input-wrap">
-                          <input
-                            className="finput-real"
-                            placeholder="tanpa @"
-                            value={tiktokUsername}
-                            onChange={(e) => setTiktokUsername(e.target.value)}
-                          />
-                        </div>
-                      </div>
-                      <div className="form-field">
-                        <label>Link Profil TikTok</label>
-                        <div className="input-wrap">
-                          <input
-                            className="finput-real"
-                            placeholder="https://tiktok.com/@username"
-                            value={tiktokLink}
-                            onChange={(e) => setTiktokLink(e.target.value)}
-                          />
-                        </div>
-                      </div>
-                      <div className="form-field">
-                        <label>Alasan / Contoh Preset (opsional)</label>
-                        <div className="input-wrap">
-                          <textarea
-                            className="finput-real finput-multiline"
-                            placeholder="Ceritain dikit kenapa mau jadi kreator di PAM..."
-                            value={alasan}
-                            onChange={(e) => setAlasan(e.target.value)}
-                            rows={3}
-                          />
-                        </div>
-                      </div>
-                      <button className="save-btn" type="submit" disabled={submitting}>
-                        {submitting ? 'Ngirim...' : 'Ajuin Jadi Kreator'}
+                  {!application && !showRegisForm && (
+                    <div className="kreator-landing">
+                      <p className="kreator-landing-text">
+                        Mau jadi kreator dan pajang preset kamu sendiri di PAM?
+                      </p>
+                      <button className="save-btn" onClick={() => setShowRegisForm(true)}>
+                        Registrasi Kreator
                       </button>
-                    </form>
+                    </div>
+                  )}
+
+                  {!application && showRegisForm && (
+                    <>
+                      <button
+                        className="back-btn ghost-static"
+                        style={{ marginBottom: 14, width: 'fit-content' }}
+                        onClick={() => setShowRegisForm(false)}
+                      >
+                        ← Balik
+                      </button>
+                      <form onSubmit={handleSubmit}>
+                        <div className="form-field">
+                          <label>Username TikTok</label>
+                          <div className="input-wrap">
+                            <input
+                              className="finput-real"
+                              placeholder="tanpa @"
+                              value={tiktokUsername}
+                              onChange={(e) => setTiktokUsername(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        <div className="form-field">
+                          <label>Link Profil TikTok</label>
+                          <div className="input-wrap">
+                            <input
+                              className="finput-real"
+                              placeholder="https://tiktok.com/@username"
+                              value={tiktokLink}
+                              onChange={(e) => setTiktokLink(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        <div className="form-field">
+                          <label>Alasan / Contoh Preset (opsional)</label>
+                          <div className="input-wrap">
+                            <textarea
+                              className="finput-real finput-multiline"
+                              placeholder="Ceritain dikit kenapa mau jadi kreator di PAM..."
+                              value={alasan}
+                              onChange={(e) => setAlasan(e.target.value)}
+                              rows={3}
+                            />
+                          </div>
+                        </div>
+                        <button className="save-btn" type="submit" disabled={submitting}>
+                          {submitting ? 'Ngirim...' : 'Ajuin Jadi Kreator'}
+                        </button>
+                      </form>
+                    </>
                   )}
                 </>
               )}
