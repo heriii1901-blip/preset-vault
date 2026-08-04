@@ -1657,10 +1657,13 @@ select.finput-real { cursor: pointer; }
 }
 
 /* ===== KREATOR SWIPE ===== */
+.kreator-page-header {
+  padding: 22px 20px 6px;
+}
 .kreator-tabs {
   position: relative;
   display: flex;
-  padding: 14px 20px 0;
+  padding: 6px 20px 0;
   border-bottom: 1px solid var(--line);
 }
 .kreator-tab {
@@ -1709,4 +1712,13 @@ select.finput-real { cursor: pointer; }
   overflow-y: auto;
   flex-shrink: 0;
 }
-
+.kreator-landing {
+  text-align: center;
+  padding: 60px 24px;
+}
+.kreator-landing-text {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 18px;
+}
