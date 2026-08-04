@@ -166,6 +166,7 @@ export default function Kreator() {
 
   // --- swipe (pointer, jalan buat touch & mouse) ---
   function onPointerDown(e) {
+    e.currentTarget.setPointerCapture(e.pointerId)
     dragState.current = { startX: e.clientX, dragging: true, deltaX: 0 }
     setIsDragging(true)
   }
@@ -207,7 +208,6 @@ export default function Kreator() {
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
-        onPointerLeave={endDrag}
       >
         <button className={panel === 0 ? 'kreator-tab active' : 'kreator-tab'} onClick={() => setPanel(0)}>
           Kreator
