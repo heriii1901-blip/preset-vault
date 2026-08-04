@@ -1658,26 +1658,35 @@ select.finput-real { cursor: pointer; }
 
 /* ===== KREATOR SWIPE ===== */
 .kreator-tabs {
+  position: relative;
   display: flex;
-  gap: 8px;
-  padding: 14px 18px 10px;
+  padding: 14px 20px 0;
+  border-bottom: 1px solid var(--line);
 }
 .kreator-tab {
   flex: 1;
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 10px 12px;
+  background: none;
+  border: none;
+  padding: 0 0 12px;
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 14.5px;
   color: var(--muted);
   cursor: pointer;
+  transition: color .2s ease;
 }
 .kreator-tab.active {
-  border-color: var(--violet);
   color: var(--text);
-  background: rgba(124, 92, 255, 0.12);
+}
+.kreator-tabs-indicator {
+  position: absolute;
+  bottom: -1px;
+  left: 20px;
+  width: calc(50% - 20px);
+  height: 2.5px;
+  background: var(--violet);
+  border-radius: 2px;
+  transition: transform 0.25s ease;
 }
 .kreator-swipe-viewport {
   flex: 1;
