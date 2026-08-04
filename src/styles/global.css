@@ -1655,3 +1655,49 @@ select.finput-real { cursor: pointer; }
     transform: translateY(0);
   }
 }
+
+/* ===== KREATOR SWIPE ===== */
+.kreator-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 14px 18px 10px;
+}
+.kreator-tab {
+  flex: 1;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.kreator-tab.active {
+  border-color: var(--violet);
+  color: var(--text);
+  background: rgba(124, 92, 255, 0.12);
+}
+.kreator-swipe-viewport {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+.kreator-swipe-track {
+  display: flex;
+  width: 200%;
+  height: 100%;
+  transition: transform 0.25s ease;
+}
+.kreator-swipe-track.dragging {
+  transition: none;
+}
+.kreator-panel {
+  width: 50%;
+  height: 100%;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
