@@ -1702,6 +1702,7 @@ select.finput-real { cursor: pointer; }
   width: 200%;
   height: 100%;
   transition: transform 0.25s ease;
+  touch-action: pan-y;
 }
 .kreator-swipe-track.dragging {
   transition: none;
@@ -1711,6 +1712,7 @@ select.finput-real { cursor: pointer; }
   height: 100%;
   overflow-y: auto;
   flex-shrink: 0;
+  touch-action: pan-y;
 }
 .kreator-landing {
   text-align: center;
