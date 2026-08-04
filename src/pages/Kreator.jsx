@@ -269,7 +269,7 @@ export default function Kreator() {
                   <div
                     key={c.creator_username}
                     className="song-row"
-                    onClick={() => navigate(`/preset/${c.id}`, { state: { source: 'kreator', creatorUsername: c.creator_username } })}
+                    onClick={() => navigate(`/kreator/${c.creator_username}`)}
                   >
                     <div className="song-thumb" style={{ background: colorFor(c.creator_username) }}>
                       {c.creator_username.charAt(0).toUpperCase()}
