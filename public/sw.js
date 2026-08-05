@@ -64,3 +64,4 @@ self.addEventListener("fetch", (event) => {
         caches.match(event.request).then((cached) => cached || Response.error())
       )
   )
+})
