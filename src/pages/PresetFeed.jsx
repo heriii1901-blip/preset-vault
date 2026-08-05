@@ -187,11 +187,10 @@ export default function PresetFeed() {
   const togglePlayPause = (id) => {
     const video = videoRefs.current[id]
     if (!video) return
-    } else if (activeVideoIdRef.current === id) {
-          video.pause()
-          activeVideoIdRef.current = null
-          setActiveId(null)
-        }
+    if (video.paused) {
+      activeVideoIdRef.current = id
+      setActiveId(id)
+      video.play()
         .then(() => {
           setPausedIds((prev) => {
             const next = new Set(prev)
@@ -207,7 +206,6 @@ export default function PresetFeed() {
       setPausedIds((prev) => new Set(prev).add(id))
     }
   }
-
   const handleTimeUpdate = (id, e) => {
     const video = e.target
     setVideoProgress((prev) => ({
