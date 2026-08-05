@@ -24,6 +24,7 @@ export default function PresetFeed() {
   const [favoritedIds, setFavoritedIds] = useState(new Set())
   const [pausedIds, setPausedIds] = useState(new Set())
   const activeVideoIdRef = useRef(null)
+  const [activeId, setActiveId] = useState(null)
   const retryCountRef = useRef({})
   const videoUrlsRef = useRef({})
   const [videoProgress, setVideoProgress] = useState({}) // Menyimpan progress tiap video { [id]: { current, duration } }
@@ -94,6 +95,7 @@ export default function PresetFeed() {
       videoRefs.current[oldId].pause()
     }
     activeVideoIdRef.current = id
+    setActiveId(id)
     const video = videoRefs.current[id]
     if (!video) return
     video.currentTime = 0
@@ -137,6 +139,7 @@ export default function PresetFeed() {
         } else if (activeVideoIdRef.current === id) {
           video.pause()
           activeVideoIdRef.current = null
+          setActiveId(null)
         }
       })
     },
@@ -184,9 +187,11 @@ export default function PresetFeed() {
   const togglePlayPause = (id) => {
     const video = videoRefs.current[id]
     if (!video) return
-    if (video.paused) {
-      activeVideoIdRef.current = id
-      video.play()
+    } else if (activeVideoIdRef.current === id) {
+          video.pause()
+          activeVideoIdRef.current = null
+          setActiveId(null)
+        }
         .then(() => {
           setPausedIds((prev) => {
             const next = new Set(prev)
@@ -373,7 +378,7 @@ export default function PresetFeed() {
                     src={loadedIds.has(preset.id) ? preset.preview_video_url : undefined}
                     loop
                     playsInline
-                    preload={loadedIds.has(preset.id) ? 'auto' : 'none'}
+                    preload={activeId === preset.id ? 'auto' : loadedIds.has(preset.id) ? 'metadata' : 'none'}
                     onClick={() => togglePlayPause(preset.id)}
                     onTimeUpdate={(e) => handleTimeUpdate(preset.id, e)}
                     onError={(e) => handleVideoError(preset.id, e)}
