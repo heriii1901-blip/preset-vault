@@ -26,6 +26,8 @@ export default function Terbaru() {
   const [loading, setLoading] = useState(!cached)
   const activeVideoRef = useRef(null)
   const gridRef = useRef(null)
+  const itemRefs = useRef({})
+  const [visibleIds, setVisibleIds] = useState(new Set())
 
   useEffect(() => {
     async function loadLatestPresets() {
@@ -69,15 +71,31 @@ export default function Terbaru() {
   }
 
   useEffect(() => {
-    const grid = gridRef.current
-    if (!grid) return
-    const onScroll = () => {
-      resetToCover(activeVideoRef.current)
-      activeVideoRef.current = null
+    if (presets.length === 0) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const id = entry.target.dataset.presetId
+          if (entry.isIntersecting) {
+            setVisibleIds((prev) => {
+              if (prev.has(id)) return prev
+              return new Set(prev).add(id)
+            })
+          }
+        })
+      },
+      { rootMargin: '150px 0px 150px 0px' }
+    )
+    const timer = setTimeout(() => {
+      Object.values(itemRefs.current).forEach((el) => {
+        if (el) observer.observe(el)
+      })
+    }, 100)
+    return () => {
+      clearTimeout(timer)
+      observer.disconnect()
     }
-    grid.addEventListener('scroll', onScroll, { passive: true })
-    return () => grid.removeEventListener('scroll', onScroll)
-  }, [])
+  }, [presets])
 
   return (
     <div className="screen">
@@ -103,6 +121,8 @@ export default function Terbaru() {
             <div
               key={preset.id}
               className="grid-cell"
+              data-preset-id={preset.id}
+              ref={(el) => { itemRefs.current[preset.id] = el }}
               onClick={() => navigate(`/preset/${preset.id}`, { state: { source: 'terbaru' } })}
               onContextMenu={(e) => e.preventDefault()}
               onPointerDown={(e) => handleStartPlay(e.currentTarget.querySelector('video'))}
@@ -116,11 +136,11 @@ export default function Terbaru() {
             >
               {preset.preview_video_url ? (
                 <video
-                  src={preset.preview_video_url}
+                  src={visibleIds.has(preset.id) ? preset.preview_video_url : undefined}
                   muted
                   loop
                   playsInline
-                  preload="metadata"
+                  preload={visibleIds.has(preset.id) ? 'metadata' : 'none'}
                   crossOrigin="anonymous"
                   disablePictureInPicture
                   controlsList="nodownload"
