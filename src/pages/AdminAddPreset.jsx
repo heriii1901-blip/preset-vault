@@ -155,24 +155,28 @@ export default function AdminAddPreset() {
           setSaveProgress((prev) => (prev < 75 ? prev + 2 : prev))
         }, 300)
 
-        const filePath = `previews/${Date.now()}_${previewFile.name}`
-        const { error: uploadErr } = await supabase.storage
-          .from('previews')
-          .upload(filePath, previewFile, { cacheControl: '3600', upsert: false })
+        const uploadRes = await fetch('/api/upload-to-r2', {
+          method: 'POST',
+          headers: {
+            'x-file-name': previewFile.name,
+            'Content-Type': previewFile.type || 'video/mp4',
+          },
+          body: previewFile,
+        })
 
         clearInterval(progressIntervalRef.current)
         progressIntervalRef.current = null
 
         if (cancelledRef.current) return
-        if (uploadErr) throw uploadErr
+        if (!uploadRes.ok) throw new Error('Upload ke R2 gagal')
 
-        const { data: publicUrlData } = supabase.storage.from('previews').getPublicUrl(filePath)
-        previewVideoUrl = publicUrlData.publicUrl
+        const uploadData = await uploadRes.json()
+        previewVideoUrl = uploadData.url
         setSaveProgress(80)
       } else {
         setSaveProgress(80)
       }
-
+      
       if (isEditMode) {
         setSaveStage('Update preset...')
         const { error: updateErr } = await supabase
