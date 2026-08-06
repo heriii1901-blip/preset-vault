@@ -38,6 +38,18 @@ export default function AdminManagePresets() {
     if (!ok) return
     setDeletingId(preset.id)
     try {
+      if (preset.preview_video_url) {
+        try {
+          await fetch('/api/delete-from-r2', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: preset.preview_video_url }),
+          })
+        } catch (r2Err) {
+          console.error('Gagal hapus video di R2 (lanjut hapus data):', r2Err)
+        }
+      }
+
       const { error: delErr } = await supabase.from('presets').delete().eq('id', preset.id)
       if (delErr) throw delErr
       if (preset.song_id) {
