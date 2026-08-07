@@ -17,10 +17,10 @@ const supabase = createClient(
 
 export default async function handler(req, res) {
   // proteksi: cuma bisa dipanggil kalau tau secretnya
-  if (req.headers["x-cleanup-secret"] !== process.env.CLEANUP_SECRET) {
+  if (req.query.secret !== process.env.CLEANUP_SECRET) {
     return res.status(403).json({ error: "Forbidden" });
   }
-
+  
   const dryRun = req.query.dryRun !== "false"; // default: cuma preview, gak beneran hapus
 
   try {
