@@ -40,7 +40,11 @@ export default function AdminCreatorApplications() {
 
       const { error: profileErr } = await supabase
         .from('profiles')
-        .update({ is_creator: true, creator_username: app.tiktok_username })
+        .update({
+          is_creator: true,
+          creator_username: app.tiktok_username,
+          tiktok_link: app.tiktok_link,
+        })
         .eq('id', app.user_id)
       if (profileErr) throw profileErr
 
