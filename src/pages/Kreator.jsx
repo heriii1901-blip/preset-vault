@@ -1,23 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabase'
-import { usePresetCache } from '../context/PresetCacheContext'
-
-const CACHE_KEY = 'kreator-list'
-
-function captureThumb(video, key, setCache) {
-  try {
-    const canvas = document.createElement('canvas')
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
-    if (!canvas.width || !canvas.height) return
-    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height)
-    setCache(`thumb:${key}`, canvas.toDataURL('image/jpeg', 0.6))
-  } catch {
-    // beda origin, skip
-  }
-}
 
 const THUMB_COLORS = [
   'linear-gradient(135deg,#7C5CFF,#4A32C9)',
@@ -35,61 +19,10 @@ function colorFor(username) {
 export default function Kreator() {
   const { user, isAdmin } = useAuth()
   const navigate = useNavigate()
-  const { getCache, setCache } = usePresetCache()
 
-  const [panel, setPanel] = useState(0) // 0 = Kreator (list), 1 = Kamu
-  const [isDragging, setIsDragging] = useState(false)
-  const [dragX, setDragX] = useState(0)
-  const dragState = useRef({ startX: 0, dragging: false, deltaX: 0 })
-
-  // status akun
-  const [loadingProfile, setLoadingProfile] = useState(true)
-  const [isCreator, setIsCreator] = useState(false)
-  const [creatorUsername, setCreatorUsername] = useState('')
-  const [application, setApplication] = useState(null)
-
-  // form pengajuan
-  const [tiktokUsername, setTiktokUsername] = useState('')
-  const [tiktokLink, setTiktokLink] = useState('')
-  const [alasan, setAlasan] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-
-  // list kreator
   const [creatorList, setCreatorList] = useState([])
   const [loadingList, setLoadingList] = useState(true)
-  const [showRegisForm, setShowRegisForm] = useState(false)
-
-  // dashboard kreator
-  const [ownPresets, setOwnPresets] = useState([])
-  const [loadingOwn, setLoadingOwn] = useState(false)
-
-  useEffect(() => {
-    async function loadStatus() {
-      if (!user) return
-      setLoadingProfile(true)
-      try {
-        const [{ data: profile, error: profileErr }, { data: apps, error: appsErr }] = await Promise.all([
-          supabase.from('profiles').select('is_creator, creator_username').eq('id', user.id).single(),
-          supabase
-            .from('creator_applications')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(1),
-        ])
-        if (profileErr) throw profileErr
-        if (appsErr) throw appsErr
-        setIsCreator(profile?.is_creator || false)
-        setCreatorUsername(profile?.creator_username || '')
-        setApplication(apps?.[0] || null)
-      } catch (err) {
-        console.error('Gagal ambil status kreator:', err)
-      } finally {
-        setLoadingProfile(false)
-      }
-    }
-    loadStatus()
-  }, [user])
+  const [ownProfile, setOwnProfile] = useState(null)
 
   useEffect(() => {
     async function loadCreatorList() {
@@ -97,7 +30,7 @@ export default function Kreator() {
       try {
         const { data, error } = await supabase
           .from('presets')
-          .select('id, creator_username, tiktok_link, preview_video_url, created_at')
+          .select('id, creator_username, preview_video_url, created_at')
           .order('created_at', { ascending: false })
         if (error) throw error
         const map = new Map()
@@ -120,100 +53,22 @@ export default function Kreator() {
   }, [])
 
   useEffect(() => {
-    if (!isCreator || !creatorUsername) return
-    async function loadOwnPresets() {
-      setLoadingOwn(true)
+    if (!isAdmin || !user) return
+    async function loadOwnProfile() {
       try {
         const { data, error } = await supabase
-          .from('presets')
-          .select('*')
-          .eq('creator_username', creatorUsername)
-          .order('created_at', { ascending: false })
+          .from('profiles')
+          .select('username, creator_username, is_creator')
+          .eq('id', user.id)
+          .single()
         if (error) throw error
-        setOwnPresets(data || [])
+        setOwnProfile(data)
       } catch (err) {
-        console.error('Gagal ambil preset kamu:', err)
-      } finally {
-        setLoadingOwn(false)
+        console.error('Gagal ambil profil admin:', err)
       }
     }
-    loadOwnPresets()
-  }, [isCreator, creatorUsername])
-
-  async function handleSubmit(e) {
-    e.preventDefault()
-    if (!tiktokUsername.trim() || !tiktokLink.trim()) return
-    setSubmitting(true)
-    try {
-      const { data, error } = await supabase
-        .from('creator_applications')
-        .insert({
-          user_id: user.id,
-          tiktok_username: tiktokUsername.trim(),
-          tiktok_link: tiktokLink.trim(),
-          alasan: alasan.trim() || null,
-        })
-        .select()
-        .single()
-      if (error) throw error
-      setApplication(data)
-    } catch (err) {
-      console.error('Gagal kirim pengajuan kreator:', err)
-      alert('Gagal kirim pengajuan, coba lagi.')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  // --- swipe (pointer, jalan buat touch & mouse) ---
-  // Capture baru dipasang pas beneran ke-detect geser (>10px), bukan pas nyentuh doang,
-  // biar tap/klik biasa ke button/song-row di dalamnya tetep jalan normal.
-  function onPointerDown(e) {
-    dragState.current = {
-      startX: e.clientX,
-      dragging: true,
-      deltaX: 0,
-      captured: false,
-      pointerId: e.pointerId,
-      target: e.currentTarget,
-    }
-  }
-  function onPointerMove(e) {
-    if (!dragState.current.dragging) return
-    const delta = e.clientX - dragState.current.startX
-
-    if (!dragState.current.captured) {
-      if (Math.abs(delta) < 10) return
-      dragState.current.captured = true
-      setIsDragging(true)
-      try {
-        dragState.current.target.setPointerCapture(dragState.current.pointerId)
-      } catch {}
-    }
-
-    dragState.current.deltaX = delta
-    setDragX(delta)
-  }
-  function endDrag(e) {
-    if (!dragState.current.dragging) return
-    const delta = dragState.current.deltaX
-    const wasCaptured = dragState.current.captured
-    dragState.current.dragging = false
-    dragState.current.captured = false
-    setIsDragging(false)
-    setDragX(0)
-
-    if (wasCaptured) {
-      if (delta < -60 && panel === 0) setPanel(1)
-      else if (delta > 60 && panel === 1) setPanel(0)
-      try {
-        e.currentTarget.releasePointerCapture(dragState.current.pointerId)
-      } catch {}
-    }
-  }
-  const trackStyle = {
-    transform: `translateX(calc(${-panel * 50}% + ${dragX}px))`,
-  }
+    loadOwnProfile()
+  }, [isAdmin, user])
 
   if (!isAdmin) {
     return (
@@ -225,240 +80,58 @@ export default function Kreator() {
     )
   }
 
+  const adminKey = ownProfile?.creator_username || null
+  const otherCreators = creatorList.filter((c) => c.creator_username !== adminKey)
+  const adminCount = adminKey ? creatorList.find((c) => c.creator_username === adminKey)?.count || 0 : 0
+  const adminDisplayName = adminKey || ownProfile?.username || 'Kamu'
+
   return (
     <div className="screen">
       <div className="kreator-page-header">
         <div className="eyebrow">KREATOR</div>
       </div>
-      <div
-        className="kreator-tabs"
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
-      >
-        <button className={panel === 0 ? 'kreator-tab active' : 'kreator-tab'} onClick={() => setPanel(0)}>
-          Kreator
-        </button>
-        <button className={panel === 1 ? 'kreator-tab active' : 'kreator-tab'} onClick={() => setPanel(1)}>
-          Kamu
-        </button>
-        <div className="kreator-tabs-indicator" style={{ transform: `translateX(${panel * 100}%)` }} />
-      </div>
-      <div
-        className="kreator-swipe-viewport"
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
-        onPointerLeave={endDrag}
-      >
-        <div className={isDragging ? 'kreator-swipe-track dragging' : 'kreator-swipe-track'} style={trackStyle}>
-          {/* PANEL 1: List semua kreator, style kek list Lagu */}
-          <div className="kreator-panel">
-            <div className="list-header" style={{ padding: '16px 18px 4px', margin: 0 }}>
-              <div className="eyebrow">KREATOR</div>
+
+      {loadingList && <div className="empty-state">Memuat...</div>}
+
+      {!loadingList && (
+        <div className="song-list" style={{ padding: '0 18px' }}>
+          {/* Akun admin selalu di-pin di paling atas */}
+          <div
+            className="song-row"
+            onClick={() => adminKey && navigate(`/kreator/${adminKey}`)}
+          >
+            <div className="song-thumb" style={{ background: colorFor(adminDisplayName) }}>
+              {adminDisplayName.charAt(0).toUpperCase()}
             </div>
-            {loadingList && <div className="empty-state">Memuat...</div>}
-            {!loadingList && creatorList.length === 0 && (
-              <div className="empty-state">Belum ada kreator.</div>
-            )}
-            {!loadingList && creatorList.length > 0 && (
-              <div className="song-list" style={{ padding: '0 18px' }}>
-                {creatorList.map((c) => (
-                  <div
-                    key={c.creator_username}
-                    className="song-row"
-                    onClick={() => navigate(`/kreator/${c.creator_username}`)}
-                  >
-                    <div className="song-thumb" style={{ background: colorFor(c.creator_username) }}>
-                      {c.creator_username.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="song-text">
-                      <h4>@{c.creator_username}</h4>
-                    </div>
-                    <span className="song-count">{c.count}</span>
-                  </div>
-                ))}
+            <div className="song-text">
+              <h4>
+                @{adminDisplayName}{' '}
+                <span style={{ color: '#FF3D3D', fontWeight: 800, fontSize: 12 }}>(ADMIN)</span>
+              </h4>
+            </div>
+            <span className="song-count">{adminCount}</span>
+          </div>
+
+          {otherCreators.length === 0 && (
+            <div className="empty-state">Belum ada kreator lain.</div>
+          )}
+          {otherCreators.map((c) => (
+            <div
+              key={c.creator_username}
+              className="song-row"
+              onClick={() => navigate(`/kreator/${c.creator_username}`)}
+            >
+              <div className="song-thumb" style={{ background: colorFor(c.creator_username) }}>
+                {c.creator_username.charAt(0).toUpperCase()}
               </div>
-            )}
-          </div>
-
-          {/* PANEL 2: Kamu */}
-          <div className="kreator-panel">
-            <div className="admin-content" style={{ padding: '0 18px 20px' }}>
-              {loadingProfile ? (
-                <div className="empty-state">Memuat...</div>
-              ) : isCreator ? (
-                <>
-                  <div className="admin-header">
-                    <span className="admin-tag">KREATOR</span>
-                    <h2>Preset Kamu ({ownPresets.length})</h2>
-                  </div>
-                  <button
-                    className="save-btn"
-                    style={{ marginBottom: 16 }}
-                    onClick={() => alert('Fitur upload preset kreator nyusul ya 🙏')}
-                  >
-                    + Upload Preset Baru
-                  </button>
-                  {loadingOwn && <div className="empty-state">Memuat presetmu...</div>}
-                  {!loadingOwn && ownPresets.length === 0 && (
-                    <div className="empty-state">Kamu belum punya preset. Yuk upload pertamamu!</div>
-                  )}
-                  {!loadingOwn && ownPresets.length > 0 && (
-                    <div className="preset-grid" style={{ padding: 0 }}>
-                      {ownPresets.map((p) => (
-                        <div
-                          key={p.id}
-                          className="grid-cell"
-                          onClick={() => navigate(`/preset/${p.id}`, { state: { source: 'kreator', creatorUsername } })}
-                          onContextMenu={(e) => e.preventDefault()}
-                        >
-                          {p.preview_video_url ? (
-                            <video
-                              src={p.preview_video_url}
-                              muted
-                              loop
-                              playsInline
-                              preload="metadata"
-                              draggable={false}
-                            />
-                          ) : (
-                            <div className="grid-fallback">🎬</div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <>
-                  <div className="admin-header">
-                    <span className="admin-tag">KREATOR</span>
-                    <h2>Program Kreator PAM</h2>
-                  </div>
-
-                  {application?.status === 'pending' && (
-                    <div className="empty-state">
-                      Pengajuan kamu (@{application.tiktok_username}) lagi direview admin. Sabar ya, biasanya gak lama kok.
-                    </div>
-                  )}
-
-                  {application?.status === 'rejected' && (
-                    <>
-                      <div className="empty-state" style={{ marginBottom: 16 }}>
-                        Pengajuan kamu sebelumnya belum diterima. Boleh coba ajuin lagi di bawah ini.
-                      </div>
-                      <form onSubmit={handleSubmit}>
-                        <div className="form-field">
-                          <label>Username TikTok</label>
-                          <div className="input-wrap">
-                            <input
-                              className="finput-real"
-                              placeholder="tanpa @"
-                              value={tiktokUsername}
-                              onChange={(e) => setTiktokUsername(e.target.value)}
-                            />
-                          </div>
-                        </div>
-                        <div className="form-field">
-                          <label>Link Profil TikTok</label>
-                          <div className="input-wrap">
-                            <input
-                              className="finput-real"
-                              placeholder="https://tiktok.com/@username"
-                              value={tiktokLink}
-                              onChange={(e) => setTiktokLink(e.target.value)}
-                            />
-                          </div>
-                        </div>
-                        <div className="form-field">
-                          <label>Alasan / Contoh Preset (opsional)</label>
-                          <div className="input-wrap">
-                            <textarea
-                              className="finput-real finput-multiline"
-                              placeholder="lagi review fiturnya dulu rek"
-                              value={alasan}
-                              onChange={(e) => setAlasan(e.target.value)}
-                              rows={3}
-                            />
-                          </div>
-                        </div>
-                        <button className="save-btn" type="submit" disabled={submitting}>
-                          {submitting ? 'Ngirim...' : 'Ajuin Lagi'}
-                        </button>
-                      </form>
-                    </>
-                  )}
-
-                  {!application && !showRegisForm && (
-                    <div className="kreator-landing">
-                      <p className="kreator-landing-text">
-                        Mau jadi kreator dan pajang preset kamu sendiri di PAM?
-                      </p>
-                      <button className="save-btn" onClick={() => setShowRegisForm(true)}>
-                        Registrasi Kreator
-                      </button>
-                    </div>
-                  )}
-
-                  {!application && showRegisForm && (
-                    <>
-                      <button
-                        className="back-btn ghost-static"
-                        style={{ marginBottom: 14, width: 'fit-content' }}
-                        onClick={() => setShowRegisForm(false)}
-                      >
-                        ← Balik
-                      </button>
-                      <form onSubmit={handleSubmit}>
-                        <div className="form-field">
-                          <label>Username TikTok</label>
-                          <div className="input-wrap">
-                            <input
-                              className="finput-real"
-                              placeholder="tanpa @"
-                              value={tiktokUsername}
-                              onChange={(e) => setTiktokUsername(e.target.value)}
-                            />
-                          </div>
-                        </div>
-                        <div className="form-field">
-                          <label>Link Profil TikTok</label>
-                          <div className="input-wrap">
-                            <input
-                              className="finput-real"
-                              placeholder="https://tiktok.com/@username"
-                              value={tiktokLink}
-                              onChange={(e) => setTiktokLink(e.target.value)}
-                            />
-                          </div>
-                        </div>
-                        <div className="form-field">
-                          <label>Alasan / Contoh Preset (opsional)</label>
-                          <div className="input-wrap">
-                            <textarea
-                              className="finput-real finput-multiline"
-                              placeholder="Ceritain dikit kenapa mau jadi kreator di PAM..."
-                              value={alasan}
-                              onChange={(e) => setAlasan(e.target.value)}
-                              rows={3}
-                            />
-                          </div>
-                        </div>
-                        <button className="save-btn" type="submit" disabled={submitting}>
-                          {submitting ? 'Ngirim...' : 'Ajuin Jadi Kreator'}
-                        </button>
-                      </form>
-                    </>
-                  )}
-                </>
-              )}
+              <div className="song-text">
+                <h4>@{c.creator_username}</h4>
+              </div>
+              <span className="song-count">{c.count}</span>
             </div>
-          </div>
+          ))}
         </div>
-      </div>
+      )}
     </div>
   )
 }
