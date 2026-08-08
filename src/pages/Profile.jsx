@@ -303,7 +303,7 @@ export default function Profile() {
               <button type="button" className="link-modal-close" onClick={() => setAboutOpen(false)}>×</button>
             </div>
             <div style={{ textAlign: 'center', padding: '10px 0 18px' }}>
-              <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, marginBottom: 4 }}>PAM</h3>
+              <h3 style={{ fontSize: 20, marginBottom: 4 }}>PAM</h3>
               <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>Preset Alight Motion</p>
               <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>Versi 1.0.0</p>
               <p style={{ fontSize: 11.5, color: 'var(--muted)' }}>kalo masih suka bug login ulang aja</p>
