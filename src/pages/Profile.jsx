@@ -281,7 +281,7 @@ export default function Profile() {
             <button type="button" className="profile-menu-item" onClick={() => alert('Coming Soon')}>Pengaturan</button>
             <button type="button" className="profile-menu-item" onClick={() => alert('Coming Soon')}>Bahasa</button>
             <button type="button" className="profile-menu-item" onClick={() => { setMenuOpen(false); setAboutOpen(true) }}>Tentang Aplikasi</button>
-            <button type="button" className="profile-menu-item" onClick={() => alert('Coming Soon')}>Kreator</button>
+            <button type="button" className="profile-menu-item" onClick={() => { setMenuOpen(false); navigate('/daftar-kreator') }}>Kreator</button>
             {!isApk && (
               <button
                 type="button"
