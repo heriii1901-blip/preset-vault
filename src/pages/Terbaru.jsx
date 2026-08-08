@@ -28,6 +28,7 @@ export default function Terbaru() {
   const gridRef = useRef(null)
   const itemRefs = useRef({})
   const [visibleIds, setVisibleIds] = useState(new Set())
+  const [failedIds, setFailedIds] = useState(new Set())
 
   useEffect(() => {
     async function loadLatestPresets() {
@@ -61,13 +62,35 @@ export default function Terbaru() {
   function handleStartPlay(video) {
     if (!video || activeVideoRef.current === video) return
     resetToCover(activeVideoRef.current)
-    video.play().catch(() => {})
     activeVideoRef.current = video
+
+    // Kalo data video belum cukup siap (kepotong antrian network pas burst load),
+    // play() bisa silent-fail. Tunggu 'canplay' dulu baru play, biar ngga ke-skip diem-diem.
+    if (video.readyState >= 2) {
+      video.play().catch(() => {})
+    } else {
+      const onReady = () => {
+        video.removeEventListener('canplay', onReady)
+        if (activeVideoRef.current === video) video.play().catch(() => {})
+      }
+      video.addEventListener('canplay', onReady)
+    }
   }
 
   function handleLoadedMetadata(e) {
     const video = e.currentTarget
-    if (video.currentTime === 0) video.currentTime = COVER_TIME
+    // Video pendek (<COVER_TIME) -> seek ke setengah durasi biar ngga mentok/gagal
+    const target = video.duration && video.duration < COVER_TIME ? video.duration / 2 : COVER_TIME
+    if (video.currentTime === 0) video.currentTime = target
+
+    // Fallback: kalo event 'seeked' ngga fire dalam 2.5 detik (network macet pas burst
+    // load banyak video bareng), paksa retry sekali. Ini yang bikin cover kadang ilang random.
+    clearTimeout(video._seekRetryTimer)
+    video._seekRetryTimer = setTimeout(() => {
+      if (video.currentTime < target - 0.1) {
+        video.currentTime = target
+      }
+    }, 2500)
   }
 
   useEffect(() => {
@@ -84,7 +107,7 @@ export default function Terbaru() {
           }
         })
       },
-      { rootMargin: '150px 0px 150px 0px' }
+      { rootMargin: '60px 0px 60px 0px' } // dulunya 150px -> hampir semua video ke-trigger barengan pas mount, bikin burst request ke R2
     )
     const timer = setTimeout(() => {
       Object.values(itemRefs.current).forEach((el) => {
@@ -134,7 +157,7 @@ export default function Terbaru() {
                 }
               }}
             >
-              {preset.preview_video_url ? (
+              {preset.preview_video_url && !failedIds.has(preset.id) ? (
                 <video
                   src={visibleIds.has(preset.id) ? preset.preview_video_url : undefined}
                   muted
@@ -147,7 +170,15 @@ export default function Terbaru() {
                   draggable={false}
                   poster={getCache(`thumb:${preset.id}`)?.data}
                   onLoadedMetadata={handleLoadedMetadata}
-                  onSeeked={(e) => captureThumb(e.currentTarget, preset.id, setCache)}
+                  onSeeked={(e) => {
+                    clearTimeout(e.currentTarget._seekRetryTimer)
+                    captureThumb(e.currentTarget, preset.id, setCache)
+                  }}
+                  onError={() => {
+                    // Beneran gagal load (bukan cuma lambat) -> jangan biarin cell kosong/blank,
+                    // tampilin fallback icon aja daripada keliatan bug
+                    setFailedIds((prev) => new Set(prev).add(preset.id))
+                  }}
                 />
               ) : (
                 <div className="grid-fallback">🎬</div>
@@ -168,4 +199,3 @@ export default function Terbaru() {
     </div>
   )
 }
-
