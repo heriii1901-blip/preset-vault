@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabase'
+import { usePresetCache } from '../context/PresetCacheContext'
+
+const CACHE_KEY = 'kreator-list'
+const REGISTERED_CACHE_KEY = 'kreator-list-registered'
 
 const THUMB_COLORS = [
   'linear-gradient(135deg,#7C5CFF,#4A32C9)',
@@ -16,16 +20,41 @@ function colorFor(username) {
   return THUMB_COLORS[Math.abs(hash) % THUMB_COLORS.length]
 }
 
+function CreatorAvatar({ displayKey, avatarUrl }) {
+  if (avatarUrl) {
+    return (
+      <div className="song-thumb" style={{ padding: 0, overflow: 'hidden' }}>
+        <img
+          src={avatarUrl}
+          alt=""
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        />
+      </div>
+    )
+  }
+  return (
+    <div className="song-thumb" style={{ background: colorFor(displayKey) }}>
+      {displayKey.charAt(0).toUpperCase()}
+    </div>
+  )
+}
+
 export default function Kreator() {
   const { user, isAdmin } = useAuth()
   const navigate = useNavigate()
+  const { getCache, setCache } = usePresetCache()
 
-  const [creatorList, setCreatorList] = useState([])
-  const [loadingList, setLoadingList] = useState(true)
+  const cachedList = getCache(CACHE_KEY)
+  const cachedRegistered = getCache(REGISTERED_CACHE_KEY)
+
+  const [creatorList, setCreatorList] = useState(cachedList?.data || [])
+  const [loadingList, setLoadingList] = useState(!cachedList)
+  const [registeredMap, setRegisteredMap] = useState(cachedRegistered?.data || {})
   const [ownProfile, setOwnProfile] = useState(null)
 
   useEffect(() => {
     async function loadCreatorList() {
+      if (getCache(CACHE_KEY)) return
       setLoadingList(true)
       try {
         const { data, error } = await supabase
@@ -42,7 +71,9 @@ export default function Kreator() {
             map.get(p.creator_username).count += 1
           }
         }
-        setCreatorList(Array.from(map.values()))
+        const list = Array.from(map.values())
+        setCreatorList(list)
+        setCache(CACHE_KEY, list)
       } catch (err) {
         console.error('Gagal ambil daftar kreator:', err)
       } finally {
@@ -50,6 +81,30 @@ export default function Kreator() {
       }
     }
     loadCreatorList()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    async function loadRegistered() {
+      if (getCache(REGISTERED_CACHE_KEY)) return
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('creator_username, account_name, avatar_url')
+          .eq('is_creator', true)
+        if (error) throw error
+        const map = {}
+        for (const p of data || []) {
+          if (p.creator_username) map[p.creator_username] = p
+        }
+        setRegisteredMap(map)
+        setCache(REGISTERED_CACHE_KEY, map)
+      } catch (err) {
+        console.error('Gagal ambil profil kreator terdaftar:', err)
+      }
+    }
+    loadRegistered()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -58,7 +113,7 @@ export default function Kreator() {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('username, creator_username, is_creator')
+          .select('username, creator_username, is_creator, account_name, avatar_url')
           .eq('id', user.id)
           .single()
         if (error) throw error
@@ -83,15 +138,18 @@ export default function Kreator() {
   const adminKey = ownProfile?.creator_username || null
   const otherCreators = creatorList.filter((c) => c.creator_username !== adminKey)
   const adminCount = adminKey ? creatorList.find((c) => c.creator_username === adminKey)?.count || 0 : 0
-  const adminDisplayName = adminKey || ownProfile?.username || 'Kamu'
+  const adminDisplayName = ownProfile?.account_name || adminKey || ownProfile?.username || 'Kamu'
+  const adminAvatar = ownProfile?.avatar_url || null
 
   return (
     <div className="screen">
-      <div className="kreator-page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="kreator-page-header">
         <div className="eyebrow">KREATOR</div>
-        <button className="admin-shortcut" onClick={() => navigate('/admin/kreator-pengajuan')}>
-          Review Pengajuan
-        </button>
+        <div className="admin-shortcut-row">
+          <button className="admin-shortcut" onClick={() => navigate('/admin/kreator-pengajuan')}>
+            Review Pengajuan
+          </button>
+        </div>
       </div>
 
       {loadingList && <div className="empty-state">Memuat...</div>}
@@ -103,14 +161,13 @@ export default function Kreator() {
             className="song-row"
             onClick={() => adminKey && navigate(`/kreator/${adminKey}`)}
           >
-            <div className="song-thumb" style={{ background: colorFor(adminDisplayName) }}>
-              {adminDisplayName.charAt(0).toUpperCase()}
-            </div>
+            <CreatorAvatar displayKey={adminDisplayName} avatarUrl={adminAvatar} />
             <div className="song-text">
               <h4>
-                @{adminDisplayName}{' '}
+                {adminDisplayName}{' '}
                 <span style={{ color: '#FF3D3D', fontWeight: 800, fontSize: 12 }}>(ADMIN)</span>
               </h4>
+              {adminKey && <p style={{ fontSize: 11, color: 'var(--muted)', margin: 0 }}>@{adminKey}</p>}
             </div>
             <span className="song-count">{adminCount}</span>
           </div>
@@ -118,21 +175,26 @@ export default function Kreator() {
           {otherCreators.length === 0 && (
             <div className="empty-state">Belum ada kreator lain.</div>
           )}
-          {otherCreators.map((c) => (
-            <div
-              key={c.creator_username}
-              className="song-row"
-              onClick={() => navigate(`/kreator/${c.creator_username}`)}
-            >
-              <div className="song-thumb" style={{ background: colorFor(c.creator_username) }}>
-                {c.creator_username.charAt(0).toUpperCase()}
+          {otherCreators.map((c) => {
+            const registered = registeredMap[c.creator_username]
+            const displayName = registered?.account_name || c.creator_username
+            return (
+              <div
+                key={c.creator_username}
+                className="song-row"
+                onClick={() => navigate(`/kreator/${c.creator_username}`)}
+              >
+                <CreatorAvatar displayKey={displayName} avatarUrl={registered?.avatar_url} />
+                <div className="song-text">
+                  <h4>{registered?.account_name ? displayName : `@${c.creator_username}`}</h4>
+                  {registered?.account_name && (
+                    <p style={{ fontSize: 11, color: 'var(--muted)', margin: 0 }}>@{c.creator_username}</p>
+                  )}
+                </div>
+                <span className="song-count">{c.count}</span>
               </div>
-              <div className="song-text">
-                <h4>@{c.creator_username}</h4>
-              </div>
-              <span className="song-count">{c.count}</span>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
