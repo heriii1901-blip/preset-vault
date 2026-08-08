@@ -1,4 +1,6 @@
 :root {
+  /* Font standar bawaan device (kek WA/IG), ngga pake Google Fonts lagi */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --bg: #0A0A0F;
   --surface: #15151D;
   --surface-2: #1D1D28;
@@ -34,7 +36,7 @@ html, body {
   background: radial-gradient(circle at 20% 10%, rgba(124, 92, 255, 0.15), transparent 40%),
               radial-gradient(circle at 80% 90%, rgba(255, 61, 127, 0.12), transparent 40%),
               var(--bg);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   color: var(--text);
 }
 
@@ -178,14 +180,14 @@ button:focus, a:focus {
   padding: 28px 26px 40px;
 }
 .eyebrow {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-sans);
   font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--lime);
   margin-bottom: 14px;
 }
 .brand {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 700;
   font-size: 40px;
   line-height: 1.05;
@@ -240,7 +242,7 @@ button:focus, a:focus {
   background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 11px 14px;
+  padding: 8px 14px; /* dulunya 11px, kegedean/ngga ramping */
 }
 .search-bar input {
   background: transparent;
@@ -249,7 +251,7 @@ button:focus, a:focus {
   color: var(--text);
   font-size: 13px;
   width: 100%;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
 }
 .search-bar input::placeholder { color: var(--muted); }
  
@@ -352,7 +354,7 @@ button:focus, a:focus {
 }
 .song-text { flex: 1; min-width: 0; }
 .song-text h4 {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 700;
   white-space: nowrap;
@@ -360,7 +362,7 @@ button:focus, a:focus {
   text-overflow: ellipsis;
 }
 .song-count {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-sans);
   font-size: 11px;
   color: var(--lime);
   background: rgba(212, 255, 61, 0.1);
@@ -414,13 +416,22 @@ button:focus, a:focus {
   clip-path: inset(0 0 0 0);
 }
 
-/* Pas ditekan: mendem cepat. Pas dilepas: mendut-mendut kek per (bounce) */
+/* Pas ditekan: mendem cepat. Pas dilepas: mantul kek per (bounce) */
 .nav-item .nav-icon {
-  transition: transform .35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: center;
 }
 .nav-item:active .nav-icon {
   transform: scale(0.8);
   transition: transform .1s ease-out;
+}
+.nav-item:not(:active) .nav-icon {
+  animation: navIconBounce .45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes navIconBounce {
+  0% { transform: scale(0.8); }
+  55% { transform: scale(1.18); }
+  75% { transform: scale(0.95); }
+  100% { transform: scale(1); }
 }
 
 .nav-submenu {
@@ -507,7 +518,7 @@ button:focus, a:focus {
     border: none;
     text-align: left;
     cursor: pointer;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-sans);
   }
 
   .nav-subitem:hover {
@@ -543,7 +554,7 @@ button:focus, a:focus {
   border: 1px solid var(--line);
   border-radius: 12px;
   color: var(--pink);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 600;
   font-size: 13px;
   padding: 12px;
@@ -574,13 +585,13 @@ button:focus, a:focus {
 }
 .admin-header { margin-bottom: 20px; }
 .admin-tag {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-sans);
   font-size: 10.5px;
   letter-spacing: 0.1em;
   color: var(--pink);
 }
 .admin-header h2 {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-sans);
   font-size: 19px;
   font-weight: 700;
   margin-top: 6px;
@@ -607,7 +618,7 @@ button:focus, a:focus {
   background: rgba(124, 92, 255, 0.12);
 }
 .tlabel {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 700;
   font-size: 13.5px;
 }
@@ -632,7 +643,7 @@ button:focus, a:focus {
   padding: 12px 13px;
   font-size: 12.5px;
   color: var(--text);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   outline: none;
 }
 .finput-real:focus { border-color: var(--violet); }
@@ -674,7 +685,7 @@ select.finput-real { cursor: pointer; }
   white-space: pre-wrap;
   word-break: break-all;
   line-height: 1.5;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-sans);
 }
 
 .input-wrap:has(.finput-multiline) .input-clear-btn {
@@ -718,7 +729,7 @@ select.finput-real { cursor: pointer; }
   margin-bottom: 18px;
 }
 .save-progress-pct {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 700;
   font-size: 26px;
   margin-bottom: 14px;
@@ -748,7 +759,7 @@ select.finput-real { cursor: pointer; }
   border: 1px solid rgba(255, 61, 127, 0.4);
   border-radius: 12px;
   color: var(--pink);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 600;
   font-size: 13px;
   padding: 10px 24px;
@@ -772,7 +783,7 @@ select.finput-real { cursor: pointer; }
   font-size: 11.5px;
   color: var(--muted);
   cursor: pointer;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
 }
 .mode-btn.active {
   color: var(--text);
@@ -809,7 +820,7 @@ select.finput-real { cursor: pointer; }
   border: none;
   border-radius: 14px;
   color: #fff;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 600;
   font-size: 14.5px;
   padding: 15px;
@@ -841,7 +852,7 @@ select.finput-real { cursor: pointer; }
   padding: 12px 14px;
 }
 .pmr-info h4 {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-sans);
   font-size: 13.5px;
   font-weight: 700;
   margin-bottom: 2px;
@@ -862,7 +873,7 @@ select.finput-real { cursor: pointer; }
   font-size: 11.5px;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
 }
 .pmr-edit {
   background: rgba(124, 92, 255, 0.15);
@@ -921,7 +932,7 @@ select.finput-real { cursor: pointer; }
   border-radius: 50%;
   background: linear-gradient(135deg, var(--violet), var(--pink));
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 700;
   font-size: 16px;
   flex-shrink: 0;
@@ -933,7 +944,7 @@ select.finput-real { cursor: pointer; }
   flex-shrink: 0;
 }
 .profile-info h4 {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-sans);
   font-size: 16px;
   font-weight: 700;
   margin-bottom: 2px;
@@ -945,7 +956,7 @@ select.finput-real { cursor: pointer; }
  
 .section-label { margin-bottom: 14px; padding: 0 2px; }
 .section-label h4 {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-sans);
   font-size: 15px;
   font-weight: 700;
   margin-top: 4px;
@@ -958,7 +969,7 @@ select.finput-real { cursor: pointer; }
   border: 1px solid rgba(255, 61, 127, 0.4);
   border-radius: 14px;
   color: var(--pink);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 600;
   font-size: 13.5px;
   padding: 13px;
@@ -985,7 +996,7 @@ select.finput-real { cursor: pointer; }
 }
  
 .grid-header h3 {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-sans);
   font-size: 17px;
 }
  
@@ -1010,7 +1021,7 @@ select.finput-real { cursor: pointer; }
   grid-auto-rows: min-content;
   align-items: start;
   align-content: start;
-  gap: 8px;
+  gap: 4px;
   padding: 8px;
 }
 
@@ -1021,13 +1032,13 @@ select.finput-real { cursor: pointer; }
   background: var(--surface-2);
   overflow: hidden;
   cursor: pointer;
-  border-radius: 10px;
+  border-radius: 6px;
 }
 
 @media (min-width: 768px) {
   .preset-grid {
     grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
+    gap: 10px;
     padding: 20px;
   }
 }
@@ -1155,7 +1166,7 @@ select.finput-real { cursor: pointer; }
 }
  
 .feed-overlay h4 {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-sans);
   font-size: 15px;
   margin-bottom: 2px;
 }
@@ -1301,7 +1312,7 @@ select.finput-real { cursor: pointer; }
 .feed-time-text {
   color: rgba(255, 255, 255, 0.9);
   font-size: 11px;
-  font-family: sans-serif;
+  font-family: var(--font-sans);
   font-weight: 500;
   margin-left: 10px;
   margin-bottom: 4px;
@@ -1395,7 +1406,7 @@ select.finput-real { cursor: pointer; }
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 700;
   font-size: 14px;
 }
@@ -1427,7 +1438,7 @@ select.finput-real { cursor: pointer; }
   resize: none;
   white-space: pre-wrap;
   word-break: break-all;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-sans);
   line-height: 1.5;
   overflow-y: auto;
 }
@@ -1469,7 +1480,7 @@ select.finput-real { cursor: pointer; }
   padding: 12px 13px;
   font-size: 12.5px;
   color: var(--text);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1527,7 +1538,7 @@ select.finput-real { cursor: pointer; }
 }
 
 .home-tagline {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-sans);
   font-size: 15px;
   font-weight: 700;
   margin-top: 4px;
@@ -1548,7 +1559,7 @@ select.finput-real { cursor: pointer; }
   background: var(--surface-2);
   color: var(--text);
   font-size: 13px;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   outline: none;
 }
 
@@ -1563,7 +1574,7 @@ select.finput-real { cursor: pointer; }
   font-weight: 600;
   font-size: 13px;
   cursor: pointer;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
 }
 
 @media (min-width: 768px) {
@@ -1618,7 +1629,7 @@ select.finput-real { cursor: pointer; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 700;
   font-size: 14px;
   margin-bottom: 12px;
@@ -1643,6 +1654,7 @@ select.finput-real { cursor: pointer; }
   flex: 1;
   min-height: 0;
   width: 100%;
+  position: relative; /* anchor buat LoadingScreen, biar ngga nutupin bottom nav */
   animation: pageEnter .15s ease-out;
 }
 @keyframes pageEnter {
@@ -1671,7 +1683,7 @@ select.finput-real { cursor: pointer; }
   background: none;
   border: none;
   padding: 0 0 12px;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 700;
   font-size: 14.5px;
   color: var(--muted);
@@ -1739,13 +1751,13 @@ select.finput-real { cursor: pointer; }
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 700;
   font-size: 20px;
   flex-shrink: 0;
 }
 .kreator-profile-info h3 {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-sans);
   font-size: 16px;
   font-weight: 700;
 }
