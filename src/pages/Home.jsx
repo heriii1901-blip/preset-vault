@@ -164,7 +164,6 @@ export default function Home() {
             </svg>
             <input
               type="search"
-              className="search-input"
               placeholder="Cari lagu..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
