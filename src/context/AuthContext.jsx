@@ -23,6 +23,20 @@ export function AuthProvider({ children }) {
     return () => listener.subscription.unsubscribe()
   }, [])
 
+  // Sinkron foto profil Google ke tabel profiles, biar bisa ditampilin di list Kreator
+  useEffect(() => {
+    if (!user) return
+    const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || null
+    if (!avatarUrl) return
+    supabase
+      .from('profiles')
+      .update({ avatar_url: avatarUrl })
+      .eq('id', user.id)
+      .then(({ error }) => {
+        if (error) console.error('Gagal sync avatar:', error)
+      })
+  }, [user])
+
   const loginWithGoogle = () =>
     supabase.auth.signInWithOAuth({
       provider: 'google',
