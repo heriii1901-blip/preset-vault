@@ -139,7 +139,8 @@ export default function AdminCreatorApplications() {
                 marginBottom: 12,
               }}
             >
-              <div style={{ fontWeight: 700, marginBottom: 4 }}>@{app.tiktok_username}</div>
+              <div style={{ fontWeight: 700, marginBottom: 2 }}>{app.account_name || '(tanpa nama akun)'}</div>
+              <div style={{ fontSize: 12.5, color: 'var(--muted)', marginBottom: 4 }}>@{app.tiktok_username}</div>
               <a
                 href={app.tiktok_link}
                 target="_blank"
@@ -148,8 +149,13 @@ export default function AdminCreatorApplications() {
               >
                 {app.tiktok_link}
               </a>
-              {app.alasan && (
-                <p style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 8 }}>{app.alasan}</p>
+              {app.am_version && (
+                <p style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 8 }}>Versi: {app.am_version}</p>
+              )}
+              {app.sample_link && (
+                <p style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 4, wordBreak: 'break-all' }}>
+                  Contoh preset: {app.sample_link}
+                </p>
               )}
               <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 8 }}>
                 Diajukan: {new Date(app.created_at).toLocaleDateString('id-ID')}
