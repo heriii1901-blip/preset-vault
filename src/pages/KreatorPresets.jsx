@@ -38,9 +38,10 @@ export default function KreatorPresets() {
   const cached = getCache(cacheKey)
   const [presets, setPresets] = useState(cached?.data || [])
   const [loading, setLoading] = useState(!cached)
+  const [creatorProfile, setCreatorProfile] = useState(null)
   const activeVideoRef = useRef(null)
   const gridRef = useRef(null)
-
+  
   useEffect(() => {
     async function loadData() {
       if (getCache(cacheKey)) return
@@ -62,6 +63,23 @@ export default function KreatorPresets() {
     }
     if (creatorUsername) loadData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [creatorUsername])
+
+  useEffect(() => {
+    async function loadCreatorProfile() {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('is_creator, tiktok_link')
+          .eq('creator_username', creatorUsername)
+          .maybeSingle()
+        if (error) throw error
+        setCreatorProfile(data)
+      } catch (err) {
+        console.error('Gagal ambil profil kreator:', err)
+      }
+    }
+    if (creatorUsername) loadCreatorProfile()
   }, [creatorUsername])
 
   function resetToCover(video) {
@@ -110,9 +128,9 @@ export default function KreatorPresets() {
         <div className="kreator-profile-info">
           <h3>@{creatorUsername}</h3>
           <p>{presets.length} preset</p>
-          {presets[0]?.tiktok_link && (
+          {creatorProfile?.is_creator && creatorProfile?.tiktok_link && (
             <a
-              href={presets[0].tiktok_link}
+              href={creatorProfile.tiktok_link}
               target="_blank"
               rel="noreferrer"
               className="kreator-profile-link"
