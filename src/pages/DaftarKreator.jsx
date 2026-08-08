@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabase'
+import { usePresetCache } from '../context/PresetCacheContext'
 
 const TERMS_TEXT = `Dengan mengajukan diri sebagai kreator di PAM, kamu menyatakan setuju bahwa:
 
@@ -14,6 +15,7 @@ const TERMS_TEXT = `Dengan mengajukan diri sebagai kreator di PAM, kamu menyatak
 export default function DaftarKreator() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { getCache, setCache } = usePresetCache()
 
   const [loadingProfile, setLoadingProfile] = useState(true)
   const [isCreator, setIsCreator] = useState(false)
@@ -28,9 +30,11 @@ export default function DaftarKreator() {
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
-  const [ownPresets, setOwnPresets] = useState([])
+  const ownCacheKey = creatorUsername ? `own-presets:${creatorUsername}` : null
+  const cachedOwn = ownCacheKey ? getCache(ownCacheKey) : null
+  const [ownPresets, setOwnPresets] = useState(cachedOwn?.data || [])
   const [loadingOwn, setLoadingOwn] = useState(false)
-
+  
   useEffect(() => {
     async function loadStatus() {
       if (!user) return
@@ -61,6 +65,7 @@ export default function DaftarKreator() {
 
   useEffect(() => {
     if (!isCreator || !creatorUsername) return
+    if (getCache(`own-presets:${creatorUsername}`)) return
     async function loadOwnPresets() {
       setLoadingOwn(true)
       try {
@@ -71,6 +76,7 @@ export default function DaftarKreator() {
           .order('created_at', { ascending: false })
         if (error) throw error
         setOwnPresets(data || [])
+        setCache(`own-presets:${creatorUsername}`, data || [])
       } catch (err) {
         console.error('Gagal ambil preset kamu:', err)
       } finally {
@@ -78,6 +84,7 @@ export default function DaftarKreator() {
       }
     }
     loadOwnPresets()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCreator, creatorUsername])
 
   function isFormValid() {
