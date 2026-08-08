@@ -44,6 +44,7 @@ export default function AdminCreatorApplications() {
           is_creator: true,
           creator_username: app.tiktok_username,
           tiktok_link: app.tiktok_link,
+          account_name: app.account_name,
         })
         .eq('id', app.user_id)
       if (profileErr) throw profileErr
