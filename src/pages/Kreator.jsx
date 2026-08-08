@@ -87,8 +87,11 @@ export default function Kreator() {
 
   return (
     <div className="screen">
-      <div className="kreator-page-header">
+      <div className="kreator-page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div className="eyebrow">KREATOR</div>
+        <button className="admin-shortcut" onClick={() => navigate('/admin/kreator-pengajuan')}>
+          Review Pengajuan
+        </button>
       </div>
 
       {loadingList && <div className="empty-state">Memuat...</div>}
