@@ -24,7 +24,7 @@ export default function LoadingScreen() {
 
 const styles = {
   wrapper: {
-    position: "fixed",
+    position: "absolute", // dulunya "fixed" -> nutupin seluruh layar termasuk bottom nav
     inset: 0,
     display: "flex",
     justifyContent: "center",
