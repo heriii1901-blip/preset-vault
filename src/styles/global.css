@@ -242,7 +242,7 @@ button:focus, a:focus {
   background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 8px 14px; /* dulunya 11px, kegedean/ngga ramping */
+  padding: 12px 14px; /* disamain sama tinggi box search di menu Cari, dulu numpuk 2 padding jadi kegedean */
 }
 .search-bar input {
   background: transparent;
@@ -1553,6 +1553,7 @@ select.finput-real { cursor: pointer; }
 
 .search-input {
   flex: 1;
+  min-width: 0; /* biar input beneran bisa nyusut, defaultnya <input> punya lebar minimum bawaan browser yang bikin tombol Cari kedorong keluar layar */
   padding: 12px 14px;
   border-radius: 11px;
   border: 1px solid var(--line);
@@ -1566,6 +1567,7 @@ select.finput-real { cursor: pointer; }
 .search-input:focus { border-color: var(--violet); }
 .search-input::placeholder { color: var(--muted); }
 .search-go-btn {
+  flex-shrink: 0; /* biar tombolnya tetep utuh, yang nyusut cuma kotak input */
   padding: 12px 20px;
   border-radius: 11px;
   border: none;
