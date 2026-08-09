@@ -7,42 +7,14 @@ import Kreator from './Kreator'
 import KreatorHubTabs from '../components/KreatorHubTabs'
 
 export default function KreatorHome() {
-  const { user } = useAuth()
+  const { isCreator, creatorUsername } = useAuth()
   const navigate = useNavigate()
   const { getCache, setCache } = usePresetCache()
-
-  const [checkedStatus, setCheckedStatus] = useState(false)
-  const [isCreator, setIsCreator] = useState(false)
-  const [creatorUsername, setCreatorUsername] = useState('')
 
   const ownCacheKey = creatorUsername ? `own-presets:${creatorUsername}` : null
   const cachedOwn = ownCacheKey ? getCache(ownCacheKey) : null
   const [ownPresets, setOwnPresets] = useState(cachedOwn?.data || [])
   const [loadingOwn, setLoadingOwn] = useState(false)
-
-  useEffect(() => {
-    async function loadStatus() {
-      if (!user) {
-        setCheckedStatus(true)
-        return
-      }
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('is_creator, creator_username')
-          .eq('id', user.id)
-          .single()
-        if (error) throw error
-        setIsCreator(data?.is_creator || false)
-        setCreatorUsername(data?.creator_username || '')
-      } catch (err) {
-        console.error('Gagal ambil status kreator:', err)
-      } finally {
-        setCheckedStatus(true)
-      }
-    }
-    loadStatus()
-  }, [user])
 
   useEffect(() => {
     if (!isCreator || !creatorUsername) return
@@ -68,7 +40,7 @@ export default function KreatorHome() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCreator, creatorUsername])
 
-  if (!checkedStatus || !isCreator) {
+  if (!isCreator) {
     return <Kreator />
   }
 
