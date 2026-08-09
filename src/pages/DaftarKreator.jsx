@@ -1,3 +1,4 @@
+import KreatorHubTabs from '../components/KreatorHubTabs'
 import { CREATOR_FONT_OPTIONS, creatorNameStyle } from '../utils/creatorFont'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -14,7 +15,7 @@ const TERMS_TEXT = `Dengan mengajukan diri sebagai kreator di PAM, kamu menyatak
 5. Admin PAM berhak menolak atau membatalkan pengajuan/status kreator kapan pun kalau ada pelanggaran.`
 
 export default function DaftarKreator() {
-  const { user } = useAuth()
+  const { user, isAdmin } = useAuth()
   const navigate = useNavigate()
   const { getCache, setCache } = usePresetCache()
 
@@ -270,48 +271,59 @@ export default function DaftarKreator() {
         {loadingProfile ? (
           <div className="empty-state">Memuat...</div>
         ) : isCreator ? (
-          <>
-            <div className="admin-header">
-              <span className="admin-tag">KREATOR</span>
-              <h2>Preset Kamu ({ownPresets.length})</h2>
+          isAdmin ? (
+            <div style={{ margin: '-14px -18px -20px' }}>
+              <KreatorHubTabs
+                creatorUsername={creatorUsername}
+                ownPresets={ownPresets}
+                loadingOwn={loadingOwn}
+                navigate={navigate}
+              />
             </div>
-            <button
-              className="save-btn"
-              style={{ marginBottom: 16 }}
-              onClick={() => alert('Fitur upload preset kreator nyusul ya 🙏')}
-            >
-              + Upload Preset Baru
-            </button>
-            {loadingOwn && <div className="empty-state">Memuat presetmu...</div>}
-            {!loadingOwn && ownPresets.length === 0 && (
-              <div className="empty-state">Kamu belum punya preset. Yuk upload pertamamu!</div>
-            )}
-            {!loadingOwn && ownPresets.length > 0 && (
-              <div className="preset-grid" style={{ padding: 0 }}>
-                {ownPresets.map((p) => (
-                  <div
-                    key={p.id}
-                    className="grid-cell"
-                    onClick={() => navigate(`/preset/${p.id}`, { state: { source: 'kreator', creatorUsername } })}
-                    onContextMenu={(e) => e.preventDefault()}
-                  >
-                    {p.preview_video_url ? (
-                      <video
-                        src={p.preview_video_url}
-                        muted
-                        loop
-                        playsInline
-                        preload="metadata"
-                        draggable={false}
-                      />
-                    ) : (
-                      <div className="grid-fallback">🎬</div>
-                    )}
-                  </div>
-                ))}
+          ) : (
+            <>
+              <div className="admin-header">
+                <span className="admin-tag">KREATOR</span>
+                <h2>Preset Kamu ({ownPresets.length})</h2>
               </div>
-            )}
-          </>
+              <button
+                className="save-btn"
+                style={{ marginBottom: 16 }}
+                onClick={() => alert('Fitur upload preset kreator nyusul ya 🙏')}
+              >
+                + Upload Preset Baru
+              </button>
+              {loadingOwn && <div className="empty-state">Memuat presetmu...</div>}
+              {!loadingOwn && ownPresets.length === 0 && (
+                <div className="empty-state">Kamu belum punya preset. Yuk upload pertamamu!</div>
+              )}
+              {!loadingOwn && ownPresets.length > 0 && (
+                <div className="preset-grid" style={{ padding: 0 }}>
+                  {ownPresets.map((p) => (
+                    <div
+                      key={p.id}
+                      className="grid-cell"
+                      onClick={() => navigate(`/preset/${p.id}`, { state: { source: 'kreator', creatorUsername } })}
+                      onContextMenu={(e) => e.preventDefault()}
+                    >
+                      {p.preview_video_url ? (
+                        <video
+                          src={p.preview_video_url}
+                          muted
+                          loop
+                          playsInline
+                          preload="metadata"
+                          draggable={false}
+                        />
+                      ) : (
+                        <div className="grid-fallback">🎬</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )
         ) : (
           <>
             <div className="admin-header">
