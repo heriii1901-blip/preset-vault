@@ -6,17 +6,43 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [isCreator, setIsCreator] = useState(false)
+  const [creatorUsername, setCreatorUsername] = useState('')
+
+  async function loadCreatorStatus(userId) {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('is_creator, creator_username')
+        .eq('id', userId)
+        .single()
+      if (error) throw error
+      setIsCreator(data?.is_creator || false)
+      setCreatorUsername(data?.creator_username || '')
+    } catch (err) {
+      console.error('Gagal ambil status kreator:', err)
+    }
+  }
 
   useEffect(() => {
     // Cek session yang lagi aktif pas app pertama kali dibuka
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      const sessionUser = session?.user ?? null
+      setUser(sessionUser)
+      if (sessionUser) await loadCreatorStatus(sessionUser.id)
       setLoading(false)
     })
 
     // Dengerin perubahan status login (login/logout) secara real-time
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const sessionUser = session?.user ?? null
+      setUser(sessionUser)
+      if (sessionUser) {
+        await loadCreatorStatus(sessionUser.id)
+      } else {
+        setIsCreator(false)
+        setCreatorUsername('')
+      }
       setLoading(false)
     })
 
@@ -51,7 +77,7 @@ export function AuthProvider({ children }) {
   // Ini "penjaga pintu" yang kita omongin: cek email yang login sama admin
   const isAdmin = user?.email === ADMIN_EMAIL
 
-  const value = { user, loading, isAdmin, loginWithGoogle, logout }
+  const value = { user, loading, isAdmin, isCreator, creatorUsername, loginWithGoogle, logout }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
