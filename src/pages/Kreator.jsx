@@ -1,3 +1,4 @@
+import { creatorNameStyle } from '../utils/creatorFont'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -90,7 +91,7 @@ export default function Kreator() {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('creator_username, account_name, avatar_url')
+          .select('creator_username, account_name, avatar_url, account_font, account_bold')
           .eq('is_creator', true)
         if (error) throw error
         const map = {}
@@ -113,7 +114,7 @@ export default function Kreator() {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('username, creator_username, is_creator, account_name, avatar_url')
+          .select('username, creator_username, is_creator, account_name, avatar_url, account_font, account_bold')
           .eq('id', user.id)
           .single()
         if (error) throw error
@@ -163,10 +164,10 @@ export default function Kreator() {
           >
             <CreatorAvatar displayKey={adminDisplayName} avatarUrl={adminAvatar} />
             <div className="song-text">
-              <h4>
-                {adminDisplayName}{' '}
-                <span style={{ color: '#FF3D3D', fontWeight: 800, fontSize: 12 }}>(ADMIN)</span>
-              </h4>
+              <h4 style={creatorNameStyle(ownProfile?.account_font, ownProfile?.account_bold)}>
+              {adminDisplayName}{' '}
+              <span style={{ color: '#FF3D3D', fontWeight: 800, fontSize: 12, fontFamily: 'var(--font-sans)' }}>(ADMIN)</span>
+            </h4>
               {adminKey && <p style={{ fontSize: 11, color: 'var(--muted)', margin: 0 }}>@{adminKey}</p>}
             </div>
             <span className="song-count">{adminCount}</span>
@@ -186,7 +187,9 @@ export default function Kreator() {
               >
                 <CreatorAvatar displayKey={displayName} avatarUrl={registered?.avatar_url} />
                 <div className="song-text">
-                  <h4>{registered?.account_name ? displayName : `@${c.creator_username}`}</h4>
+                  <h4 style={registered ? creatorNameStyle(registered.account_font, registered.account_bold) : undefined}>
+                    {registered?.account_name ? displayName : `@${c.creator_username}`}
+                  </h4>
                   {registered?.account_name && (
                     <p style={{ fontSize: 11, color: 'var(--muted)', margin: 0 }}>@{c.creator_username}</p>
                   )}
