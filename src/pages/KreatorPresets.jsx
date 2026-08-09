@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { usePresetCache } from '../context/PresetCacheContext'
+import { creatorNameStyle } from '../utils/creatorFont'
 
 const COVER_TIME = 2
 
@@ -70,7 +71,7 @@ export default function KreatorPresets() {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('is_creator, tiktok_link')
+          .select('is_creator, tiktok_link, account_name, account_font, account_bold')
           .eq('creator_username', creatorUsername)
           .maybeSingle()
         if (error) throw error
@@ -126,7 +127,12 @@ export default function KreatorPresets() {
           {creatorUsername.charAt(0).toUpperCase()}
         </div>
         <div className="kreator-profile-info">
-          <h3>@{creatorUsername}</h3>
+          <h3 style={creatorProfile ? creatorNameStyle(creatorProfile.account_font, creatorProfile.account_bold) : undefined}>
+            {creatorProfile?.account_name || `@${creatorUsername}`}
+          </h3>
+          {creatorProfile?.account_name && (
+            <p style={{ fontSize: 11, color: 'var(--muted)', margin: '2px 0 0' }}>@{creatorUsername}</p>
+          )}
           <p>{presets.length} preset</p>
           {creatorProfile?.is_creator && creatorProfile?.tiktok_link && (
             <a
