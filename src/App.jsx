@@ -13,7 +13,7 @@ import SongPresets from './pages/SongPresets'
 import Terbaru from './pages/Terbaru'
 import CariKreator from './pages/CariKreator'
 import PresetFeed from './pages/PresetFeed'
-import Kreator from './pages/Kreator'
+import KreatorHome from './pages/KreatorHome'
 import DaftarKreator from './pages/DaftarKreator'
 import KreatorPresets from './pages/KreatorPresets'
 import AdminCreatorApplications from './pages/AdminCreatorApplications'
@@ -127,7 +127,7 @@ export default function App() {
                   path="/kreator"
                   element={
                     <ProtectedRoute>
-                      <Kreator />
+                      <KreatorHome />
                     </ProtectedRoute>
                   }
                 />
