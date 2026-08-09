@@ -289,7 +289,7 @@ export default function DaftarKreator() {
               <button
                 className="save-btn"
                 style={{ marginBottom: 16 }}
-                onClick={() => alert('Fitur upload preset kreator nyusul ya 🙏')}
+                onClick={() => navigate('/kreator/tambah-preset')}
               >
                 + Upload Preset Baru
               </button>
