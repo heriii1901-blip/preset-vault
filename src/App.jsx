@@ -18,6 +18,8 @@ import DaftarKreator from './pages/DaftarKreator'
 import KreatorPresets from './pages/KreatorPresets'
 import AdminCreatorApplications from './pages/AdminCreatorApplications'
 import DownloadPage from './pages/DownloadPage'
+import KreatorAddPreset from './pages/KreatorAddPreset'
+import AdminSongRequests from './pages/AdminSongRequests'
 
 export default function App() {
   const location = useLocation()
@@ -142,6 +144,22 @@ export default function App() {
                   element={
                     <ProtectedRoute>
                       <DaftarKreator />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/kreator/tambah-preset"
+                  element={
+                    <ProtectedRoute>
+                      <KreatorAddPreset />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/song-requests"
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <AdminSongRequests />
                     </ProtectedRoute>
                   }
                 />
