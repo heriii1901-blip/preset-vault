@@ -1620,17 +1620,30 @@ select.finput-real { cursor: pointer; }
   z-index: 100;
   display: flex;
   justify-content: flex-end;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.26s ease;
+}
+.profile-menu-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .profile-menu-drawer {
-  width: 240px;
+  width: 78vw;
+  max-width: 420px;
   height: 100%;
   background: var(--surface);
   border-left: 1px solid var(--line);
   padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+  transform: translateX(100%);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.profile-menu-drawer.is-open {
+  transform: translateX(0);
 }
 
 .profile-menu-header {
@@ -1644,16 +1657,39 @@ select.finput-real { cursor: pointer; }
 }
 
 .profile-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   text-align: left;
   background: none;
   border: none;
   color: var(--text);
-  font-size: 13.5px;
-  padding: 12px 8px;
+  font-size: 14px;
+  padding: 13px 8px;
   border-radius: 10px;
   cursor: pointer;
+  width: 100%;
 }
 .profile-menu-item:hover { background: var(--surface-2); }
+
+.profile-menu-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.profile-menu-label {
+  flex: 1;
+  font-weight: 700;
+}
+
+.profile-menu-chevron {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--muted);
+}
 
 /* Transisi halaman pas pindah menu */
 .page-transition {
