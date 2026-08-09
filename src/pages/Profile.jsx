@@ -271,29 +271,67 @@ export default function Profile() {
         </button>
       </div>
 
-      {menuOpen && (
-        <div className="profile-menu-backdrop" onClick={() => setMenuOpen(false)}>
-          <div className="profile-menu-drawer" onClick={(e) => e.stopPropagation()}>
-            <div className="profile-menu-header">
-              <span>Menu</span>
-              <button type="button" className="link-modal-close" onClick={() => setMenuOpen(false)}>×</button>
-            </div>
-            <button type="button" className="profile-menu-item" onClick={() => alert('Coming Soon')}>Pengaturan</button>
-            <button type="button" className="profile-menu-item" onClick={() => alert('Coming Soon')}>Bahasa</button>
-            <button type="button" className="profile-menu-item" onClick={() => { setMenuOpen(false); setAboutOpen(true) }}>Tentang Aplikasi</button>
-            <button type="button" className="profile-menu-item" onClick={() => { setMenuOpen(false); navigate('/daftar-kreator') }}>Kreator</button>
-            {!isApk && (
-              <button
-                type="button"
-                className="profile-menu-item"
-                onClick={() => window.open('https://sl1nk.com/pam-v1-0-0')}
-              >
-                Download Apk
-              </button>
-            )}
+      <div className={`profile-menu-backdrop${menuOpen ? ' is-open' : ''}`} onClick={() => setMenuOpen(false)}>
+        <div className={`profile-menu-drawer${menuOpen ? ' is-open' : ''}`} onClick={(e) => e.stopPropagation()}>
+          <div className="profile-menu-header">
+            <span>Menu</span>
+            <button type="button" className="link-modal-close" onClick={() => setMenuOpen(false)}>×</button>
           </div>
+
+          <button type="button" className="profile-menu-item" onClick={() => alert('Coming Soon')}>
+            <svg className="profile-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+            <span className="profile-menu-label">Pengaturan</span>
+            <svg className="profile-menu-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 6 15 12 9 18" /></svg>
+          </button>
+
+          <button type="button" className="profile-menu-item" onClick={() => alert('Coming Soon')}>
+            <svg className="profile-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="2" y1="12" x2="22" y2="12" />
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+            </svg>
+            <span className="profile-menu-label">Bahasa</span>
+            <svg className="profile-menu-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 6 15 12 9 18" /></svg>
+          </button>
+
+          <button type="button" className="profile-menu-item" onClick={() => { setMenuOpen(false); setAboutOpen(true) }}>
+            <svg className="profile-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+            <span className="profile-menu-label">Tentang Aplikasi</span>
+            <svg className="profile-menu-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 6 15 12 9 18" /></svg>
+          </button>
+
+          <button type="button" className="profile-menu-item" onClick={() => { setMenuOpen(false); navigate('/daftar-kreator') }}>
+            <svg className="profile-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <span className="profile-menu-label">Kreator</span>
+            <svg className="profile-menu-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 6 15 12 9 18" /></svg>
+          </button>
+
+          {!isApk && (
+            <button
+              type="button"
+              className="profile-menu-item"
+              onClick={() => window.open('https://sl1nk.com/pam-v1-0-0')}
+            >
+              <svg className="profile-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              <span className="profile-menu-label">Download Apk</span>
+              <svg className="profile-menu-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 6 15 12 9 18" /></svg>
+            </button>
+          )}
         </div>
-      )}
+      </div>
 
       {aboutOpen && (
         <div className="link-modal-backdrop" onClick={() => setAboutOpen(false)}>
