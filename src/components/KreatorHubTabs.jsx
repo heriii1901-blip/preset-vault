@@ -50,7 +50,7 @@ export default function KreatorHubTabs({ creatorUsername, ownPresets, loadingOwn
             <button
               className="save-btn"
               style={{ marginBottom: 16 }}
-              onClick={() => alert('Fitur upload preset kreator nyusul ya 🙏')}
+              onClick={() => navigate('/kreator/tambah-preset')}
             >
               + Upload Preset Baru
             </button>
