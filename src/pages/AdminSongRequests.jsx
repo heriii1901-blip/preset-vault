@@ -209,7 +209,7 @@ export default function AdminSongRequests() {
               )}
 
               {req.tiktok_link && (
-                
+                <a
                   href={req.tiktok_link}
                   target="_blank"
                   rel="noreferrer"
