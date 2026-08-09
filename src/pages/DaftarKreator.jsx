@@ -1,10 +1,8 @@
-import KreatorHubTabs from '../components/KreatorHubTabs'
 import { CREATOR_FONT_OPTIONS, creatorNameStyle } from '../utils/creatorFont'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabase'
-import { usePresetCache } from '../context/PresetCacheContext'
 
 const TERMS_TEXT = `Dengan mengajukan diri sebagai kreator di PAM, kamu menyatakan setuju bahwa:
 
@@ -15,13 +13,10 @@ const TERMS_TEXT = `Dengan mengajukan diri sebagai kreator di PAM, kamu menyatak
 5. Admin PAM berhak menolak atau membatalkan pengajuan/status kreator kapan pun kalau ada pelanggaran.`
 
 export default function DaftarKreator() {
-  const { user, isAdmin } = useAuth()
+  const { user } = useAuth()
   const navigate = useNavigate()
-  const { getCache, setCache } = usePresetCache()
 
   const [loadingProfile, setLoadingProfile] = useState(true)
-  const [isCreator, setIsCreator] = useState(false)
-  const [creatorUsername, setCreatorUsername] = useState('')
   const [application, setApplication] = useState(null)
 
   const [accountName, setAccountName] = useState('')
@@ -34,11 +29,6 @@ export default function DaftarKreator() {
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
-  const ownCacheKey = creatorUsername ? `own-presets:${creatorUsername}` : null
-  const cachedOwn = ownCacheKey ? getCache(ownCacheKey) : null
-  const [ownPresets, setOwnPresets] = useState(cachedOwn?.data || [])
-  const [loadingOwn, setLoadingOwn] = useState(false)
-  
   useEffect(() => {
     async function loadStatus() {
       if (!user) return
@@ -55,8 +45,10 @@ export default function DaftarKreator() {
         ])
         if (profileErr) throw profileErr
         if (appsErr) throw appsErr
-        setIsCreator(profile?.is_creator || false)
-        setCreatorUsername(profile?.creator_username || '')
+        if (profile?.is_creator) {
+          navigate('/kreator', { replace: true })
+          return
+        }
         setApplication(apps?.[0] || null)
       } catch (err) {
         console.error('Gagal ambil status kreator:', err)
@@ -65,31 +57,7 @@ export default function DaftarKreator() {
       }
     }
     loadStatus()
-  }, [user])
-
-  useEffect(() => {
-    if (!isCreator || !creatorUsername) return
-    if (getCache(`own-presets:${creatorUsername}`)) return
-    async function loadOwnPresets() {
-      setLoadingOwn(true)
-      try {
-        const { data, error } = await supabase
-          .from('presets')
-          .select('*')
-          .eq('creator_username', creatorUsername)
-          .order('created_at', { ascending: false })
-        if (error) throw error
-        setOwnPresets(data || [])
-        setCache(`own-presets:${creatorUsername}`, data || [])
-      } catch (err) {
-        console.error('Gagal ambil preset kamu:', err)
-      } finally {
-        setLoadingOwn(false)
-      }
-    }
-    loadOwnPresets()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isCreator, creatorUsername])
+  }, [user, navigate])
 
   function isFormValid() {
     return (
@@ -270,60 +238,6 @@ export default function DaftarKreator() {
       <div className="admin-content" style={{ padding: '14px 18px 20px' }}>
         {loadingProfile ? (
           <div className="empty-state">Memuat...</div>
-        ) : isCreator ? (
-          isAdmin ? (
-            <div style={{ margin: '-14px -18px -20px' }}>
-              <KreatorHubTabs
-                creatorUsername={creatorUsername}
-                ownPresets={ownPresets}
-                loadingOwn={loadingOwn}
-                navigate={navigate}
-              />
-            </div>
-          ) : (
-            <>
-              <div className="admin-header">
-                <span className="admin-tag">KREATOR</span>
-                <h2>Preset Kamu ({ownPresets.length})</h2>
-              </div>
-              <button
-                className="save-btn"
-                style={{ marginBottom: 16 }}
-                onClick={() => navigate('/kreator/tambah-preset')}
-              >
-                + Upload Preset Baru
-              </button>
-              {loadingOwn && <div className="empty-state">Memuat presetmu...</div>}
-              {!loadingOwn && ownPresets.length === 0 && (
-                <div className="empty-state">Kamu belum punya preset. Yuk upload pertamamu!</div>
-              )}
-              {!loadingOwn && ownPresets.length > 0 && (
-                <div className="preset-grid" style={{ padding: 0 }}>
-                  {ownPresets.map((p) => (
-                    <div
-                      key={p.id}
-                      className="grid-cell"
-                      onClick={() => navigate(`/preset/${p.id}`, { state: { source: 'kreator', creatorUsername } })}
-                      onContextMenu={(e) => e.preventDefault()}
-                    >
-                      {p.preview_video_url ? (
-                        <video
-                          src={p.preview_video_url}
-                          muted
-                          loop
-                          playsInline
-                          preload="metadata"
-                          draggable={false}
-                        />
-                      ) : (
-                        <div className="grid-fallback">🎬</div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
-          )
         ) : (
           <>
             <div className="admin-header">
