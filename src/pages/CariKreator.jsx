@@ -70,7 +70,16 @@ export default function CariKreator() {
             className="search-input"
             placeholder="Ketik nama kreator..."
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value
+              setInputValue(val)
+              if (!val.trim()) {
+                setSearchTerm('')
+                setResults([])
+                setSearched(false)
+                setCache(CACHE_KEY, { searchTerm: '', results: [] })
+              }
+            }}
             onKeyDown={handleKeyDown}
             autoComplete="off"
             autoCorrect="off"
