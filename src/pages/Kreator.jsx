@@ -44,6 +44,19 @@ export default function Kreator() {
   const { user, isAdmin } = useAuth()
   const navigate = useNavigate()
   const { getCache, setCache } = usePresetCache()
+  const [pendingSongCount, setPendingSongCount] = useState(0)
+
+  useEffect(() => {
+    if (!isAdmin) return
+    supabase
+      .from('song_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'pending')
+      .then(({ count, error }) => {
+        if (error) return console.error('Gagal ambil jumlah permintaan lagu:', error)
+        setPendingSongCount(count || 0)
+      })
+  }, [isAdmin])
 
   const cachedList = getCache(CACHE_KEY)
   const cachedRegistered = getCache(REGISTERED_CACHE_KEY)
@@ -149,6 +162,9 @@ export default function Kreator() {
         <div className="admin-shortcut-row">
           <button className="admin-shortcut" onClick={() => navigate('/admin/kreator-pengajuan')}>
             Review Pengajuan
+          </button>
+          <button className="admin-shortcut" onClick={() => navigate('/admin/song-requests')}>
+            Request Lagu{pendingSongCount > 0 ? ` (${pendingSongCount})` : ''}
           </button>
         </div>
       </div>
