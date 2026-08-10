@@ -1671,6 +1671,12 @@ select.finput-real { cursor: pointer; }
   width: 100%;
 }
 .profile-menu-item:hover { background: var(--surface-2); }
+.profile-menu-item-danger {
+  color: #e5484d;
+}
+.profile-menu-item-danger .profile-menu-icon {
+  stroke: #e5484d;
+}
 
 .profile-menu-icon {
   width: 20px;
