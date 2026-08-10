@@ -82,20 +82,6 @@ export function BottomNav() {
           </NavLink>
         </div>
       )}
-      
-      {isKreatorActive && isAdmin && (
-        <div className="nav-submenu">
-          <NavLink to="/admin/kreator-pengajuan" className={({ isActive }) => `nav-subitem${isActive ? ' active' : ''}`}>
-            <span>Review Pengajuan</span>
-          </NavLink>
-          <NavLink to="/admin/song-requests" className={({ isActive }) => `nav-subitem${isActive ? ' active' : ''}`}>
-            <span className="nav-subitem-row">
-              Request Lagu
-              {pendingSongCount > 0 && <span className="nav-subitem-badge">{pendingSongCount}</span>}
-            </span>
-          </NavLink>
-        </div>
-      )}
 
       <NavLink to="/kreator" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
         <span className="nav-icon">
@@ -110,6 +96,20 @@ export function BottomNav() {
         </span>
         <span>Kreator</span>
       </NavLink>
+
+      {isKreatorActive && isAdmin && (
+        <div className="nav-submenu">
+          <NavLink to="/admin/kreator-pengajuan" className={({ isActive }) => `nav-subitem${isActive ? ' active' : ''}`}>
+            <span>Review Pengajuan</span>
+          </NavLink>
+          <NavLink to="/admin/song-requests" className={({ isActive }) => `nav-subitem${isActive ? ' active' : ''}`}>
+            <span className="nav-subitem-row">
+              Request Lagu
+              {pendingSongCount > 0 && <span className="nav-subitem-badge">{pendingSongCount}</span>}
+            </span>
+          </NavLink>
+        </div>
+      )}
 
       <NavLink to="/akun" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
         <span className="nav-icon">
