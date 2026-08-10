@@ -37,7 +37,6 @@ export default function Profile() {
   const [loadingFavs, setLoadingFavs] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
-  const [pendingSongCount, setPendingSongCount] = useState(0)
   const isApk = isRunningAsApk()
   const activeVideoRef = useRef(null)
 
@@ -75,19 +74,6 @@ export default function Profile() {
   }
   loadProfileName()
 }, [user])
-
-  // Jumlah permintaan lagu yang belum direview (buat badge, admin doang)
-  useEffect(() => {
-    if (!isAdmin) return
-    supabase
-      .from('song_requests')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'pending')
-      .then(({ count, error }) => {
-        if (error) return console.error('Gagal ambil jumlah permintaan lagu:', error)
-        setPendingSongCount(count || 0)
-      })
-  }, [isAdmin])
 
   // Load data Favorit
   useEffect(() => {
@@ -305,19 +291,6 @@ export default function Profile() {
             <span className="profile-menu-label">Kreator</span>
             <svg className="profile-menu-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 6 15 12 9 18" /></svg>
           </button>
-
-          {isAdmin && (
-            <button type="button" className="profile-menu-item" onClick={() => { setMenuOpen(false); navigate('/admin/song-requests') }}>
-              <svg className="profile-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 18V5l12-2v13" />
-                <circle cx="6" cy="18" r="3" />
-                <circle cx="18" cy="16" r="3" />
-              </svg>
-              <span className="profile-menu-label">Permintaan Lagu</span>
-              {pendingSongCount > 0 && <span className="profile-menu-badge">{pendingSongCount}</span>}
-              <svg className="profile-menu-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 6 15 12 9 18" /></svg>
-            </button>
-          )}
 
           {!isApk && (
             <button
