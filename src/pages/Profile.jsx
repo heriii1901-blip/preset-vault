@@ -279,10 +279,6 @@ export default function Profile() {
           </div>
         )}
         </div>
-
-        <button className="logout-btn" onClick={handleLogout}>
-          Keluar Akun
-        </button>
       </div>
 
       <div className={`profile-menu-backdrop${menuOpen ? ' is-open' : ''}`} onClick={() => setMenuOpen(false)}>
@@ -357,9 +353,22 @@ export default function Profile() {
               <svg className="profile-menu-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 6 15 12 9 18" /></svg>
             </button>
           )}
+
+          <button
+            type="button"
+            className="profile-menu-item profile-menu-item-danger"
+            onClick={() => { setMenuOpen(false); handleLogout() }}
+          >
+            <svg className="profile-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            <span className="profile-menu-label">Keluar Akun</span>
+          </button>
         </div>
       </div>
-
+      
       {aboutOpen && (
         <div className="link-modal-backdrop" onClick={() => setAboutOpen(false)}>
           <div className="link-modal-box" onClick={(e) => e.stopPropagation()}>
