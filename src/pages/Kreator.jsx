@@ -159,14 +159,6 @@ export default function Kreator() {
     <div className="screen">
       <div className="kreator-page-header">
         <div className="eyebrow">KREATOR</div>
-        <div className="admin-shortcut-row">
-          <button className="admin-shortcut" onClick={() => navigate('/admin/kreator-pengajuan')}>
-            Review Pengajuan
-          </button>
-          <button className="admin-shortcut" onClick={() => navigate('/admin/song-requests')}>
-            Request Lagu{pendingSongCount > 0 ? ` (${pendingSongCount})` : ''}
-          </button>
-        </div>
       </div>
 
       {loadingList && <div className="empty-state">Memuat...</div>}
@@ -216,6 +208,15 @@ export default function Kreator() {
           })}
         </div>
       )}
+
+      <div className="admin-shortcut-row">
+        <button className="admin-shortcut" onClick={() => navigate('/admin/kreator-pengajuan')}>
+          Review Pengajuan
+        </button>
+        <button className="admin-shortcut" onClick={() => navigate('/admin/song-requests')}>
+          Request Lagu{pendingSongCount > 0 ? ` (${pendingSongCount})` : ''}
+        </button>
+      </div>
     </div>
   )
 }
