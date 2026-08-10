@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { supabase } from '../supabase'
 
 export function BottomNav() {
   const location = useLocation()
@@ -9,6 +11,20 @@ export function BottomNav() {
   const isLaguActive = location.pathname.startsWith('/lagu')
   const isKreatorActive = location.pathname.startsWith('/kreator')
   const isAkunActive = location.pathname === '/akun'
+
+  const [pendingSongCount, setPendingSongCount] = useState(0)
+
+  useEffect(() => {
+    if (!isAdmin) return
+    supabase
+      .from('song_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'pending')
+      .then(({ count, error }) => {
+        if (error) return console.error('Gagal ambil jumlah permintaan lagu:', error)
+        setPendingSongCount(count || 0)
+      })
+  }, [isAdmin])
 
   return (
     <div className="bottom-nav">
@@ -66,10 +82,17 @@ export function BottomNav() {
           </NavLink>
         </div>
       )}
+      
       {isKreatorActive && isAdmin && (
         <div className="nav-submenu">
           <NavLink to="/admin/kreator-pengajuan" className={({ isActive }) => `nav-subitem${isActive ? ' active' : ''}`}>
             <span>Review Pengajuan</span>
+          </NavLink>
+          <NavLink to="/admin/song-requests" className={({ isActive }) => `nav-subitem${isActive ? ' active' : ''}`}>
+            <span className="nav-subitem-row">
+              Request Lagu
+              {pendingSongCount > 0 && <span className="nav-subitem-badge">{pendingSongCount}</span>}
+            </span>
           </NavLink>
         </div>
       )}
