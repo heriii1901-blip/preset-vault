@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext'
 import { PresetCacheProvider } from './context/PresetCacheContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { BottomNav } from './components/BottomNav'
+import { ServerNoticeBanner } from './components/ServerNoticeBanner'
 
 import Login from './pages/Login'
 import Home from './pages/Home'
@@ -176,6 +177,8 @@ export default function App() {
 
             {/* BottomNav dirender di sini agar tidak hilang saat refresh */}
             {shouldShowNav && <BottomNav />}
+
+            <ServerNoticeBanner />
           </div>
         </div>
       </PresetCacheProvider>
