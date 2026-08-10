@@ -19,6 +19,10 @@ export default function KreatorHubTabs({ creatorUsername, ownPresets, loadingOwn
 
   return (
     <div className="kreator-hub">
+      <div className="kreator-page-header">
+        <div className="eyebrow">KREATOR</div>
+      </div>
+
       <div className="kreator-hub-tabs">
         <button
           type="button"
@@ -38,7 +42,7 @@ export default function KreatorHubTabs({ creatorUsername, ownPresets, loadingOwn
 
       <div className="kreator-hub-scroller" ref={scrollerRef} onScroll={handleScroll}>
         <div className="kreator-hub-page">
-          <Kreator />
+          <Kreator hideHeader />
         </div>
 
         <div className="kreator-hub-page">
