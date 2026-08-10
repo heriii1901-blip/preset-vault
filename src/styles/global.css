@@ -1879,3 +1879,60 @@ select.finput-real { cursor: pointer; }
   scroll-snap-align: start;
   overflow-y: auto;
 }
+
+.server-notice-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 24px;
+}
+
+.server-notice-box {
+  position: relative;
+  background: var(--bg-card, #1a1a1a);
+  border-radius: 14px;
+  padding: 22px 20px 20px;
+  max-width: 320px;
+  width: 100%;
+  text-align: center;
+}
+
+.server-notice-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.server-notice-title {
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.server-notice-text {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.server-notice-ok {
+  background: var(--lime);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
