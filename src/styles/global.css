@@ -1928,6 +1928,8 @@ select.finput-real { cursor: pointer; }
   flex-shrink: 0;
   scroll-snap-align: start;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .server-notice-backdrop {
