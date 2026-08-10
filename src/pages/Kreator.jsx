@@ -40,7 +40,7 @@ function CreatorAvatar({ displayKey, avatarUrl }) {
   )
 }
 
-export default function Kreator() {
+export default function Kreator({ hideHeader = false }) {
   const { user, isAdmin } = useAuth()
   const navigate = useNavigate()
   const { getCache, setCache } = usePresetCache()
@@ -157,9 +157,11 @@ export default function Kreator() {
 
   return (
     <div className="screen">
-      <div className="kreator-page-header">
-        <div className="eyebrow">KREATOR</div>
-      </div>
+      {!hideHeader && (
+        <div className="kreator-page-header">
+          <div className="eyebrow">KREATOR</div>
+        </div>
+      )}
 
       {loadingList && <div className="empty-state">Memuat...</div>}
 
