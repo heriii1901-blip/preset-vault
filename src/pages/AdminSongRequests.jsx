@@ -171,83 +171,79 @@ export default function AdminSongRequests() {
           <div className="empty-state">Gak ada permintaan di kategori ini.</div>
         )}
 
-        {!loading &&
-          filteredRequests.map((req) => (
-            <div
-              key={req.id}
-              style={{
-                background: 'var(--surface-2)',
-                border: '1px solid var(--line)',
-                borderRadius: 14,
-                padding: 14,
-                marginBottom: 12,
-              }}
-            >
-              <div style={{ fontSize: 12.5, color: 'var(--muted)', marginBottom: 6 }}>@{req.creator_username}</div>
+        {!loading && filteredRequests.length > 0 && (
+          <div className="preset-manage-list">
+            {filteredRequests.map((req) => (
+              <div className="request-card" key={req.id}>
+                <div className="request-card-top">
+                  <div className="pmr-info" style={{ flex: 1, minWidth: 0 }}>
+                    {req.status === 'pending' ? (
+                      <div className="input-wrap" style={{ marginBottom: 4 }}>
+                        <input
+                          className="finput-real"
+                          value={editedNames[req.id] ?? req.requested_song_name}
+                          onChange={(e) => setEditedNames((prev) => ({ ...prev, [req.id]: e.target.value }))}
+                        />
+                      </div>
+                    ) : (
+                      <h4>{req.requested_song_name}</h4>
+                    )}
+                    <p>@{req.creator_username}</p>
+                  </div>
 
-              {req.status === 'pending' ? (
-                <div className="input-wrap" style={{ marginBottom: 8 }}>
-                  <input
-                    className="finput-real"
-                    value={editedNames[req.id] ?? req.requested_song_name}
-                    onChange={(e) => setEditedNames((prev) => ({ ...prev, [req.id]: e.target.value }))}
+                  {req.status === 'pending' && (
+                    <div className="pmr-actions">
+                      <button
+                        className="pmr-approve"
+                        disabled={processingId === req.id}
+                        onClick={() => handleApprove(req)}
+                      >
+                        {processingId === req.id ? '...' : 'Approve'}
+                      </button>
+                      <button
+                        className="pmr-reject"
+                        disabled={processingId === req.id}
+                        onClick={() => handleReject(req)}
+                      >
+                        {processingId === req.id ? '...' : 'Tolak'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {req.preview_video_url && (
+                  <video
+                    src={req.preview_video_url}
+                    muted
+                    loop
+                    playsInline
+                    controls
+                    style={{ width: '100%', borderRadius: 10, marginTop: 8 }}
                   />
-                </div>
-              ) : (
-                <div style={{ fontWeight: 700, marginBottom: 6 }}>{req.requested_song_name}</div>
-              )}
+                )}
 
-              {req.preview_video_url && (
-                <video
-                  src={req.preview_video_url}
-                  muted
-                  loop
-                  playsInline
-                  controls
-                  style={{ width: '100%', borderRadius: 10, marginBottom: 8 }}
-                />
-              )}
-
-              {req.tiktok_link && (
-                <a
-                  href={req.tiktok_link}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ fontSize: 12.5, color: 'var(--pink)', wordBreak: 'break-all', display: 'block', marginBottom: 4 }}
-                >
-                  {req.tiktok_link}
-                </a>
-              )}
-
-              <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 8 }}>
-                Diajukan: {new Date(req.created_at).toLocaleDateString('id-ID')}
-              </p>
-
-              {req.status === 'rejected' && req.admin_note && (
-                <p style={{ fontSize: 12, color: '#FF5C5C', marginTop: 6 }}>Alasan: {req.admin_note}</p>
-              )}
-
-              {req.status === 'pending' && (
-                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                  <button
-                    className="admin-shortcut"
-                    style={{ color: 'var(--lime)' }}
-                    disabled={processingId === req.id}
-                    onClick={() => handleApprove(req)}
+                {req.tiktok_link && (
+                  <a
+                    href={req.tiktok_link}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ fontSize: 12.5, color: 'var(--pink)', wordBreak: 'break-all', display: 'block', marginTop: 8 }}
                   >
-                    {processingId === req.id ? '...' : 'Approve'}
-                  </button>
-                  <button
-                    className="admin-shortcut admin-shortcut-danger"
-                    disabled={processingId === req.id}
-                    onClick={() => handleReject(req)}
-                  >
-                    {processingId === req.id ? '...' : 'Tolak'}
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
+                    {req.tiktok_link}
+                  </a>
+                )}
+
+                <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 8 }}>
+                  Diajukan: {new Date(req.created_at).toLocaleDateString('id-ID')}
+                </p>
+
+                {req.status === 'rejected' && req.admin_note && (
+                  <p style={{ fontSize: 12, color: '#FF5C5C', marginTop: 6 }}>Alasan: {req.admin_note}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
