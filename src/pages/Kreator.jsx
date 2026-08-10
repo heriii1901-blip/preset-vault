@@ -211,7 +211,7 @@ export default function Kreator({ hideHeader = false }) {
         </div>
       )}
 
-      <div className="admin-shortcut-row" style={{ padding: '0 20px', marginTop: 14 }}>
+      <div className="admin-shortcut-row" style={{ padding: '0 20px 20px', marginTop: 14 }}>
         <button className="admin-shortcut" onClick={() => navigate('/admin/kreator-pengajuan')}>
           Review Pengajuan
         </button>
