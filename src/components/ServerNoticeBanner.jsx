@@ -24,7 +24,7 @@ export function ServerNoticeBanner() {
         <p className="server-notice-title">PEMBERITAHUAN!!!</p>
         <p className="server-notice-text">
           Server lagi kena limit bandwidth dari penyedia hosting, jadi kadang preset baru telat muncul atau video gagal load.
-          Bukan admin males update, murni server lagi dibatasi. Sabar ya, nanti balik normal sendiri sampe limit kena reset ><.
+          Bukan admin males update, murni server lagi dibatasi. Sabar ya, nanti balik normal sendiri sampe limit kena reset.
         </p>
         <button type="button" className="server-notice-ok" onClick={dismiss}>Oke, Lanjut</button>
       </div>
