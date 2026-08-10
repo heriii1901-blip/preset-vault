@@ -255,6 +255,15 @@ export default function Profile() {
             <button type="button" className="link-modal-close" onClick={() => setMenuOpen(false)}>×</button>
           </div>
 
+          <button type="button" className="profile-menu-item" onClick={() => { setMenuOpen(false); navigate('/edit-profil') }}>
+            <svg className="profile-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+            </svg>
+            <span className="profile-menu-label">Edit Profil</span>
+            <svg className="profile-menu-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 6 15 12 9 18" /></svg>
+          </button>
+
           <button type="button" className="profile-menu-item" onClick={() => alert('Coming Soon')}>
             <svg className="profile-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3" />
