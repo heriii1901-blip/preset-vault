@@ -416,7 +416,7 @@ button:focus, a:focus {
 .icon-fill {
   stroke: var(--lime);
   clip-path: inset(100% 0 0 0);
-  transition: clip-path .65s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: clip-path .85s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .nav-item.active .icon-fill {
   clip-path: inset(0 0 0 0);
