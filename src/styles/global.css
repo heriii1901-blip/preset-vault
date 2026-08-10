@@ -395,7 +395,7 @@ button:focus, a:focus {
   color: var(--muted);
   cursor: pointer;
   text-decoration: none;
-  transition: color .2s ease;
+  transition: color .85s ease;
 }
 .nav-item span { font-size: 10.5px; font-weight: 500; }
 .nav-item.active { color: var(--text); }
