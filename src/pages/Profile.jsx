@@ -194,26 +194,7 @@ export default function Profile() {
             <div className="avatar">{initials}</div>
           )}
           <div className="profile-info">
-            {editingName ? (
-              <div className="name-edit-row">
-                <input
-                  className="name-edit-input"
-                  value={nameInput}
-                  onChange={(e) => setNameInput(e.target.value)}
-                  maxLength={40}
-                  autoFocus
-                />
-                <button className="name-edit-save" onClick={saveName} disabled={savingName}>
-                  {savingName ? '...' : '✓'}
-                </button>
-                <button className="name-edit-cancel" onClick={cancelEditName}>×</button>
-              </div>
-            ) : (
-              <div className="name-display-row">
-                <h4>{profileName}</h4>
-                <button className="name-edit-trigger" onClick={startEditName} aria-label="Ubah nama">✎</button>
-              </div>
-            )}
+            <h4>{profileName}</h4>
             <p>{user?.email}</p>
           </div>
         </div>
