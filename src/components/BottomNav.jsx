@@ -10,11 +10,6 @@ export function BottomNav() {
   const isKreatorActive = location.pathname.startsWith('/kreator')
   const isAkunActive = location.pathname === '/akun'
 
-  const handleLogout = async () => {
-    await logout()
-    navigate('/login', { replace: true })
-  }
-
   return (
     <div className="bottom-nav">
       <NavLink to="/" end className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
@@ -106,14 +101,6 @@ export function BottomNav() {
         </span>
         <span>Akun</span>
       </NavLink>
-
-      {isAkunActive && (
-        <div className="nav-submenu">
-          <button type="button" className="nav-subitem nav-subitem-danger" onClick={handleLogout}>
-            <span>Keluar Akun</span>
-          </button>
-        </div>
-      )}
     </div>
   )
 }
