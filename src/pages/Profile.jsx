@@ -265,10 +265,6 @@ export default function Profile() {
           </div>
         </div>
 
-        <button type="button" className="profile-edit-btn" onClick={() => navigate('/edit-profil')}>
-          Edit Profil
-        </button>
-
         {isCreator ? (
           <>
             <div className="profile-tabs">
