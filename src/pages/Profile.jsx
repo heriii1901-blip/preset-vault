@@ -252,7 +252,7 @@ export default function Profile() {
             )}
             {profile?.bio && <p className="profile-bio">{profile.bio}</p>}
             {isCreator && profile?.contact_link && (
-              
+              <a
                 href={profile.contact_link}
                 target="_blank"
                 rel="noreferrer"
