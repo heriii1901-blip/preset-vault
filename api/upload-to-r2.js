@@ -34,7 +34,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Missing x-file-name header" });
     }
 
-    const key = `presets/${Date.now()}-${fileName}`;
+    const folder = req.headers["x-upload-folder"] || "presets";
+    const key = `${folder}/${Date.now()}-${fileName}`;
 
     await s3.send(
       new PutObjectCommand({
