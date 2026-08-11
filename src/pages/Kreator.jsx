@@ -155,57 +155,59 @@ export default function Kreator({ hideHeader = false }) {
         </div>
       )}
 
-      {loadingList && <div className="empty-state">Memuat...</div>}
+      <div className="song-list" style={{ padding: '0 18px' }}>
+        {loadingList && <div className="empty-state">Memuat...</div>}
 
-      {!loadingList && (
-        <div className="song-list" style={{ padding: '0 18px' }}>
-          {/* Akun admin selalu di-pin di paling atas */}
-          {isAdmin && (
-            <div
-              className="song-row"
-              onClick={() => adminKey && navigate(`/kreator/${adminKey}`)}
-            >
-              <CreatorAvatar displayKey={adminDisplayName} avatarUrl={adminAvatar} />
-              <div className="song-text">
-                <h4 style={creatorNameStyle(ownProfile?.account_font, ownProfile?.account_bold)}>
-                {adminDisplayName}{' '}
-                <span style={{ color: '#FF3D3D', fontWeight: 800, fontSize: 12, fontFamily: 'var(--font-sans)' }}>(ADMIN)</span>
-              </h4>
-                {adminKey && <p style={{ fontSize: 11, color: 'var(--muted)', margin: 0 }}>@{adminKey}</p>}
-              </div>
-              <span className="song-count">{adminCount}</span>
-            </div>
-          )}
-
-          {otherCreators.length === 0 && (
-            <div className="empty-state">
-              {isAdmin ? 'Belum ada kreator lain.' : 'Belum ada kreator terdaftar.'}
-            </div>
-          )}
-          {otherCreators.map((c) => {
-            const registered = registeredMap[c.creator_username]
-            const displayName = registered?.account_name || c.creator_username
-            return (
+        {!loadingList && (
+          <>
+            {/* Akun admin selalu di-pin di paling atas */}
+            {isAdmin && (
               <div
-                key={c.creator_username}
                 className="song-row"
-                onClick={() => navigate(`/kreator/${c.creator_username}`)}
+                onClick={() => adminKey && navigate(`/kreator/${adminKey}`)}
               >
-                <CreatorAvatar displayKey={displayName} avatarUrl={registered?.avatar_url} />
+                <CreatorAvatar displayKey={adminDisplayName} avatarUrl={adminAvatar} />
                 <div className="song-text">
-                  <h4 style={registered ? creatorNameStyle(registered.account_font, registered.account_bold) : undefined}>
-                    {registered?.account_name ? displayName : `@${c.creator_username}`}
-                  </h4>
-                  {registered?.account_name && (
-                    <p style={{ fontSize: 11, color: 'var(--muted)', margin: 0 }}>@{c.creator_username}</p>
-                  )}
+                  <h4 style={creatorNameStyle(ownProfile?.account_font, ownProfile?.account_bold)}>
+                  {adminDisplayName}{' '}
+                  <span style={{ color: '#FF3D3D', fontWeight: 800, fontSize: 12, fontFamily: 'var(--font-sans)' }}>(ADMIN)</span>
+                </h4>
+                  {adminKey && <p style={{ fontSize: 11, color: 'var(--muted)', margin: 0 }}>@{adminKey}</p>}
                 </div>
-                <span className="song-count">{c.count}</span>
+                <span className="song-count">{adminCount}</span>
               </div>
-            )
-          })}
-        </div>
-      )}
+            )}
+
+            {otherCreators.length === 0 && (
+              <div className="empty-state">
+                {isAdmin ? 'Belum ada kreator lain.' : 'Belum ada kreator terdaftar.'}
+              </div>
+            )}
+            {otherCreators.map((c) => {
+              const registered = registeredMap[c.creator_username]
+              const displayName = registered?.account_name || c.creator_username
+              return (
+                <div
+                  key={c.creator_username}
+                  className="song-row"
+                  onClick={() => navigate(`/kreator/${c.creator_username}`)}
+                >
+                  <CreatorAvatar displayKey={displayName} avatarUrl={registered?.avatar_url} />
+                  <div className="song-text">
+                    <h4 style={registered ? creatorNameStyle(registered.account_font, registered.account_bold) : undefined}>
+                      {registered?.account_name ? displayName : `@${c.creator_username}`}
+                    </h4>
+                    {registered?.account_name && (
+                      <p style={{ fontSize: 11, color: 'var(--muted)', margin: 0 }}>@{c.creator_username}</p>
+                    )}
+                  </div>
+                  <span className="song-count">{c.count}</span>
+                </div>
+              )
+            })}
+          </>
+        )}
+      </div>
 
       {isAdmin && (
         <div className="admin-shortcut-row" style={{ padding: '0 20px 20px', marginTop: 14 }}>
