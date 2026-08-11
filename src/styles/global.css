@@ -1053,7 +1053,7 @@ select.finput-real { cursor: pointer; }
   display: flex;
   gap: 4px;
   padding: 0 18px;
-  margin-top: 26px;
+  margin-top: 28px;
   border-bottom: 1px solid var(--line);
   flex-shrink: 0;
 }
