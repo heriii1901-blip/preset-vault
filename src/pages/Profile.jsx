@@ -259,7 +259,7 @@ export default function Profile() {
                 className="profile-link"
                 onClick={(e) => e.stopPropagation()}
               >
-                🔗 Link Kontak
+                🔗 Buka link
               </a>
             )}
           </div>
