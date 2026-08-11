@@ -139,18 +139,10 @@ export default function Kreator({ hideHeader = false }) {
     loadOwnProfile()
   }, [isAdmin, user])
 
-  if (!isAdmin) {
-    return (
-      <div className="screen">
-        <div className="empty-state" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700 }}>
-          Akan Hadir!!!
-        </div>
-      </div>
-    )
-  }
-
-  const adminKey = ownProfile?.creator_username || null
-  const otherCreators = creatorList.filter((c) => c.creator_username !== adminKey)
+  const adminKey = isAdmin ? (ownProfile?.creator_username || null) : null
+  const otherCreators = isAdmin
+    ? creatorList.filter((c) => c.creator_username !== adminKey)
+    : creatorList
   const adminCount = adminKey ? creatorList.find((c) => c.creator_username === adminKey)?.count || 0 : 0
   const adminDisplayName = ownProfile?.account_name || adminKey || ownProfile?.username || 'Kamu'
   const adminAvatar = ownProfile?.avatar_url || null
@@ -168,23 +160,27 @@ export default function Kreator({ hideHeader = false }) {
       {!loadingList && (
         <div className="song-list" style={{ padding: '0 18px' }}>
           {/* Akun admin selalu di-pin di paling atas */}
-          <div
-            className="song-row"
-            onClick={() => adminKey && navigate(`/kreator/${adminKey}`)}
-          >
-            <CreatorAvatar displayKey={adminDisplayName} avatarUrl={adminAvatar} />
-            <div className="song-text">
-              <h4 style={creatorNameStyle(ownProfile?.account_font, ownProfile?.account_bold)}>
-              {adminDisplayName}{' '}
-              <span style={{ color: '#FF3D3D', fontWeight: 800, fontSize: 12, fontFamily: 'var(--font-sans)' }}>(ADMIN)</span>
-            </h4>
-              {adminKey && <p style={{ fontSize: 11, color: 'var(--muted)', margin: 0 }}>@{adminKey}</p>}
+          {isAdmin && (
+            <div
+              className="song-row"
+              onClick={() => adminKey && navigate(`/kreator/${adminKey}`)}
+            >
+              <CreatorAvatar displayKey={adminDisplayName} avatarUrl={adminAvatar} />
+              <div className="song-text">
+                <h4 style={creatorNameStyle(ownProfile?.account_font, ownProfile?.account_bold)}>
+                {adminDisplayName}{' '}
+                <span style={{ color: '#FF3D3D', fontWeight: 800, fontSize: 12, fontFamily: 'var(--font-sans)' }}>(ADMIN)</span>
+              </h4>
+                {adminKey && <p style={{ fontSize: 11, color: 'var(--muted)', margin: 0 }}>@{adminKey}</p>}
+              </div>
+              <span className="song-count">{adminCount}</span>
             </div>
-            <span className="song-count">{adminCount}</span>
-          </div>
+          )}
 
           {otherCreators.length === 0 && (
-            <div className="empty-state">Belum ada kreator lain.</div>
+            <div className="empty-state">
+              {isAdmin ? 'Belum ada kreator lain.' : 'Belum ada kreator terdaftar.'}
+            </div>
           )}
           {otherCreators.map((c) => {
             const registered = registeredMap[c.creator_username]
@@ -211,14 +207,16 @@ export default function Kreator({ hideHeader = false }) {
         </div>
       )}
 
-      <div className="admin-shortcut-row" style={{ padding: '0 20px 20px', marginTop: 14 }}>
-        <button className="admin-shortcut" onClick={() => navigate('/admin/kreator-pengajuan')}>
-          Review Pengajuan
-        </button>
-        <button className="admin-shortcut" onClick={() => navigate('/admin/song-requests')}>
-          Request Lagu{pendingSongCount > 0 ? ` (${pendingSongCount})` : ''}
-        </button>
-      </div>
+      {isAdmin && (
+        <div className="admin-shortcut-row" style={{ padding: '0 20px 20px', marginTop: 14 }}>
+          <button className="admin-shortcut" onClick={() => navigate('/admin/kreator-pengajuan')}>
+            Review Pengajuan
+          </button>
+          <button className="admin-shortcut" onClick={() => navigate('/admin/song-requests')}>
+            Request Lagu{pendingSongCount > 0 ? ` (${pendingSongCount})` : ''}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
