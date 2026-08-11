@@ -966,7 +966,7 @@ select.finput-real { cursor: pointer; }
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 26px 18px 20px;
+  padding: 26px 0 0;
 }
 
 .profile-scroll {
@@ -980,7 +980,7 @@ select.finput-real { cursor: pointer; }
   align-items: center;
   gap: 14px;
   margin-bottom: 24px;
-  padding: 0 2px;
+  padding: 0 18px;
   flex-shrink: 0;
 }
 .avatar {
@@ -1010,7 +1010,7 @@ select.finput-real { cursor: pointer; }
   color: var(--muted);
 }
  
-.section-label { margin-bottom: 14px; padding: 0 2px; }
+.section-label { margin-bottom: 14px; padding: 0 18px; }
 .section-label h4 {
   font-family: var(--font-sans);
   font-size: 15px;
@@ -1052,6 +1052,7 @@ select.finput-real { cursor: pointer; }
 .profile-tabs {
   display: flex;
   gap: 4px;
+  padding: 0 18px;
   border-bottom: 1px solid var(--line);
   flex-shrink: 0;
 }
@@ -1205,26 +1206,19 @@ select.finput-real { cursor: pointer; }
 }
 
 /* Grid preset khusus di halaman Profile: full-bleed nempel tepi layar kek TikTok, no gap/bingkai */
+.profile-scroll .empty-state,
+.profile-tab-page .empty-state {
+  padding-left: 18px;
+  padding-right: 18px;
+}
 .profile-scroll .preset-grid,
 .profile-tab-page .preset-grid {
   gap: 1px;
   padding: 0;
-  margin: 0 -18px;
-  width: calc(100% + 36px);
 }
 .profile-scroll .grid-cell,
 .profile-tab-page .grid-cell {
   border-radius: 0;
-}
-
-@media (min-width: 768px) {
-  .profile-scroll .preset-grid,
-  .profile-tab-page .preset-grid {
-    gap: 1px;
-    padding: 0;
-    margin: 0 -18px;
-    width: calc(100% + 36px);
-  }
 }
  
 /* ===== Fullscreen Video Feed (TikTok style) ===== */
