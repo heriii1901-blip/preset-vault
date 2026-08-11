@@ -153,7 +153,7 @@ export default function App() {
                 <Route
                   path="/daftar-kreator"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requireAdmin>
                       <DaftarKreator />
                     </ProtectedRoute>
                   }
