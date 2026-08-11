@@ -1146,8 +1146,8 @@ select.finput-real { cursor: pointer; }
   grid-auto-rows: min-content;
   align-items: start;
   align-content: start;
-  gap: 4px;
-  padding: 8px;
+  gap: 1px;
+  padding: 0;
 }
 
 .grid-cell {
@@ -1157,7 +1157,7 @@ select.finput-real { cursor: pointer; }
   background: var(--surface-2);
   overflow: hidden;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 0;
 }
 
 @media (min-width: 768px) {
@@ -1210,15 +1210,6 @@ select.finput-real { cursor: pointer; }
 .profile-tab-page .empty-state {
   padding-left: 18px;
   padding-right: 18px;
-}
-.profile-scroll .preset-grid,
-.profile-tab-page .preset-grid {
-  gap: 1px;
-  padding: 0;
-}
-.profile-scroll .grid-cell,
-.profile-tab-page .grid-cell {
-  border-radius: 0;
 }
  
 /* ===== Fullscreen Video Feed (TikTok style) ===== */
