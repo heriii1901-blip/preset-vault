@@ -46,21 +46,21 @@ export default function KreatorHubTabs({ creatorUsername, ownPresets, loadingOwn
         </div>
 
         <div className="kreator-hub-page">
-          <div className="admin-content" style={{ padding: '14px 18px 20px' }}>
-            <div className="admin-header">
+          <div className="admin-content" style={{ padding: '14px 0 0' }}>
+            <div className="admin-header" style={{ padding: '0 18px' }}>
               <span className="admin-tag">KREATOR</span>
               <h2>Preset Kamu ({ownPresets.length})</h2>
             </div>
             <button
               className="save-btn"
-              style={{ marginBottom: 16 }}
+              style={{ marginBottom: 16, marginLeft: 18, marginRight: 18, width: 'calc(100% - 36px)' }}
               onClick={() => navigate('/kreator/tambah-preset')}
             >
               + Upload Preset Baru
             </button>
-            {loadingOwn && <div className="empty-state">Memuat presetmu...</div>}
+            {loadingOwn && <div className="empty-state" style={{ paddingLeft: 18, paddingRight: 18 }}>Memuat presetmu...</div>}
             {!loadingOwn && ownPresets.length === 0 && (
-              <div className="empty-state">Kamu belum punya preset. Yuk upload pertamamu!</div>
+              <div className="empty-state" style={{ paddingLeft: 18, paddingRight: 18 }}>Kamu belum punya preset. Yuk upload pertamamu!</div>
             )}
             {!loadingOwn && ownPresets.length > 0 && (
               <div className="preset-grid" style={{ padding: 0 }}>
