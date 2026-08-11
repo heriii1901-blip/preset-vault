@@ -7,9 +7,9 @@
   --font-creator-bebas: 'Bebas Neue', var(--font-sans);
   --font-creator-caveat: 'Caveat', cursive;
   --font-creator-righteous: 'Righteous', var(--font-sans);
-  --bg: #0A0A0F;
-  --surface: #15151D;
-  --surface-2: #1D1D28;
+  --bg: #121212;
+  --surface: #1E1E1E;
+  --surface-2: #2A2A2A;
   --violet: #7C5CFF;
   --pink: #FF3D7F;
   --lime: #D4FF3D;
