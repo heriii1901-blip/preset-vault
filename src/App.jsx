@@ -21,6 +21,7 @@ import AdminCreatorApplications from './pages/AdminCreatorApplications'
 import DownloadPage from './pages/DownloadPage'
 import KreatorAddPreset from './pages/KreatorAddPreset'
 import AdminSongRequests from './pages/AdminSongRequests'
+import EditProfile from './pages/EditProfile'
 
 export default function App() {
   const location = useLocation()
@@ -79,6 +80,15 @@ export default function App() {
                   element={
                     <ProtectedRoute>
                       <Profile />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/edit-profil"
+                  element={
+                    <ProtectedRoute>
+                      <EditProfile />
                     </ProtectedRoute>
                   }
                 />
