@@ -71,7 +71,7 @@ export default function KreatorPresets() {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('is_creator, tiktok_link, account_name, account_font, account_bold')
+          .select('is_creator, tiktok_link, contact_link, bio, avatar_url, account_name, account_font, account_bold')
           .eq('creator_username', creatorUsername)
           .maybeSingle()
         if (error) throw error
@@ -82,7 +82,7 @@ export default function KreatorPresets() {
     }
     if (creatorUsername) loadCreatorProfile()
   }, [creatorUsername])
-
+  
   function resetToCover(video) {
     if (!video) return
     video.pause()
@@ -123,9 +123,18 @@ export default function KreatorPresets() {
       </button>
 
       <div className="kreator-profile-header">
-        <div className="kreator-profile-avatar" style={{ background: colorFor(creatorUsername) }}>
-          {creatorUsername.charAt(0).toUpperCase()}
-        </div>
+        {creatorProfile?.avatar_url ? (
+          <img
+            src={creatorProfile.avatar_url}
+            alt=""
+            className="kreator-profile-avatar"
+            style={{ width: 72, height: 72, objectFit: 'cover' }}
+          />
+        ) : (
+          <div className="kreator-profile-avatar" style={{ width: 72, height: 72, background: colorFor(creatorUsername) }}>
+            {creatorUsername.charAt(0).toUpperCase()}
+          </div>
+        )}
         <div className="kreator-profile-info">
           <h3 style={creatorProfile ? creatorNameStyle(creatorProfile.account_font, creatorProfile.account_bold) : undefined}>
             {creatorProfile?.account_name || `@${creatorUsername}`}
@@ -134,15 +143,18 @@ export default function KreatorPresets() {
             <p style={{ fontSize: 11, color: 'var(--muted)', margin: '2px 0 0' }}>@{creatorUsername}</p>
           )}
           <p>{presets.length} preset</p>
-          {creatorProfile?.is_creator && creatorProfile?.tiktok_link && (
+          {creatorProfile?.bio && (
+            <p style={{ fontSize: 12, lineHeight: 1.4, marginTop: 4, color: 'var(--text)' }}>{creatorProfile.bio}</p>
+          )}
+          {creatorProfile?.is_creator && (creatorProfile?.contact_link || creatorProfile?.tiktok_link) && (
             <a
-              href={creatorProfile.tiktok_link}
+              href={creatorProfile.contact_link || creatorProfile.tiktok_link}
               target="_blank"
               rel="noreferrer"
               className="kreator-profile-link"
               onClick={(e) => e.stopPropagation()}
             >
-              Liat TikTok →
+              🔗 Link Kontak
             </a>
           )}
         </div>
