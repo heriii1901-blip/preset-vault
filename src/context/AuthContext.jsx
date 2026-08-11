@@ -50,8 +50,10 @@ export function AuthProvider({ children }) {
   }, [])
 
   // Sinkron foto profil Google ke tabel profiles, biar bisa ditampilin di list Kreator
+  // Kreator skip: avatar mereka custom upload, jangan ditimpa Google
   useEffect(() => {
-    if (!user) return
+    if (!user || loading) return
+    if (isCreator) return
     const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || null
     if (!avatarUrl) return
     supabase
@@ -61,7 +63,7 @@ export function AuthProvider({ children }) {
       .then(({ error }) => {
         if (error) console.error('Gagal sync avatar:', error)
       })
-  }, [user])
+  }, [user, isCreator, loading])
 
   const loginWithGoogle = () =>
     supabase.auth.signInWithOAuth({
