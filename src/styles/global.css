@@ -383,7 +383,7 @@ button:focus, a:focus {
   flex-shrink: 0;
   border-top: 1px solid var(--line);
   background: var(--surface);
-  padding: 10px 0 14px;
+  padding: 7px 0 10px;
 }
 
 .nav-item {
@@ -391,7 +391,7 @@ button:focus, a:focus {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   color: var(--muted);
   cursor: pointer;
   text-decoration: none;
@@ -403,8 +403,8 @@ button:focus, a:focus {
 /* Icon 2 layer: outline abu-abu selalu ada, fill lime di-reveal dari bawah pas aktif */
 .nav-icon {
   position: relative;
-  width: 20px;
-  height: 20px;
+  width: 25px;
+  height: 25px;
 }
 .nav-icon svg {
   position: absolute;
