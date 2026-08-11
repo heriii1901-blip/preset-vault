@@ -239,9 +239,9 @@ export default function Profile() {
 
         <div className="profile-header">
           {photoUrl ? (
-            <img className="avatar-img" style={{ width: 76, height: 76 }} src={photoUrl} alt="Foto profil" />
+            <img className="avatar-img" style={{ width: 64, height: 76 }} src={photoUrl} alt="Foto profil" />
           ) : (
-            <div className="avatar" style={{ width: 76, height: 76, fontSize: 22 }}>{initials}</div>
+            <div className="avatar" style={{ width: 64, height: 76, fontSize: 19 }}>{initials}</div>
           )}
           <div className="profile-info">
             <h4 style={nameStyle}>{displayName}</h4>
