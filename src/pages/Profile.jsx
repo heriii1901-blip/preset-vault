@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabase'
 import { usePresetCache } from '../context/PresetCacheContext'
+import { creatorNameStyle } from '../utils/creatorFont'
 
 const COVER_TIME = 2
 
@@ -21,24 +22,28 @@ function captureThumb(video, presetId, setCache) {
 }
 
 export default function Profile() {
-  const { user, logout, isAdmin } = useAuth()
+  const { user, logout, isAdmin, isCreator, creatorUsername } = useAuth()
   const navigate = useNavigate()
   const { getCache, setCache } = usePresetCache()
 
-  // Ambil nama bawaan dari data metadata Supabase Auth yang sudah ada sebelumnya
   const fallbackName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Tanpa nama'
 
-  const [profileName, setProfileName] = useState(fallbackName)
-  const [editingName, setEditingName] = useState(false)
-  const [nameInput, setNameInput] = useState('')
-  const [savingName, setSavingName] = useState(false)
-
+  const [profile, setProfile] = useState(null)
   const [favorites, setFavorites] = useState([])
   const [loadingFavs, setLoadingFavs] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
   const isApk = isRunningAsApk()
   const activeVideoRef = useRef(null)
+
+  // Tab Postingan/Favorit (cuma kreator yang punya postingan sendiri)
+  const [activeTab, setActiveTab] = useState(0)
+  const scrollerRef = useRef(null)
+
+  const ownCacheKey = isCreator && creatorUsername ? `own-presets:${creatorUsername}` : null
+  const cachedOwn = ownCacheKey ? getCache(ownCacheKey) : null
+  const [ownPresets, setOwnPresets] = useState(cachedOwn?.data || [])
+  const [loadingOwn, setLoadingOwn] = useState(false)
 
   function resetToCover(video) {
     if (!video) return
@@ -52,28 +57,25 @@ export default function Profile() {
     video.play().catch(() => {})
     activeVideoRef.current = video
   }
-  
-  const photoUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture
 
-  // Update nama lokal jika data user auth berubah
+  // Ambil data profile (nama, bio, link kontak, avatar custom)
   useEffect(() => {
-  async function loadProfileName() {
-    if (!user) return
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('id', user.id)
-        .single()
-      if (error) throw error
-      setProfileName(data?.username || fallbackName)
-    } catch (err) {
-      console.error('Gagal ambil username profile:', err)
-      setProfileName(fallbackName)
+    async function loadProfile() {
+      if (!user) return
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('username, account_name, account_font, account_bold, bio, contact_link, avatar_url')
+          .eq('id', user.id)
+          .single()
+        if (error) throw error
+        setProfile(data)
+      } catch (err) {
+        console.error('Gagal ambil data profile:', err)
+      }
     }
-  }
-  loadProfileName()
-}, [user])
+    loadProfile()
+  }, [user])
 
   // Load data Favorit
   useEffect(() => {
@@ -95,13 +97,13 @@ export default function Profile() {
           `)
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
-          
+
         if (error) throw error
-        
+
         const cleanFavs = (data || [])
           .map(f => f.presets)
           .filter(p => p !== null && p !== undefined)
-          
+
         setFavorites(cleanFavs)
       } catch (err) {
         console.error('Gagal ambil favorit:', err)
@@ -113,49 +115,111 @@ export default function Profile() {
     loadFavorites()
   }, [user])
 
+  // Load preset yang di-upload sendiri (khusus kreator), dishare cache-nya sama halaman Kreator
+  useEffect(() => {
+    if (!isCreator || !creatorUsername) return
+    if (getCache(`own-presets:${creatorUsername}`)) return
+    async function loadOwnPresets() {
+      setLoadingOwn(true)
+      try {
+        const { data, error } = await supabase
+          .from('presets')
+          .select('*')
+          .eq('creator_username', creatorUsername)
+          .order('created_at', { ascending: false })
+        if (error) throw error
+        setOwnPresets(data || [])
+        setCache(`own-presets:${creatorUsername}`, data || [])
+      } catch (err) {
+        console.error('Gagal ambil preset kamu:', err)
+      } finally {
+        setLoadingOwn(false)
+      }
+    }
+    loadOwnPresets()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCreator, creatorUsername])
+
   const handleLogout = async () => {
     await logout()
     navigate('/login', { replace: true })
   }
 
-  const startEditName = () => {
-    setNameInput(profileName)
-    setEditingName(true)
+  function goToTab(index) {
+    setActiveTab(index)
+    const el = scrollerRef.current
+    if (el) el.scrollTo({ left: el.clientWidth * index, behavior: 'smooth' })
   }
 
-  const cancelEditName = () => {
-    setEditingName(false)
+  function handleTabScroll(e) {
+    const el = e.currentTarget
+    const index = Math.round(el.scrollLeft / el.clientWidth)
+    if (index !== activeTab) setActiveTab(index)
   }
 
-  // Fungsi simpan nama langsung ke metadata Supabase Auth agar permanen melekat di akun
-  const saveName = async () => {
-  const trimmed = nameInput.trim()
-  if (!trimmed) return
-  setSavingName(true)
-  try {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ username: trimmed })
-      .eq('id', user.id)
+  const displayName = isCreator
+    ? (profile?.account_name || (creatorUsername ? `@${creatorUsername}` : fallbackName))
+    : (profile?.username || fallbackName)
 
-    if (error) throw error
+  const nameStyle = isCreator ? creatorNameStyle(profile?.account_font, profile?.account_bold) : undefined
 
-    setProfileName(trimmed)
-    setEditingName(false)
-  } catch (err) {
-    console.error('Gagal ubah nama:', err)
-    alert('Gagal ubah nama, silakan coba lagi.')
-  } finally {
-    setSavingName(false)
-  }
-}
+  const photoUrl = profile?.avatar_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture
 
-  const initials = (profileName || '?')
+  const initials = (displayName || '?')
     .split(' ')
     .map((w) => w[0])
     .slice(0, 2)
     .join('')
     .toUpperCase()
+
+  function renderGrid(list, navState) {
+    return (
+      <div className="preset-grid" style={{ flex: 'none' }}>
+        {list.map((preset) => (
+          <div
+            key={preset.id}
+            className="grid-cell"
+            onClick={() => navigate(`/preset/${preset.id}`, navState ? { state: navState } : undefined)}
+            onContextMenu={(e) => e.preventDefault()}
+            onPointerDown={(e) => handleStartPlay(e.currentTarget.querySelector('video'))}
+            onMouseEnter={(e) => handleStartPlay(e.currentTarget.querySelector('video'))}
+            onMouseLeave={(e) => {
+              resetToCover(e.currentTarget.querySelector('video'))
+              if (activeVideoRef.current === e.currentTarget.querySelector('video')) {
+                activeVideoRef.current = null
+              }
+            }}
+          >
+            {preset.preview_video_url ? (
+              <video
+                src={preset.preview_video_url}
+                muted
+                loop
+                preload="metadata"
+                playsInline
+                disablePictureInPicture
+                controlsList="nodownload"
+                draggable={false}
+                poster={getCache(`thumb:${preset.id}`)?.data}
+                onLoadedMetadata={(e) => {
+                  const video = e.currentTarget
+                  if (video.currentTime === 0) video.currentTime = COVER_TIME
+                }}
+                onSeeked={(e) => captureThumb(e.currentTarget, preset.id, setCache)}
+              />
+            ) : (
+              <div className="grid-fallback">🎬</div>
+            )}
+            {preset.songs && (
+              <div className="grid-cell-overlay">
+                {preset.songs?.name || 'Unknown Song'} · @{preset.creator_username}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div className="screen">
@@ -175,77 +239,94 @@ export default function Profile() {
 
         <div className="profile-header">
           {photoUrl ? (
-            <img className="avatar-img" src={photoUrl} alt="Foto profil" />
+            <img className="avatar-img" style={{ width: 76, height: 76 }} src={photoUrl} alt="Foto profil" />
           ) : (
-            <div className="avatar">{initials}</div>
+            <div className="avatar" style={{ width: 76, height: 76, fontSize: 22 }}>{initials}</div>
           )}
           <div className="profile-info">
-            <h4>{profileName}</h4>
-            <p>{user?.email}</p>
+            <h4 style={nameStyle}>{displayName}</h4>
+            {isCreator ? (
+              <p>@{creatorUsername}</p>
+            ) : (
+              <p>{user?.email}</p>
+            )}
+            {profile?.bio && <p className="profile-bio">{profile.bio}</p>}
+            {isCreator && profile?.contact_link && (
+              
+                href={profile.contact_link}
+                target="_blank"
+                rel="noreferrer"
+                className="profile-link"
+                onClick={(e) => e.stopPropagation()}
+              >
+                🔗 Link Kontak
+              </a>
+            )}
           </div>
         </div>
-        
-        <div className="profile-scroll">
-        <div className="section-label">
-          <span className="eyebrow" style={{ color: 'var(--lime)' }}>TERSIMPAN</span>
-          <h4>Preset Favorit</h4>
-        </div>
 
-        {loadingFavs && <div className="empty-state">Memuat...</div>}
+        <button type="button" className="profile-edit-btn" onClick={() => navigate('/edit-profil')}>
+          Edit Profil
+        </button>
 
-        {!loadingFavs && favorites.length === 0 && (
-          <div className="empty-state">
-            Belum ada preset yang di-favoritin. Pencet ikon ♡ di halaman video buat nyimpen.
-          </div>
-        )}
+        {isCreator ? (
+          <>
+            <div className="profile-tabs">
+              <button
+                type="button"
+                className={`profile-tab${activeTab === 0 ? ' is-active' : ''}`}
+                onClick={() => goToTab(0)}
+              >
+                Postingan
+              </button>
+              <button
+                type="button"
+                className={`profile-tab${activeTab === 1 ? ' is-active' : ''}`}
+                onClick={() => goToTab(1)}
+              >
+                Favorit
+              </button>
+            </div>
 
-        {!loadingFavs && favorites.length > 0 && (
-          <div className="preset-grid" style={{ flex: 'none' }}>
-            {favorites.map((preset) => {
-              return (
-                <div
-                  key={preset.id}
-                  className="grid-cell"
-                  onClick={() => navigate(`/preset/${preset.id}`)}
-                  onContextMenu={(e) => e.preventDefault()}
-                  onPointerDown={(e) => handleStartPlay(e.currentTarget.querySelector('video'))}
-                  onMouseEnter={(e) => handleStartPlay(e.currentTarget.querySelector('video'))}
-                  onMouseLeave={(e) => {
-                    resetToCover(e.currentTarget.querySelector('video'))
-                    if (activeVideoRef.current === e.currentTarget.querySelector('video')) {
-                      activeVideoRef.current = null
-                    }
-                  }}
-                >
-                  {preset.preview_video_url ? (
-                    <video
-                      src={preset.preview_video_url}
-                      muted
-                      loop
-                      preload="metadata"
-                      playsInline
-                      disablePictureInPicture
-                      controlsList="nodownload"
-                      draggable={false}
-                      poster={getCache(`thumb:${preset.id}`)?.data}
-                      onLoadedMetadata={(e) => {
-                        const video = e.currentTarget
-                        if (video.currentTime === 0) video.currentTime = COVER_TIME
-                      }}
-                      onSeeked={(e) => captureThumb(e.currentTarget, preset.id, setCache)}
-                    />
-                  ) : (
-                    <div className="grid-fallback">🎬</div>
-                  )}
-                  <div className="grid-cell-overlay">
-                    {preset.songs?.name || 'Unknown Song'} · @{preset.creator_username}
+            <div className="profile-tabs-scroller" ref={scrollerRef} onScroll={handleTabScroll}>
+              <div className="profile-tab-page">
+                {loadingOwn && <div className="empty-state">Memuat...</div>}
+                {!loadingOwn && ownPresets.length === 0 && (
+                  <div className="empty-state">Kamu belum upload preset apapun.</div>
+                )}
+                {!loadingOwn && ownPresets.length > 0 &&
+                  renderGrid(ownPresets, { source: 'kreator', creatorUsername })}
+              </div>
+
+              <div className="profile-tab-page">
+                {loadingFavs && <div className="empty-state">Memuat...</div>}
+                {!loadingFavs && favorites.length === 0 && (
+                  <div className="empty-state">
+                    Belum ada preset yang di-favoritin. Pencet ikon ♡ di halaman video buat nyimpen.
                   </div>
-                </div>
-              )
-            })}
+                )}
+                {!loadingFavs && favorites.length > 0 && renderGrid(favorites)}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="profile-scroll">
+            <div className="section-label">
+              <span className="eyebrow" style={{ color: 'var(--lime)' }}>TERSIMPAN</span>
+              <h4>Preset Favorit</h4>
+            </div>
+
+            {loadingFavs && <div className="empty-state">Memuat...</div>}
+
+            {!loadingFavs && favorites.length === 0 && (
+              <div className="empty-state">
+                Belum ada preset yang di-favoritin. Pencet ikon ♡ di halaman video buat nyimpen.
+              </div>
+            )}
+
+            {!loadingFavs && favorites.length > 0 && renderGrid(favorites)}
           </div>
         )}
-        </div>
       </div>
 
       <div className={`profile-menu-backdrop${menuOpen ? ' is-open' : ''}`} onClick={() => setMenuOpen(false)}>
@@ -331,7 +412,7 @@ export default function Profile() {
           </button>
         </div>
       </div>
-      
+
       {aboutOpen && (
         <div className="link-modal-backdrop" onClick={() => setAboutOpen(false)}>
           <div className="link-modal-box" onClick={(e) => e.stopPropagation()}>
