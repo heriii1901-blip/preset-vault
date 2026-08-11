@@ -1203,6 +1203,29 @@ select.finput-real { cursor: pointer; }
   background: #1a1a1a;
   cursor: pointer;
 }
+
+/* Grid preset khusus di halaman Profile: full-bleed nempel tepi layar kek TikTok, no gap/bingkai */
+.profile-scroll .preset-grid,
+.profile-tab-page .preset-grid {
+  gap: 0;
+  padding: 0;
+  margin: 0 -18px;
+  width: calc(100% + 36px);
+}
+.profile-scroll .grid-cell,
+.profile-tab-page .grid-cell {
+  border-radius: 0;
+}
+
+@media (min-width: 768px) {
+  .profile-scroll .preset-grid,
+  .profile-tab-page .preset-grid {
+    gap: 0;
+    padding: 0;
+    margin: 0 -18px;
+    width: calc(100% + 36px);
+  }
+}
  
 /* ===== Fullscreen Video Feed (TikTok style) ===== */
 .feed-container {
