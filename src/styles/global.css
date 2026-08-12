@@ -1121,9 +1121,8 @@ select.finput-real { cursor: pointer; }
   flex-shrink: 0;
 }
  
-.grid-header h3 {
-  font-family: var(--font-sans);
-  font-size: 17px;
+.grid-header-title-lg {
+  font-size: 20px;
 }
  
 .grid-header p {
