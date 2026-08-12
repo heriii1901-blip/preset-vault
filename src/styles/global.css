@@ -1680,19 +1680,19 @@ select.finput-real { cursor: pointer; }
 
 .search-input-wrap {
   display: flex;
-  gap: 8px;
-  padding: 12px 16px;
+  gap: 10px;
+  padding: 14px 16px;
 }
 
 .search-input {
   flex: 1;
   min-width: 0; /* biar input beneran bisa nyusut, defaultnya <input> punya lebar minimum bawaan browser yang bikin tombol Cari kedorong keluar layar */
-  padding: 12px 14px;
-  border-radius: 11px;
+  padding: 14px 18px;
+  border-radius: 22px;
   border: 1px solid var(--line);
   background: var(--surface-2);
   color: var(--text);
-  font-size: 13px;
+  font-size: 15px;
   font-family: var(--font-sans);
   outline: none;
 }
@@ -1701,13 +1701,13 @@ select.finput-real { cursor: pointer; }
 .search-input::placeholder { color: var(--muted); }
 .search-go-btn {
   flex-shrink: 0; /* biar tombolnya tetep utuh, yang nyusut cuma kotak input */
-  padding: 12px 20px;
-  border-radius: 11px;
+  padding: 14px 24px;
+  border-radius: 22px;
   border: none;
   background: linear-gradient(135deg, var(--violet), var(--pink));
   color: #fff;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
   font-family: var(--font-sans);
 }
