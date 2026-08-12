@@ -47,7 +47,7 @@ export default function PresetFeed() {
 
         if (isFromTerbaru) {
           // Sama kayak query di Terbaru.jsx: preset terbaru lintas lagu
-          query = query.order('created_at', { ascending: false }).limit(15)
+          query = query.order('created_at', { ascending: false }).limit(20)
         } else if (isFromKreator && filterCreatorUsername) {
           // Kejebak di kreator yang sama aja, jangan nyasar ke video lain
           query = query.eq('creator_username', filterCreatorUsername).order('created_at', { ascending: false })
