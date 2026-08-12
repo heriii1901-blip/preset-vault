@@ -7,7 +7,7 @@ import { usePresetCache } from '../context/PresetCacheContext'
 const CACHE_KEY = 'lagu-list'
 
 export default function Home() {
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState('')f
   const { getCache, setCache } = usePresetCache()
   const cached = getCache(CACHE_KEY)
   const [songs, setSongs] = useState(cached?.data || [])
@@ -237,7 +237,6 @@ export default function Home() {
           </div>
         </div>
       )}
-      <div className="bottom-fade" />
     </div>
   )
 }
