@@ -39,7 +39,7 @@ export default function Terbaru() {
           .from('presets')
           .select('*')
           .order('created_at', { ascending: false })
-          .limit(15)
+          .limit(20)
         if (error) throw error
         setPresets(data || [])
         setCache(CACHE_KEY, data || [])
@@ -125,11 +125,10 @@ export default function Terbaru() {
       <div className="grid-page">
       <div className="grid-header">
         <div>
-          <h3>Terbaru</h3>
-          <p>{presets.length} preset</p>
+          <h3 className="grid-header-title-lg">Terbaru</h3>
         </div>
       </div>
-
+        
       {loading && (
         <div className="empty-state" style={{ padding: 30 }}>Memuat...</div>
       )}
