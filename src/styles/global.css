@@ -573,7 +573,7 @@ button:focus, a:focus {
 
 .admin-shortcut {
   flex: 1;
-  background: var(--surface-2);
+  background: none;
   border: 1px solid var(--line);
   border-radius: 12px;
   color: var(--pink);
@@ -586,6 +586,17 @@ button:focus, a:focus {
 
 .admin-shortcut-danger {
   color: #FF5C5C;
+}
+
+.bottom-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 18px;
+  background: linear-gradient(to top, var(--bg), transparent);
+  pointer-events: none;
+  z-index: 3;
 }
 
 .song-edit-btn {
