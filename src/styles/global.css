@@ -968,7 +968,7 @@ select.finput-real { cursor: pointer; }
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 26px 0 0;
+  padding: 44px 0 0;
 }
 
 .profile-scroll {
