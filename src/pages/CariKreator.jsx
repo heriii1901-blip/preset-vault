@@ -94,15 +94,15 @@ export default function CariKreator() {
 
         <div className="search-body">
           {!searched && (
-            <div className="empty-state" style={{ padding: 30 }}>
+            <div className="empty-state" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 30 }}>
               Cari kreator dulu buat liat presetnya di sini.
             </div>
           )}
           {searched && loading && (
-            <div className="empty-state" style={{ padding: 30 }}>Memuat...</div>
+            <div className="empty-state" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 30 }}>Memuat...</div>
           )}
           {searched && !loading && results.length === 0 && (
-            <div className="empty-state" style={{ padding: 30 }}>
+            <div className="empty-state" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 30 }}>
               Kreator "{searchTerm}" ngga ketemu.
             </div>
           )}
