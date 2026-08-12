@@ -1843,17 +1843,6 @@ select.finput-real { cursor: pointer; }
   min-height: 0;
   width: 100%;
   position: relative; /* anchor buat LoadingScreen, biar ngga nutupin bottom nav */
-  animation: pageEnter .15s ease-out;
-}
-@keyframes pageEnter {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 /* ===== KREATOR SWIPE ===== */
