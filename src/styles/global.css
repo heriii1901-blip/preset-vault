@@ -979,7 +979,7 @@ select.finput-real { cursor: pointer; }
 }
 .profile-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   margin-bottom: 18px;
   padding: 0 18px;
