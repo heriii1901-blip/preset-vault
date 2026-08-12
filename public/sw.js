@@ -1,4 +1,4 @@
-const CACHE_NAME = "pam-cache-v3"
+const CACHE_NAME = "pam-cache-v4"
 const APP_SHELL = "/index.html"
 
 self.addEventListener("install", (event) => {
