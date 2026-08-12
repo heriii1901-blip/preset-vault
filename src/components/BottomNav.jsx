@@ -28,6 +28,7 @@ export function BottomNav() {
 
   return (
     <div className="bottom-nav">
+      <div className="bottom-nav-divider" key={location.pathname} />
       <NavLink to="/" end className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
         <span className="nav-icon">
           <svg className="icon-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
