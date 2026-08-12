@@ -7,7 +7,7 @@ import { usePresetCache } from '../context/PresetCacheContext'
 const CACHE_KEY = 'lagu-list'
 
 export default function Home() {
-  const [query, setQuery] = useState('')f
+  const [query, setQuery] = useState('')
   const { getCache, setCache } = usePresetCache()
   const cached = getCache(CACHE_KEY)
   const [songs, setSongs] = useState(cached?.data || [])
