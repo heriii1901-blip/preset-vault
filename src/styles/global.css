@@ -381,23 +381,9 @@ button:focus, a:focus {
 .bottom-nav {
   display: flex;
   flex-shrink: 0;
-  position: relative;
+  border-top: 1px solid var(--line);
   background: var(--surface);
   padding: 7px 0 10px;
-}
-
-.bottom-nav-divider {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: var(--line);
-  animation: navDividerBlink .3s ease-out;
-}
-@keyframes navDividerBlink {
-  0% { background: var(--lime); opacity: .85; }
-  100% { background: var(--line); opacity: 1; }
 }
 
 .nav-item {
@@ -476,16 +462,9 @@ button:focus, a:focus {
     height: 100%;
     padding: 20px 10px;
     gap: 2px;
+    border-top: none;
+    border-right: 1px solid var(--line);
     justify-content: flex-start;
-  }
-
-  .bottom-nav-divider {
-    top: 0;
-    right: 0;
-    left: auto;
-    bottom: 0;
-    width: 1px;
-    height: auto;
   }
   
   .nav-item {
