@@ -219,7 +219,6 @@ export default function Kreator({ hideHeader = false }) {
           </button>
         </div>
       )}
-      <div className="bottom-fade" />
     </div>
   )
 }
