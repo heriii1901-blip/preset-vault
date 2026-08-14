@@ -158,7 +158,7 @@ export default function Home() {
           <div className="eyebrow">BERANDA</div>
           <h1 className="home-tagline">Cari & Download Preset Alight Motion (AM)</h1>
           <div className="search-bar">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#8A8A96" strokeWidth="2" width="16" height="16">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#8A8A96" strokeWidth="2" width="19" height="19">
               <circle cx="11" cy="11" r="7" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
