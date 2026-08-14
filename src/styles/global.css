@@ -239,23 +239,23 @@ button:focus, a:focus {
   flex-direction: column;
   padding: 22px 20px 0;
 }
-.list-header { margin-bottom: 18px; }
+.list-header { margin-bottom: 20px; }
 .search-bar {
-  margin-top: 10px;
+  margin-top: 12px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   background: var(--surface-2);
   border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 12px 14px; /* disamain sama tinggi box search di menu Cari, dulu numpuk 2 padding jadi kegedean */
+  border-radius: 14px;
+  padding: 14px 16px;
 }
 .search-bar input {
   background: transparent;
   border: none;
   outline: none;
   color: var(--text);
-  font-size: 13px;
+  font-size: 15px;
   width: 100%;
   font-family: var(--font-sans);
 }
@@ -1673,10 +1673,12 @@ select.finput-real { cursor: pointer; }
 
 .home-tagline {
   font-family: var(--font-sans);
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.25;
   margin-top: 4px;
   margin-bottom: 2px;
+  letter-spacing: -0.01em;
 }
 
 .search-input-wrap {
