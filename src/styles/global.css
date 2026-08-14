@@ -282,8 +282,7 @@ button:focus, a:focus {
   display: flex;
   align-items: center;
   gap: 13px;
-  padding: 12px 4px;
-  border-bottom: 1px solid var(--line);
+  padding: 14px 4px;
   cursor: pointer;
   transition: background .15s ease;
   user-select: none;
