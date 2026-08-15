@@ -1,11 +1,8 @@
-import { createContext, useContext, useRef, useState, useCallback } from 'react'
+import { createContext, useContext, useRef, useState, useCallback, useEffect } from 'react'
 import { supabase } from '../supabase'
 import { compressVideoIfNeeded } from '../utils/compressVideo'
+import { saveJobToDB, deleteJobFromDB, getAllJobsFromDB } from '../utils/uploadQueueDB'
 
-// Antrian upload global (tetep hidup selama app kebuka, provider-nya di atas <Routes>).
-// Prosesnya SATU-SATU di belakang layar (bukan paralel), soalnya ffmpeg.wasm cuma bisa
-// ngompres 1 video dalam satu waktu. Tapi user tetep bebas nambah antrian & pindah halaman
-// kapan aja tanpa nunggu, gak keblokir kayak sebelumnya.
 const UploadQueueContext = createContext(null)
 
 let jobCounter = 0
@@ -99,6 +96,7 @@ export function UploadQueueProvider({ children }) {
         updateJob(job.id, { status: 'error', stage: 'Gagal upload', progress: 0 })
         setHistory((prev) => [{ ...job, status: 'error', finishedAt: Date.now() }, ...prev].slice(0, 50))
       } finally {
+        deleteJobFromDB(job.id)
         removeJobAfterDelay(job.id, 3000)
       }
     }
@@ -108,12 +106,61 @@ export function UploadQueueProvider({ children }) {
 
   const enqueuePresetUpload = useCallback((payload) => {
     const id = `job-${Date.now()}-${jobCounter++}`
-    const job = { id, status: 'queued', stage: 'Nunggu antrian...', progress: 0, ...payload }
+    const job = { id, status: 'queued', stage: 'Nunggu antrian...', progress: 0, createdAt: Date.now(), ...payload }
     setJobs((prev) => [...prev, job])
     queueRef.current.push(job)
+
+    saveJobToDB({
+      id: job.id,
+      previewFileBlob: job.previewFile || null,
+      previewFileName: job.previewFile?.name || null,
+      previewFileType: job.previewFile?.type || null,
+      songMode: job.songMode,
+      selectedSongId: job.selectedSongId,
+      newSongName: job.newSongName,
+      xmlLink: job.xmlLink,
+      mbLink: job.mbLink,
+      tiktokLink: job.tiktokLink,
+      creatorUsername: job.creatorUsername,
+      userId: job.userId,
+      createdAt: job.createdAt,
+    })
+
     processQueue()
     return id
   }, [processQueue])
+
+  useEffect(() => {
+    async function resumePendingJobs() {
+      const pending = await getAllJobsFromDB()
+      if (!pending.length) return
+      for (const p of pending) {
+        const previewFile = p.previewFileBlob
+          ? new File([p.previewFileBlob], p.previewFileName || 'video.mp4', { type: p.previewFileType || 'video/mp4' })
+          : null
+        const job = {
+          id: p.id,
+          status: 'queued',
+          stage: 'Lanjutin upload yang sempet kepotong...',
+          progress: 0,
+          previewFile,
+          songMode: p.songMode,
+          selectedSongId: p.selectedSongId,
+          newSongName: p.newSongName,
+          xmlLink: p.xmlLink,
+          mbLink: p.mbLink,
+          tiktokLink: p.tiktokLink,
+          creatorUsername: p.creatorUsername,
+          userId: p.userId,
+        }
+        setJobs((prev) => [...prev, job])
+        queueRef.current.push(job)
+      }
+      processQueue()
+    }
+    resumePendingJobs()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <UploadQueueContext.Provider value={{ jobs, history, enqueuePresetUpload }}>
