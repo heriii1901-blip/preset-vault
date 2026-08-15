@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabase'
-import { compressVideoIfNeeded } from '../utils/compressVideo'
+import { useUploadQueue } from '../context/UploadQueueContext'
 
 export default function KreatorAddPreset() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { enqueuePresetUpload } = useUploadQueue()
 
   const [checkingCreator, setCheckingCreator] = useState(true)
   const [creatorUsername, setCreatorUsername] = useState('')
@@ -21,12 +22,7 @@ export default function KreatorAddPreset() {
   const [mbLink, setMbLink] = useState('')
   const [tiktokLink, setTiktokLink] = useState('')
   const [previewFile, setPreviewFile] = useState(null)
-  const [saving, setSaving] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
-  const [saveProgress, setSaveProgress] = useState(0)
-  const [saveStage, setSaveStage] = useState('')
-  const cancelledRef = useRef(false)
-  const progressIntervalRef = useRef(null)
 
   useEffect(() => {
     async function loadCreator() {
@@ -86,7 +82,7 @@ export default function KreatorAddPreset() {
     setSongMode('existing')
   }
 
-  const handleSave = async (e) => {
+  const handleSave = (e) => {
     e.preventDefault()
     setStatusMsg('')
 
@@ -95,110 +91,20 @@ export default function KreatorAddPreset() {
     if (songMode === 'new' && !newSongName.trim()) return setStatusMsg('Nama lagu baru belum diisi.')
     if (songMode === 'existing' && !selectedSongId) return setStatusMsg('Pilih lagunya dulu.')
 
-    cancelledRef.current = false
-    setSaving(true)
-    setSaveProgress(0)
-    setSaveStage('Nyiapin data...')
+    enqueuePresetUpload({
+      previewFile,
+      songMode,
+      selectedSongId,
+      newSongName: newSongName.trim(),
+      xmlLink: xmlLink.trim(),
+      mbLink: mbLink.trim(),
+      tiktokLink: tiktokLink.trim(),
+      creatorUsername,
+      userId: user.id,
+    })
 
-    try {
-      let previewVideoUrl = ''
-      if (previewFile) {
-        setSaveStage('Ngompres video...')
-
-        const fileToUpload = await compressVideoIfNeeded(previewFile, (progress) => {
-          setSaveProgress(Math.min(Math.floor(progress * 50), 50))
-        })
-
-        if (cancelledRef.current) return
-
-        setSaveStage('Ngupload video contoh...')
-
-        progressIntervalRef.current = setInterval(() => {
-          setSaveProgress((prev) => (prev < 90 ? prev + 2 : prev))
-        }, 300)
-
-        const uploadRes = await fetch('/api/upload-to-r2', {
-          method: 'POST',
-          headers: {
-            'x-file-name': fileToUpload.name,
-            'Content-Type': fileToUpload.type || 'video/mp4',
-          },
-          body: fileToUpload,
-        })
-        
-        clearInterval(progressIntervalRef.current)
-        progressIntervalRef.current = null
-
-        if (cancelledRef.current) return
-        if (!uploadRes.ok) throw new Error('Upload ke R2 gagal')
-
-        const uploadData = await uploadRes.json()
-        previewVideoUrl = uploadData.url
-        setSaveProgress(70)
-      } else {
-        setSaveProgress(70)
-      }
-
-      if (songMode === 'existing') {
-        setSaveStage('Nyimpen preset...')
-        const { error: presetErr } = await supabase.from('presets').insert({
-          song_id: selectedSongId,
-          xml_link: xmlLink.trim(),
-          mb_link: mbLink.trim(),
-          creator_username: creatorUsername,
-          tiktok_link: tiktokLink.trim(),
-          preview_video_url: previewVideoUrl,
-        })
-        if (presetErr) throw presetErr
-
-        const { data: songRow } = await supabase
-          .from('songs')
-          .select('preset_count')
-          .eq('id', selectedSongId)
-          .single()
-        await supabase
-          .from('songs')
-          .update({ preset_count: (songRow?.preset_count || 0) + 1 })
-          .eq('id', selectedSongId)
-
-        setSaveProgress(100)
-        setStatusMsg('✅ Preset berhasil disimpen!')
-        resetForm()
-      } else {
-        setSaveStage('Ngirim permintaan lagu baru...')
-        const { error: reqErr } = await supabase.from('song_requests').insert({
-          user_id: user.id,
-          creator_username: creatorUsername,
-          requested_song_name: newSongName.trim(),
-          xml_link: xmlLink.trim(),
-          mb_link: mbLink.trim(),
-          tiktok_link: tiktokLink.trim(),
-          preview_video_url: previewVideoUrl,
-        })
-        if (reqErr) throw reqErr
-
-        setSaveProgress(100)
-        setStatusMsg('✅ Diajukan! Presetnya bakal otomatis tayang begitu admin approve nama lagunya.')
-        resetForm()
-      }
-    } catch (err) {
-      console.error('Gagal simpen preset:', err)
-      setStatusMsg('❌ Gagal simpen. Cek koneksi / setting Supabase.')
-    } finally {
-      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current)
-      setSaving(false)
-      setSaveProgress(0)
-      setSaveStage('')
-    }
-  }
-
-  const handleCancelSave = () => {
-    cancelledRef.current = true
-    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current)
-    setSaving(false)
-    setSaveProgress(0)
-    setSaveStage('')
-    setStatusMsg('Proses simpen dibatalin.')
+    setStatusMsg('✅ Ditambahin ke antrian upload! Boleh langsung tambah preset lain.')
+    resetForm()
   }
 
   if (checkingCreator) {
@@ -373,26 +279,10 @@ export default function KreatorAddPreset() {
             </p>
           )}
 
-          <button className="save-btn" type="submit" disabled={saving}>
-            {saving ? 'Nyimpen...' : 'Simpan Preset'}
+          <button className="save-btn" type="submit">
+            Simpan Preset
           </button>
         </form>
-
-        {saving && (
-          <div className="save-overlay">
-            <div className="save-overlay-box">
-              <div className="save-spinner" />
-              <div className="save-progress-pct">{Math.round(saveProgress)}%</div>
-              <div className="save-progress-track">
-                <div className="save-progress-fill" style={{ width: `${saveProgress}%` }} />
-              </div>
-              <div className="save-stage-text">{saveStage || 'Memproses...'}</div>
-              <button type="button" className="save-cancel-btn" onClick={handleCancelSave}>
-                Batal
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )
