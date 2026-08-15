@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabase'
+import { compressVideoIfNeeded } from '../utils/compressVideo'
 
 export default function KreatorAddPreset() {
   const { user } = useAuth()
@@ -102,21 +103,29 @@ export default function KreatorAddPreset() {
     try {
       let previewVideoUrl = ''
       if (previewFile) {
+        setSaveStage('Ngompres video...')
+
+        const fileToUpload = await compressVideoIfNeeded(previewFile, (progress) => {
+          setSaveProgress(Math.min(Math.floor(progress * 50), 50))
+        })
+
+        if (cancelledRef.current) return
+
         setSaveStage('Ngupload video contoh...')
 
         progressIntervalRef.current = setInterval(() => {
-          setSaveProgress((prev) => (prev < 75 ? prev + 2 : prev))
+          setSaveProgress((prev) => (prev < 90 ? prev + 2 : prev))
         }, 300)
 
         const uploadRes = await fetch('/api/upload-to-r2', {
           method: 'POST',
           headers: {
-            'x-file-name': previewFile.name,
-            'Content-Type': previewFile.type || 'video/mp4',
+            'x-file-name': fileToUpload.name,
+            'Content-Type': fileToUpload.type || 'video/mp4',
           },
-          body: previewFile,
+          body: fileToUpload,
         })
-
+        
         clearInterval(progressIntervalRef.current)
         progressIntervalRef.current = null
 
