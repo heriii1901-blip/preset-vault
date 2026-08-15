@@ -1,9 +1,11 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { PresetCacheProvider } from './context/PresetCacheContext'
+import { UploadQueueProvider } from './context/UploadQueueContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { BottomNav } from './components/BottomNav'
 import { ServerNoticeBanner } from './components/ServerNoticeBanner'
+import { UploadQueueWidget } from './components/UploadQueueWidget'
 
 import Login from './pages/Login'
 import Home from './pages/Home'
@@ -26,13 +28,13 @@ import EditProfile from './pages/EditProfile'
 export default function App() {
   const location = useLocation()
 
-  // Daftar route yang WAJIB nampilin BottomNav
   const showNavRoutes = ['/', '/lagu', '/cari', '/kreator', '/akun']
   const shouldShowNav = showNavRoutes.includes(location.pathname)
 
   return (
     <AuthProvider>
       <PresetCacheProvider>
+      <UploadQueueProvider>
         <div className="phone-wrap">
           <div className="phone">
             <div className="page-transition" key={location.pathname}>
@@ -93,7 +95,6 @@ export default function App() {
                   }
                 />
 
-                {/* requireAdmin: cuma email admin yang bisa masuk sini */}
                 <Route
                   path="/admin/tambah-preset"
                   element={
@@ -185,12 +186,13 @@ export default function App() {
               </Routes>
             </div>
 
-            {/* BottomNav dirender di sini agar tidak hilang saat refresh */}
             {shouldShowNav && <BottomNav />}
 
             <ServerNoticeBanner />
+            <UploadQueueWidget />
           </div>
         </div>
+      </UploadQueueProvider>
       </PresetCacheProvider>
     </AuthProvider>
   )
