@@ -49,7 +49,7 @@ function getVideoDuration(file) {
   })
 }
 
-const MAX_SIZE_BYTES = 3 * 1024 * 1024 // Target akhir: 3MB
+const MAX_SIZE_BYTES = 4 * 1024 * 1024 // Target akhir: 4MB
 const AUDIO_BITRATE_KBPS = 64
 const MIN_VIDEO_BITRATE_KBPS = 150
 const SAFETY_MARGIN = 0.92
@@ -91,7 +91,7 @@ export async function compressVideoIfNeeded(file, onProgress) {
         '-b:v', `${currentBitrateKbps}k`,
         '-maxrate', `${currentBitrateKbps}k`,
         '-bufsize', `${currentBitrateKbps * 2}k`,
-        '-preset', 'fast',
+        '-preset', 'ultrafast',
         '-c:a', 'aac',
         '-b:a', `${AUDIO_BITRATE_KBPS}k`,
         '-movflags', '+faststart',
