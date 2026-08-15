@@ -5,6 +5,14 @@ import { saveJobToDB, deleteJobFromDB, getAllJobsFromDB } from '../utils/uploadQ
 
 const UploadQueueContext = createContext(null)
 
+const THUMB_COLORS = [
+  'linear-gradient(135deg,#7C5CFF,#4A32C9)',
+  'linear-gradient(135deg,#FF3D7F,#C91E5A)',
+  'linear-gradient(135deg,#D4FF3D,#8FB800)',
+  'linear-gradient(135deg,#7C5CFF,#FF3D7F)',
+  'linear-gradient(135deg,#4A32C9,#15151D)',
+]
+
 let jobCounter = 0
 
 export function UploadQueueProvider({ children }) {
@@ -56,38 +64,70 @@ export function UploadQueueProvider({ children }) {
 
         updateJob(job.id, { status: 'saving', stage: 'Nyimpen preset...', progress: 85 })
 
-        if (job.songMode === 'existing') {
-          const { error: presetErr } = await supabase.from('presets').insert({
-            song_id: job.selectedSongId,
-            xml_link: job.xmlLink,
-            mb_link: job.mbLink,
-            creator_username: job.creatorUsername,
-            tiktok_link: job.tiktokLink,
-            preview_video_url: previewVideoUrl,
-          })
-          if (presetErr) throw presetErr
+        let songId = job.selectedSongId
 
-          const { data: songRow } = await supabase
-            .from('songs')
-            .select('preset_count')
-            .eq('id', job.selectedSongId)
-            .single()
-          await supabase
-            .from('songs')
-            .update({ preset_count: (songRow?.preset_count || 0) + 1 })
-            .eq('id', job.selectedSongId)
-        } else {
-          const { error: reqErr } = await supabase.from('song_requests').insert({
-            user_id: job.userId,
-            creator_username: job.creatorUsername,
-            requested_song_name: job.newSongName,
-            xml_link: job.xmlLink,
-            mb_link: job.mbLink,
-            tiktok_link: job.tiktokLink,
-            preview_video_url: previewVideoUrl,
-          })
-          if (reqErr) throw reqErr
+        if (job.songMode === 'new') {
+          if (job.directSongCreate) {
+            // Admin: lagu baru langsung dibuat, gak lewat antrian approval
+            const { data: existingSong, error: findErr } = await supabase
+              .from('songs')
+              .select('id')
+              .eq('name', job.newSongName)
+              .maybeSingle()
+            if (findErr) throw findErr
+
+            if (existingSong) {
+              songId = existingSong.id
+            } else {
+              const color = THUMB_COLORS[Math.floor(Math.random() * THUMB_COLORS.length)]
+              const { data: newSong, error: insertSongErr } = await supabase
+                .from('songs')
+                .insert({ name: job.newSongName, preset_count: 0, color })
+                .select()
+                .single()
+              if (insertSongErr) throw insertSongErr
+              songId = newSong.id
+            }
+          } else {
+            // Kreator: lagu baru masuk song_requests, nunggu di-approve admin dulu
+            const { error: reqErr } = await supabase.from('song_requests').insert({
+              user_id: job.userId,
+              creator_username: job.creatorUsername,
+              requested_song_name: job.newSongName,
+              xml_link: job.xmlLink,
+              mb_link: job.mbLink,
+              tiktok_link: job.tiktokLink,
+              preview_video_url: previewVideoUrl,
+            })
+            if (reqErr) throw reqErr
+
+            updateJob(job.id, { status: 'done', stage: 'Nunggu approval lagu baru', progress: 100 })
+            setHistory((prev) => [{ ...job, status: 'done', finishedAt: Date.now() }, ...prev].slice(0, 50))
+            deleteJobFromDB(job.id)
+            removeJobAfterDelay(job.id, 3000)
+            continue
+          }
         }
+
+        const { error: presetErr } = await supabase.from('presets').insert({
+          song_id: songId,
+          xml_link: job.xmlLink,
+          mb_link: job.mbLink,
+          creator_username: job.creatorUsername,
+          tiktok_link: job.tiktokLink,
+          preview_video_url: previewVideoUrl,
+        })
+        if (presetErr) throw presetErr
+
+        const { data: songRow } = await supabase
+          .from('songs')
+          .select('preset_count')
+          .eq('id', songId)
+          .single()
+        await supabase
+          .from('songs')
+          .update({ preset_count: (songRow?.preset_count || 0) + 1 })
+          .eq('id', songId)
 
         updateJob(job.id, { status: 'done', stage: 'Beres!', progress: 100 })
         setHistory((prev) => [{ ...job, status: 'done', finishedAt: Date.now() }, ...prev].slice(0, 50))
@@ -123,6 +163,7 @@ export function UploadQueueProvider({ children }) {
       tiktokLink: job.tiktokLink,
       creatorUsername: job.creatorUsername,
       userId: job.userId,
+      directSongCreate: job.directSongCreate || false,
       createdAt: job.createdAt,
     })
 
@@ -152,6 +193,7 @@ export function UploadQueueProvider({ children }) {
           tiktokLink: p.tiktokLink,
           creatorUsername: p.creatorUsername,
           userId: p.userId,
+          directSongCreate: p.directSongCreate || false,
         }
         setJobs((prev) => [...prev, job])
         queueRef.current.push(job)
