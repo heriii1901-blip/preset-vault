@@ -17,14 +17,29 @@ export async function getFFmpeg(onProgress) {
     ffmpeg.on('progress', ({ progress }) => onProgress(progress))
   }
 
-  const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm'
+  // Pake core-mt (multi-thread) - jauh lebih cepet dari versi single-thread.
+  // Butuh header COOP/COEP di vercel.json biar SharedArrayBuffer diizinin browser.
+  // Kalo gagal (browser gak support / header belom kepasang), fallback ke single-thread.
+  const baseURLmt = 'https://unpkg.com/@ffmpeg/core-mt@0.12.6/dist/esm'
+  const baseURLst = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm'
   try {
-    const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript')
-    const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm')
-    await ffmpeg.load({ coreURL, wasmURL })
-  } catch (err) {
-    console.error('RAW error pas load ffmpeg core:', err)
-    throw new Error(`Gagal fetch ffmpeg-core dari unpkg: ${err?.message || String(err)}`)
+    if (typeof SharedArrayBuffer === 'undefined' || !window.crossOriginIsolated) {
+      throw new Error('cross-origin isolation belom aktif, skip multi-thread')
+    }
+    const coreURL = await toBlobURL(`${baseURLmt}/ffmpeg-core.js`, 'text/javascript')
+    const wasmURL = await toBlobURL(`${baseURLmt}/ffmpeg-core.wasm`, 'application/wasm')
+    const workerURL = await toBlobURL(`${baseURLmt}/ffmpeg-core.worker.js`, 'text/javascript')
+    await ffmpeg.load({ coreURL, wasmURL, workerURL })
+  } catch (mtErr) {
+    console.warn('Multi-thread ffmpeg gagal, fallback ke single-thread:', mtErr?.message)
+    try {
+      const coreURL = await toBlobURL(`${baseURLst}/ffmpeg-core.js`, 'text/javascript')
+      const wasmURL = await toBlobURL(`${baseURLst}/ffmpeg-core.wasm`, 'application/wasm')
+      await ffmpeg.load({ coreURL, wasmURL })
+    } catch (err) {
+      console.error('RAW error pas load ffmpeg core:', err)
+      throw new Error(`Gagal fetch ffmpeg-core dari unpkg: ${err?.message || String(err)}`)
+    }
   }
 
   ffmpegInstance = ffmpeg
@@ -51,10 +66,10 @@ function getVideoDuration(file) {
 
 const MAX_SIZE_BYTES = 4 * 1024 * 1024 // Target akhir: 4MB
 const AUDIO_BITRATE_KBPS = 64
-const MIN_VIDEO_BITRATE_KBPS = 150
+const MIN_VIDEO_BITRATE_KBPS = 350 // dulu 150 - kegedean turunnya buat konten gerak cepet, jadi pecah/blocky
 const SAFETY_MARGIN = 0.92
-const RESOLUTION_STEPS = [1280, 960, 720] // sisi terpanjang (px), turun kalo bitrate floor masih kurang
-const MAX_ATTEMPTS = 6
+const RESOLUTION_STEPS = [1280, 960, 720, 540] // sisi terpanjang (px)
+const MAX_ATTEMPTS = 5
 
 // Cap sisi terpanjang (landscape: width, portrait: height), gak upscale video kecil
 function buildScaleFilter(maxDim) {
@@ -78,7 +93,14 @@ export async function compressVideoIfNeeded(file, onProgress) {
 
     let compressedBlob = null
     let currentBitrateKbps = videoBitrateKbps
-    let resIndex = 0 // mulai dari 1280
+
+    // Mulai dari resolusi yang emang cocok buat bitrate segini, bukan selalu dari 1280.
+    // Bitrate rendah di resolusi tinggi = pecah/blocky (terutama konten gerak cepet kayak jedag-jedug).
+    // Turunin resolusi duluan itu jaga kualitas jauh lebih baik ketimbang maksa bitrate super rendah.
+    let resIndex = 0
+    if (currentBitrateKbps < 500) resIndex = 3      // 540p
+    else if (currentBitrateKbps < 800) resIndex = 2 // 720p
+    else if (currentBitrateKbps < 1400) resIndex = 1 // 960p
     let attempt = 0
 
     while (attempt < MAX_ATTEMPTS) {
@@ -89,9 +111,9 @@ export async function compressVideoIfNeeded(file, onProgress) {
         '-vf', `scale=${buildScaleFilter(maxDim)}`,
         '-c:v', 'libx264',
         '-b:v', `${currentBitrateKbps}k`,
-        '-maxrate', `${currentBitrateKbps}k`,
+        '-maxrate', `${Math.floor(currentBitrateKbps * 1.15)}k`,
         '-bufsize', `${currentBitrateKbps * 2}k`,
-        '-preset', 'ultrafast',
+        '-preset', 'veryfast',
         '-c:a', 'aac',
         '-b:a', `${AUDIO_BITRATE_KBPS}k`,
         '-movflags', '+faststart',
@@ -111,7 +133,7 @@ export async function compressVideoIfNeeded(file, onProgress) {
         resIndex++
         currentBitrateKbps = videoBitrateKbps
       } else {
-        // Udah di resolusi & bitrate paling minimal (720p) → stop, jangan dipaksa lagi
+        // Udah di resolusi & bitrate paling minimal (540p) → stop, jangan dipaksa lagi
         break
       }
     }
