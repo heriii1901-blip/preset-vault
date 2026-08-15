@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
+import { compressVideoIfNeeded } from '../utils/compressVideo'
 
 const THUMB_COLORS = [
   'linear-gradient(135deg,#7C5CFF,#4A32C9)',
@@ -149,19 +150,27 @@ export default function AdminAddPreset() {
 
       let previewVideoUrl = isEditMode ? existingPreviewUrl : ''
       if (previewFile) {
+        setSaveStage('Ngompres video...')
+
+        const fileToUpload = await compressVideoIfNeeded(previewFile, (progress) => {
+          setSaveProgress(15 + Math.min(Math.floor(progress * 35), 35))
+        })
+
+        if (cancelledRef.current) return
+
         setSaveStage('Ngupload video contoh...')
 
         progressIntervalRef.current = setInterval(() => {
-          setSaveProgress((prev) => (prev < 75 ? prev + 2 : prev))
+          setSaveProgress((prev) => (prev < 95 ? prev + 2 : prev))
         }, 300)
 
         const uploadRes = await fetch('/api/upload-to-r2', {
           method: 'POST',
           headers: {
-            'x-file-name': previewFile.name,
-            'Content-Type': previewFile.type || 'video/mp4',
+            'x-file-name': fileToUpload.name,
+            'Content-Type': fileToUpload.type || 'video/mp4',
           },
-          body: previewFile,
+          body: fileToUpload,
         })
 
         clearInterval(progressIntervalRef.current)
