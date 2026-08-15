@@ -2056,3 +2056,73 @@ select.finput-real { cursor: pointer; }
   font-size: 13px;
   cursor: pointer;
 }
+
+/* Upload queue widget — tab kecil pojok kiri atas buat upload yg jalan di background */
+.upload-queue-widget {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.upload-queue-tab {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(30, 30, 30, 0.85);
+  border-radius: 50%;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  animation: upload-tab-in 0.2s ease-out;
+}
+
+@keyframes upload-tab-in {
+  from { transform: scale(0.6); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.upload-ring-bg {
+  fill: none;
+  stroke: rgba(242, 241, 245, 0.15);
+  stroke-width: 3;
+}
+
+.upload-ring-fg {
+  fill: none;
+  stroke: var(--violet);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  transition: stroke-dashoffset 0.2s linear;
+}
+
+.upload-queue-done .upload-ring-fg {
+  stroke: var(--lime);
+}
+
+.upload-queue-error .upload-ring-fg {
+  stroke: var(--pink);
+}
+
+.upload-queue-icon {
+  position: absolute;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.upload-queue-done .upload-queue-icon {
+  color: var(--lime);
+}
+
+.upload-queue-error .upload-queue-icon {
+  color: var(--pink);
+}
