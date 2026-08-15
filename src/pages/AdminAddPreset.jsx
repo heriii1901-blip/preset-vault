@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { compressVideoIfNeeded } from '../utils/compressVideo'
+import { useUploadQueue } from '../context/UploadQueueContext'
 
 const THUMB_COLORS = [
   'linear-gradient(135deg,#7C5CFF,#4A32C9)',
@@ -15,6 +16,7 @@ export default function AdminAddPreset() {
   const navigate = useNavigate()
   const { presetId } = useParams()
   const isEditMode = Boolean(presetId)
+  const { enqueuePresetUpload } = useUploadQueue()
 
   const [songs, setSongs] = useState([])
   const [songMode, setSongMode] = useState('existing')
@@ -107,7 +109,7 @@ export default function AdminAddPreset() {
     setNewSongName('')
   }
 
-  const handleSave = async (e) => {
+  const handleSave = (e) => {
     e.preventDefault()
     setStatusMsg('')
 
@@ -117,6 +119,30 @@ export default function AdminAddPreset() {
     if (songMode === 'new' && !newSongName.trim()) return setStatusMsg('Nama lagu baru belum diisi.')
     if (songMode === 'existing' && !selectedSongId) return setStatusMsg('Pilih lagunya dulu.')
 
+    if (isEditMode) {
+      handleUpdate()
+      return
+    }
+
+    // Mode tambah baru: masuk antrian upload, gak nge-block layar.
+    // Lagu baru dari admin langsung dibuat (directSongCreate) - beda dari kreator yang harus nunggu approval.
+    enqueuePresetUpload({
+      previewFile,
+      songMode,
+      selectedSongId,
+      newSongName: newSongName.trim(),
+      xmlLink: xmlLink.trim(),
+      mbLink: mbLink.trim(),
+      tiktokLink: tiktokLink.trim(),
+      creatorUsername: creatorUsername.trim(),
+      directSongCreate: true,
+    })
+
+    setStatusMsg('✅ Ditambahin ke antrian upload! Boleh langsung tambah preset lain.')
+    resetForm()
+  }
+
+  const handleUpdate = async () => {
     cancelledRef.current = false
     setSaving(true)
     setSaveProgress(0)
@@ -185,7 +211,7 @@ export default function AdminAddPreset() {
       } else {
         setSaveProgress(80)
       }
-      
+
       if (isEditMode) {
         setSaveStage('Update preset...')
         const { error: updateErr } = await supabase
