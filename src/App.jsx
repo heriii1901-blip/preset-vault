@@ -5,7 +5,6 @@ import { UploadQueueProvider } from './context/UploadQueueContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { BottomNav } from './components/BottomNav'
 import { ServerNoticeBanner } from './components/ServerNoticeBanner'
-import { UploadQueueWidget } from './components/UploadQueueWidget'
 
 import Login from './pages/Login'
 import Home from './pages/Home'
@@ -189,7 +188,6 @@ export default function App() {
             {shouldShowNav && <BottomNav />}
 
             <ServerNoticeBanner />
-            <UploadQueueWidget />
           </div>
         </div>
       </UploadQueueProvider>
