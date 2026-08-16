@@ -1160,6 +1160,8 @@ select.finput-real { cursor: pointer; }
   overflow: hidden;
   cursor: pointer;
   border-radius: 0;
+  content-visibility: auto;
+  contain-intrinsic-size: 200px 250px;
 }
 
 @media (min-width: 768px) {
@@ -1242,6 +1244,8 @@ select.finput-real { cursor: pointer; }
   scroll-snap-align: start;
   scroll-snap-stop: always;
   flex-shrink: 0;
+  content-visibility: auto;
+  contain-intrinsic-size: 0 100dvh;
 }
 
 .feed-item video {
