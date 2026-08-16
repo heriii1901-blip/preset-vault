@@ -572,11 +572,11 @@ export default function AdminAddPreset() {
           ← Balik
         </button>
 
-        <div className="admin-header">
+        <div className={isEditMode ? 'admin-header' : 'admin-header admin-header-tight'}>
           <span className="admin-tag">PANEL ADMIN</span>
           <h2>{isEditMode ? 'Edit Preset' : 'Tambah Preset Baru'}</h2>
         </div>
-
+        
         {isEditMode ? (
           formPanel
         ) : (
