@@ -1952,6 +1952,37 @@ select.finput-real { cursor: pointer; }
   color: var(--pink);
 }
 
+.failed-job-card {
+  background: var(--card-bg, rgba(255,255,255,0.04));
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.failed-job-title {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.failed-job-meta {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.failed-job-error {
+  font-size: 12.5px;
+  color: var(--pink);
+  margin-bottom: 10px;
+}
+
+.failed-job-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .kreator-hub {
   display: flex;
   flex-direction: column;
