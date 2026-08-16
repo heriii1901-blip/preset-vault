@@ -608,6 +608,7 @@ button:focus, a:focus {
   overflow-y: auto;
 }
 .admin-header { margin-bottom: 20px; }
+.admin-header.admin-header-tight { margin-bottom: 4px; }
 .admin-tag {
   font-family: var(--font-sans);
   font-size: 10.5px;
@@ -1986,14 +1987,20 @@ select.finput-real { cursor: pointer; }
 .kreator-hub {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 .kreator-hub-tabs {
   display: flex;
   gap: 4px;
-  padding: 10px 18px 0;
+  padding: 6px 18px 0;
   border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--bg);
+  flex-shrink: 0;
 }
 
 .kreator-hub-tab {
@@ -2014,6 +2021,7 @@ select.finput-real { cursor: pointer; }
 
 .kreator-hub-scroller {
   flex: 1;
+  min-height: 0;
   display: flex;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
@@ -2030,7 +2038,6 @@ select.finput-real { cursor: pointer; }
   display: flex;
   flex-direction: column;
 }
-
 .server-notice-backdrop {
   position: fixed;
   inset: 0;
