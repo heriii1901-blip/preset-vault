@@ -1,7 +1,14 @@
 import { createContext, useContext, useRef, useState, useCallback, useEffect } from 'react'
 import { supabase } from '../supabase'
 import { compressVideoIfNeeded } from '../utils/compressVideo'
-import { saveJobToDB, deleteJobFromDB, getAllJobsFromDB } from '../utils/uploadQueueDB'
+import {
+  saveJobToDB,
+  deleteJobFromDB,
+  getAllJobsFromDB,
+  saveFailedJobToDB,
+  deleteFailedJobFromDB,
+  getAllFailedJobsFromDB,
+} from '../utils/uploadQueueDB'
 
 const UploadQueueContext = createContext(null)
 
@@ -18,6 +25,7 @@ let jobCounter = 0
 export function UploadQueueProvider({ children }) {
   const [jobs, setJobs] = useState([])
   const [history, setHistory] = useState([])
+  const [failedJobs, setFailedJobs] = useState([])
   const queueRef = useRef([])
   const processingRef = useRef(false)
 
@@ -135,6 +143,26 @@ export function UploadQueueProvider({ children }) {
         console.error('Upload queue gagal:', err)
         updateJob(job.id, { status: 'error', stage: 'Gagal upload', progress: 0 })
         setHistory((prev) => [{ ...job, status: 'error', finishedAt: Date.now() }, ...prev].slice(0, 50))
+
+        const failedJob = {
+          id: job.id,
+          previewFileBlob: job.previewFile || null,
+          previewFileName: job.previewFile?.name || null,
+          previewFileType: job.previewFile?.type || null,
+          songMode: job.songMode,
+          selectedSongId: job.selectedSongId,
+          newSongName: job.newSongName,
+          xmlLink: job.xmlLink,
+          mbLink: job.mbLink,
+          tiktokLink: job.tiktokLink,
+          creatorUsername: job.creatorUsername,
+          userId: job.userId,
+          directSongCreate: job.directSongCreate || false,
+          errorMessage: err?.message || 'Gagal upload',
+          failedAt: Date.now(),
+        }
+        saveFailedJobToDB(failedJob)
+        setFailedJobs((prev) => [failedJob, ...prev.filter((f) => f.id !== job.id)])
       } finally {
         deleteJobFromDB(job.id)
         removeJobAfterDelay(job.id, 3000)
@@ -171,6 +199,36 @@ export function UploadQueueProvider({ children }) {
     return id
   }, [processQueue])
 
+  const retryFailedJob = useCallback((id) => {
+    setFailedJobs((prev) => {
+      const found = prev.find((f) => f.id === id)
+      if (found) {
+        deleteFailedJobFromDB(id)
+        const previewFile = found.previewFileBlob
+          ? new File([found.previewFileBlob], found.previewFileName || 'video.mp4', { type: found.previewFileType || 'video/mp4' })
+          : null
+        enqueuePresetUpload({
+          previewFile,
+          songMode: found.songMode,
+          selectedSongId: found.selectedSongId,
+          newSongName: found.newSongName,
+          xmlLink: found.xmlLink,
+          mbLink: found.mbLink,
+          tiktokLink: found.tiktokLink,
+          creatorUsername: found.creatorUsername,
+          userId: found.userId,
+          directSongCreate: found.directSongCreate,
+        })
+      }
+      return prev.filter((f) => f.id !== id)
+    })
+  }, [enqueuePresetUpload])
+
+  const dismissFailedJob = useCallback((id) => {
+    deleteFailedJobFromDB(id)
+    setFailedJobs((prev) => prev.filter((f) => f.id !== id))
+  }, [])
+
   useEffect(() => {
     async function resumePendingJobs() {
       const pending = await getAllJobsFromDB()
@@ -204,8 +262,16 @@ export function UploadQueueProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Muat daftar job yang gagal dari IndexedDB pas app dibuka - ini query IndexedDB lokal,
+  // BUKAN Supabase, jadi gak ada resiko egress/query berulang ke server.
+  useEffect(() => {
+    getAllFailedJobsFromDB().then((list) => {
+      setFailedJobs(list.sort((a, b) => (b.failedAt || 0) - (a.failedAt || 0)))
+    })
+  }, [])
+
   return (
-    <UploadQueueContext.Provider value={{ jobs, history, enqueuePresetUpload }}>
+    <UploadQueueContext.Provider value={{ jobs, history, failedJobs, enqueuePresetUpload, retryFailedJob, dismissFailedJob }}>
       {children}
     </UploadQueueContext.Provider>
   )
