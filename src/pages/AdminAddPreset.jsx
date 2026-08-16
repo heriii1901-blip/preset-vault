@@ -16,7 +16,9 @@ export default function AdminAddPreset() {
   const navigate = useNavigate()
   const { presetId } = useParams()
   const isEditMode = Boolean(presetId)
-  const { enqueuePresetUpload } = useUploadQueue()
+  const { enqueuePresetUpload, failedJobs, retryFailedJob, dismissFailedJob } = useUploadQueue()
+  const [activePanel, setActivePanel] = useState(0)
+  const scrollerRef = useRef(null)
 
   const [songs, setSongs] = useState([])
   const [songMode, setSongMode] = useState('existing')
@@ -107,6 +109,18 @@ export default function AdminAddPreset() {
     setTiktokLink('')
     setPreviewFile(null)
     setNewSongName('')
+  }
+
+  function goToPanel(index) {
+    setActivePanel(index)
+    const el = scrollerRef.current
+    if (el) el.scrollTo({ left: el.clientWidth * index, behavior: 'smooth' })
+  }
+
+  function handlePanelScroll(e) {
+    const el = e.currentTarget
+    const index = Math.round(el.scrollLeft / el.clientWidth)
+    if (index !== activePanel) setActivePanel(index)
   }
 
   const handleSave = (e) => {
@@ -312,6 +326,245 @@ export default function AdminAddPreset() {
     )
   }
 
+  const formPanel = (
+    <>
+      <form onSubmit={handleSave}>
+        <div className="form-field">
+          <label>Link XML (satu link per baris kalau lebih dari satu)</label>
+          <div className="input-wrap">
+            <textarea
+              className="finput-real finput-multiline"
+              placeholder="Paste link XML dari AM..."
+              value={xmlLink}
+              onChange={(e) => setXmlLink(e.target.value)}
+              rows={3}
+            />
+            {xmlLink && (
+              <button
+                type="button"
+                className="input-clear-btn"
+                onClick={() => setXmlLink('')}
+                aria-label="Hapus isi"
+              >
+                ×
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="form-field">
+          <label>Link 5MB (satu link per baris kalau lebih dari satu)</label>
+          <div className="input-wrap">
+            <textarea
+              className="finput-real finput-multiline"
+              placeholder="Paste link 5MB / Alight Creative..."
+              value={mbLink}
+              onChange={(e) => setMbLink(e.target.value)}
+              rows={3}
+            />
+            {mbLink && (
+              <button
+                type="button"
+                className="input-clear-btn"
+                onClick={() => setMbLink('')}
+                aria-label="Hapus isi"
+              >
+                ×
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="form-field">
+          <label>
+            Video contoh {isEditMode ? '(kosongin biar video lama tetep dipake)' : '(opsional, buat preview di app)'}
+          </label>
+          <label className="upload-box" style={{ display: 'block', cursor: 'pointer' }}>
+            {previewFile
+              ? `✅ ${previewFile.name}`
+              : existingPreviewUrl
+              ? '🎬 Ada video lama · pilih file buat ganti'
+              : '⬆ Pilih video dari HP'}
+            <input
+              type="file"
+              accept="video/*"
+              style={{ display: 'none' }}
+              onChange={(e) => setPreviewFile(e.target.files?.[0] || null)}
+            />
+          </label>
+        </div>
+
+        <div className="form-field">
+          <label>Lagu</label>
+          {!isEditMode && (
+            <div className="song-mode-toggle">
+              <button
+                type="button"
+                className={songMode === 'existing' ? 'mode-btn active' : 'mode-btn'}
+                onClick={() => setSongMode('existing')}
+              >
+                Pilih yang ada
+              </button>
+              <button
+                type="button"
+                className={songMode === 'new' ? 'mode-btn active' : 'mode-btn'}
+                onClick={() => setSongMode('new')}
+              >
+                Lagu baru
+              </button>
+            </div>
+          )}
+
+          {songMode === 'existing' ? (
+            songs.length > 0 ? (
+              <div className="custom-select" ref={songDropdownRef}>
+                <button
+                  type="button"
+                  className="custom-select-trigger"
+                  onClick={() => setSongDropdownOpen((prev) => !prev)}
+                >
+                  <span>{songs.find((s) => s.id === selectedSongId)?.name || 'Pilih lagu...'}</span>
+                  <span className={songDropdownOpen ? 'custom-select-arrow open' : 'custom-select-arrow'}>▾</span>
+                </button>
+                {songDropdownOpen && (
+                  <div className="custom-select-menu">
+                    {songs.map((s) => (
+                      <div
+                        key={s.id}
+                        className={s.id === selectedSongId ? 'custom-select-option active' : 'custom-select-option'}
+                        onClick={() => {
+                          setSelectedSongId(s.id)
+                          setSongDropdownOpen(false)
+                        }}
+                      >
+                        {s.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="hint" style={{ color: 'var(--muted)' }}>Belum ada lagu tersimpen. Pilih "Lagu baru" dulu.</p>
+            )
+          ) : (
+            <div className="input-wrap">
+              <input
+                className="finput-real"
+                placeholder="Nama lagu baru..."
+                value={newSongName}
+                onChange={(e) => setNewSongName(e.target.value)}
+              />
+              {newSongName && (
+                <button
+                  type="button"
+                  className="input-clear-btn"
+                  onClick={() => setNewSongName('')}
+                  aria-label="Hapus isi"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="form-field">
+          <label>Username kreator</label>
+          <div className="input-wrap">
+            <input
+              className="finput-real"
+              placeholder="@username"
+              value={creatorUsername}
+              onChange={(e) => setCreatorUsername(e.target.value)}
+            />
+            {creatorUsername && (
+              <button
+                type="button"
+                className="input-clear-btn"
+                onClick={() => setCreatorUsername('')}
+                aria-label="Hapus isi"
+              >
+                ×
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="form-field">
+          <label>Link akun/video TikTok kreator</label>
+          <div className="input-wrap">
+            <input
+              className="finput-real"
+              placeholder="tiktok.com/@username/video/..."
+              value={tiktokLink}
+              onChange={(e) => setTiktokLink(e.target.value)}
+            />
+            {tiktokLink && (
+              <button
+                type="button"
+                className="input-clear-btn"
+                onClick={() => setTiktokLink('')}
+                aria-label="Hapus isi"
+              >
+                ×
+              </button>
+            )}
+          </div>
+        </div>
+
+        {statusMsg && (
+          <p style={{ fontSize: 12.5, marginBottom: 12, color: statusMsg.startsWith('✅') ? 'var(--lime)' : 'var(--pink)' }}>
+            {statusMsg}
+          </p>
+        )}
+
+        <button className="save-btn" type="submit" disabled={saving}>
+          {saving ? (isEditMode ? 'Ngupdate...' : 'Nyimpen...') : (isEditMode ? 'Update Preset' : 'Simpan Preset')}
+        </button>
+      </form>
+
+      {saving && (
+        <div className="save-overlay">
+          <div className="save-overlay-box">
+            <div className="save-spinner" />
+            <div className="save-progress-pct">{Math.round(saveProgress)}%</div>
+            <div className="save-progress-track">
+              <div className="save-progress-fill" style={{ width: `${saveProgress}%` }} />
+            </div>
+            <div className="save-stage-text">{saveStage || 'Memproses...'}</div>
+            <button type="button" className="save-cancel-btn" onClick={handleCancelSave}>
+              Batal
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  )
+
+  const failedPanel = (
+    <div style={{ padding: '0 18px' }}>
+      {failedJobs.length === 0 ? (
+        <div className="empty-state">Gak ada upload yang gagal. 🎉</div>
+      ) : (
+        failedJobs.map((f) => (
+          <div key={f.id} className="failed-job-card">
+            <div className="failed-job-title">{f.newSongName || 'Lagu yang udah ada'}</div>
+            <div className="failed-job-meta">@{f.creatorUsername || '-'}</div>
+            <div className="failed-job-error">❌ {f.errorMessage}</div>
+            <div className="failed-job-actions">
+              <button type="button" className="save-btn" style={{ padding: '8px 14px', fontSize: 13 }} onClick={() => retryFailedJob(f.id)}>
+                Upload Ulang
+              </button>
+              <button type="button" className="back-btn ghost-static" style={{ padding: '8px 14px', fontSize: 13 }} onClick={() => dismissFailedJob(f.id)}>
+                Hapus
+              </button>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  )
+
   return (
     <div className="screen">
       <div className="admin-content">
@@ -324,213 +577,30 @@ export default function AdminAddPreset() {
           <h2>{isEditMode ? 'Edit Preset' : 'Tambah Preset Baru'}</h2>
         </div>
 
-        <form onSubmit={handleSave}>
-          <div className="form-field">
-            <label>Link XML (satu link per baris kalau lebih dari satu)</label>
-            <div className="input-wrap">
-              <textarea
-                className="finput-real finput-multiline"
-                placeholder="Paste link XML dari AM..."
-                value={xmlLink}
-                onChange={(e) => setXmlLink(e.target.value)}
-                rows={3}
-              />
-              {xmlLink && (
-                <button
-                  type="button"
-                  className="input-clear-btn"
-                  onClick={() => setXmlLink('')}
-                  aria-label="Hapus isi"
-                >
-                  ×
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="form-field">
-            <label>Link 5MB (satu link per baris kalau lebih dari satu)</label>
-            <div className="input-wrap">
-              <textarea
-                className="finput-real finput-multiline"
-                placeholder="Paste link 5MB / Alight Creative..."
-                value={mbLink}
-                onChange={(e) => setMbLink(e.target.value)}
-                rows={3}
-              />
-              {mbLink && (
-                <button
-                  type="button"
-                  className="input-clear-btn"
-                  onClick={() => setMbLink('')}
-                  aria-label="Hapus isi"
-                >
-                  ×
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="form-field">
-            <label>
-              Video contoh {isEditMode ? '(kosongin biar video lama tetep dipake)' : '(opsional, buat preview di app)'}
-            </label>
-            <label className="upload-box" style={{ display: 'block', cursor: 'pointer' }}>
-              {previewFile
-                ? `✅ ${previewFile.name}`
-                : existingPreviewUrl
-                ? '🎬 Ada video lama · pilih file buat ganti'
-                : '⬆ Pilih video dari HP'}
-              <input
-                type="file"
-                accept="video/*"
-                style={{ display: 'none' }}
-                onChange={(e) => setPreviewFile(e.target.files?.[0] || null)}
-              />
-            </label>
-          </div>
-
-          <div className="form-field">
-            <label>Lagu</label>
-            {!isEditMode && (
-              <div className="song-mode-toggle">
-                <button
-                  type="button"
-                  className={songMode === 'existing' ? 'mode-btn active' : 'mode-btn'}
-                  onClick={() => setSongMode('existing')}
-                >
-                  Pilih yang ada
-                </button>
-                <button
-                  type="button"
-                  className={songMode === 'new' ? 'mode-btn active' : 'mode-btn'}
-                  onClick={() => setSongMode('new')}
-                >
-                  Lagu baru
-                </button>
-              </div>
-            )}
-
-            {songMode === 'existing' ? (
-              songs.length > 0 ? (
-                <div className="custom-select" ref={songDropdownRef}>
-                  <button
-                    type="button"
-                    className="custom-select-trigger"
-                    onClick={() => setSongDropdownOpen((prev) => !prev)}
-                  >
-                    <span>{songs.find((s) => s.id === selectedSongId)?.name || 'Pilih lagu...'}</span>
-                    <span className={songDropdownOpen ? 'custom-select-arrow open' : 'custom-select-arrow'}>▾</span>
-                  </button>
-                  {songDropdownOpen && (
-                    <div className="custom-select-menu">
-                      {songs.map((s) => (
-                        <div
-                          key={s.id}
-                          className={s.id === selectedSongId ? 'custom-select-option active' : 'custom-select-option'}
-                          onClick={() => {
-                            setSelectedSongId(s.id)
-                            setSongDropdownOpen(false)
-                          }}
-                        >
-                          {s.name}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <p className="hint" style={{ color: 'var(--muted)' }}>Belum ada lagu tersimpen. Pilih "Lagu baru" dulu.</p>
-              )
-            ) : (
-              <div className="input-wrap">
-                <input
-                  className="finput-real"
-                  placeholder="Nama lagu baru..."
-                  value={newSongName}
-                  onChange={(e) => setNewSongName(e.target.value)}
-                />
-                {newSongName && (
-                  <button
-                    type="button"
-                    className="input-clear-btn"
-                    onClick={() => setNewSongName('')}
-                    aria-label="Hapus isi"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="form-field">
-            <label>Username kreator</label>
-            <div className="input-wrap">
-              <input
-                className="finput-real"
-                placeholder="@username"
-                value={creatorUsername}
-                onChange={(e) => setCreatorUsername(e.target.value)}
-              />
-              {creatorUsername && (
-                <button
-                  type="button"
-                  className="input-clear-btn"
-                  onClick={() => setCreatorUsername('')}
-                  aria-label="Hapus isi"
-                >
-                  ×
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="form-field">
-            <label>Link akun/video TikTok kreator</label>
-            <div className="input-wrap">
-              <input
-                className="finput-real"
-                placeholder="tiktok.com/@username/video/..."
-                value={tiktokLink}
-                onChange={(e) => setTiktokLink(e.target.value)}
-              />
-              {tiktokLink && (
-                <button
-                  type="button"
-                  className="input-clear-btn"
-                  onClick={() => setTiktokLink('')}
-                  aria-label="Hapus isi"
-                >
-                  ×
-                </button>
-              )}
-            </div>
-          </div>
-
-          {statusMsg && (
-            <p style={{ fontSize: 12.5, marginBottom: 12, color: statusMsg.startsWith('✅') ? 'var(--lime)' : 'var(--pink)' }}>
-              {statusMsg}
-            </p>
-          )}
-
-          <button className="save-btn" type="submit" disabled={saving}>
-            {saving ? (isEditMode ? 'Ngupdate...' : 'Nyimpen...') : (isEditMode ? 'Update Preset' : 'Simpan Preset')}
-          </button>
-        </form>
-
-        {saving && (
-          <div className="save-overlay">
-            <div className="save-overlay-box">
-              <div className="save-spinner" />
-              <div className="save-progress-pct">{Math.round(saveProgress)}%</div>
-              <div className="save-progress-track">
-                <div className="save-progress-fill" style={{ width: `${saveProgress}%` }} />
-              </div>
-              <div className="save-stage-text">{saveStage || 'Memproses...'}</div>
-              <button type="button" className="save-cancel-btn" onClick={handleCancelSave}>
-                Batal
+        {isEditMode ? (
+          formPanel
+        ) : (
+          <div className="kreator-hub" style={{ padding: 0 }}>
+            <div className="kreator-hub-tabs">
+              <button
+                type="button"
+                className={`kreator-hub-tab${activePanel === 0 ? ' is-active' : ''}`}
+                onClick={() => goToPanel(0)}
+              >
+                Tambah Preset
               </button>
+              <button
+                type="button"
+                className={`kreator-hub-tab${activePanel === 1 ? ' is-active' : ''}`}
+                onClick={() => goToPanel(1)}
+              >
+                Gagal Upload{failedJobs.length > 0 ? ` (${failedJobs.length})` : ''}
+              </button>
+            </div>
+
+            <div className="kreator-hub-scroller" ref={scrollerRef} onScroll={handlePanelScroll}>
+              <div className="kreator-hub-page">{formPanel}</div>
+              <div className="kreator-hub-page">{failedPanel}</div>
             </div>
           </div>
         )}
