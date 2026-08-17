@@ -8,17 +8,19 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const [isCreator, setIsCreator] = useState(false)
   const [creatorUsername, setCreatorUsername] = useState('')
-
+  const [hasCustomAvatar, setHasCustomAvatar] = useState(false)
+  
   async function loadCreatorStatus(userId) {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('is_creator, creator_username')
+        .select('is_creator, creator_username, avatar_is_custom')
         .eq('id', userId)
         .single()
       if (error) throw error
       setIsCreator(data?.is_creator || false)
       setCreatorUsername(data?.creator_username || '')
+      setHasCustomAvatar(data?.avatar_is_custom || false)
     } catch (err) {
       console.error('Gagal ambil status kreator:', err)
     }
@@ -53,7 +55,7 @@ export function AuthProvider({ children }) {
   // Kreator skip: avatar mereka custom upload, jangan ditimpa Google
   useEffect(() => {
     if (!user || loading) return
-    if (isCreator) return
+    if (isCreator || hasCustomAvatar) return
     const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || null
     if (!avatarUrl) return
     supabase
@@ -63,7 +65,7 @@ export function AuthProvider({ children }) {
       .then(({ error }) => {
         if (error) console.error('Gagal sync avatar:', error)
       })
-  }, [user, isCreator, loading])
+  }, [user, isCreator, hasCustomAvatar, loading])
 
   const loginWithGoogle = () =>
     supabase.auth.signInWithOAuth({
@@ -79,7 +81,7 @@ export function AuthProvider({ children }) {
   // Ini "penjaga pintu" yang kita omongin: cek email yang login sama admin
   const isAdmin = user?.email === ADMIN_EMAIL
 
-  const value = { user, loading, isAdmin, isCreator, creatorUsername, loginWithGoogle, logout }
+  const value = { user, loading, isAdmin, isCreator, creatorUsername, hasCustomAvatar, loginWithGoogle, logout }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
