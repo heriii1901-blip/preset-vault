@@ -80,7 +80,8 @@ function getVideoDuration(file) {
   })
 }
 
-const MAX_SIZE_BYTES = 4 * 1024 * 1024 // Target akhir: 4MB
+const SKIP_COMPRESS_BYTES = 5 * 1024 * 1024 // Di bawah ini, auto post tanpa kompres sama sekali
+const MAX_SIZE_BYTES = 6 * 1024 * 1024 // Target akhir kalau kena kompres
 const AUDIO_BITRATE_KBPS = 64
 const MIN_VIDEO_BITRATE_KBPS = 350 // dulu 150 - kegedean turunnya buat konten gerak cepet, jadi pecah/blocky
 const SAFETY_MARGIN = 0.92
@@ -93,7 +94,7 @@ function buildScaleFilter(maxDim) {
 }
 
 export async function compressVideoIfNeeded(file, onProgress) {
-  if (!file || file.size <= MAX_SIZE_BYTES) return file
+  if (!file || file.size <= SKIP_COMPRESS_BYTES) return file
   try {
     const duration = await getVideoDuration(file)
     if (!duration || duration <= 0) throw new Error('Durasi video ngga valid')
