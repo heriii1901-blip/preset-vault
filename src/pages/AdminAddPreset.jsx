@@ -16,7 +16,8 @@ export default function AdminAddPreset() {
   const navigate = useNavigate()
   const { presetId } = useParams()
   const isEditMode = Boolean(presetId)
-  const { enqueuePresetUpload, failedJobs, retryFailedJob, dismissFailedJob } = useUploadQueue()
+  const { enqueuePresetUpload, history, cancelJob, resubmitQueueItem, deleteHistoryItem, getQueueItemForEdit } = useUploadQueue()
+  const [editingQueueId, setEditingQueueId] = useState(null)
   const [activePanel, setActivePanel] = useState(0)
   const scrollerRef = useRef(null)
 
@@ -88,6 +89,22 @@ export default function AdminAddPreset() {
     loadPreset()
   }, [isEditMode, presetId])
 
+  // Mode edit dari Riwayat Upload: isi form dari item antrian yang mau diedit/diupload ulang
+  useEffect(() => {
+    if (!editingQueueId) return
+    const item = getQueueItemForEdit(editingQueueId)
+    if (!item) return
+    setXmlLink(item.xmlLink || '')
+    setMbLink(item.mbLink || '')
+    setCreatorUsername(item.creatorUsername || '')
+    setTiktokLink(item.tiktokLink || '')
+    setPreviewFile(item.previewFile || null)
+    setSongMode(item.songMode || 'existing')
+    setSelectedSongId(item.selectedSongId || '')
+    setNewSongName(item.newSongName || '')
+    setStatusMsg('')
+  }, [editingQueueId, getQueueItemForEdit])
+
   useEffect(() => {
     function handleClickOutside(e) {
       if (songDropdownRef.current && !songDropdownRef.current.contains(e.target)) {
@@ -138,9 +155,7 @@ export default function AdminAddPreset() {
       return
     }
 
-    // Mode tambah baru: masuk antrian upload, gak nge-block layar.
-    // Lagu baru dari admin langsung dibuat (directSongCreate) - beda dari kreator yang harus nunggu approval.
-    enqueuePresetUpload({
+    const payload = {
       previewFile,
       songMode,
       selectedSongId,
@@ -150,7 +165,20 @@ export default function AdminAddPreset() {
       tiktokLink: tiktokLink.trim(),
       creatorUsername: creatorUsername.trim(),
       directSongCreate: true,
-    })
+    }
+
+    if (editingQueueId) {
+      // Lagi ngedit item dari Riwayat Upload (yang dibatalin/gagal) - submit ulang pake id yang sama
+      resubmitQueueItem(editingQueueId, payload)
+      setStatusMsg('✅ Diupload ulang! Cek progressnya di tab Riwayat Upload.')
+      setEditingQueueId(null)
+      resetForm()
+      return
+    }
+
+    // Mode tambah baru: masuk antrian upload, gak nge-block layar.
+    // Lagu baru dari admin langsung dibuat (directSongCreate) - beda dari kreator yang harus nunggu approval.
+    enqueuePresetUpload(payload)
 
     setStatusMsg('✅ Ditambahin ke antrian upload! Boleh langsung tambah preset lain.')
     resetForm()
@@ -197,7 +225,6 @@ export default function AdminAddPreset() {
         })
 
         if (cancelledRef.current) return
-
         setSaveStage('Ngupload video contoh...')
 
         progressIntervalRef.current = setInterval(() => {
@@ -466,7 +493,7 @@ export default function AdminAddPreset() {
               )}
             </div>
           )}
-        </div>
+          </div>
 
         <div className="form-field">
           <label>Username kreator</label>
@@ -518,8 +545,27 @@ export default function AdminAddPreset() {
           </p>
         )}
 
+        {editingQueueId && (
+          <button
+            type="button"
+            className="back-btn ghost-static"
+            style={{ marginBottom: 10, width: '100%' }}
+            onClick={() => {
+              setEditingQueueId(null)
+              resetForm()
+              setStatusMsg('')
+            }}
+          >
+            ✕ Batal edit, balik ke Tambah Preset baru
+          </button>
+        )}
+
         <button className="save-btn" type="submit" disabled={saving}>
-          {saving ? (isEditMode ? 'Ngupdate...' : 'Nyimpen...') : (isEditMode ? 'Update Preset' : 'Simpan Preset')}
+          {saving
+            ? (isEditMode ? 'Ngupdate...' : 'Nyimpen...')
+            : editingQueueId
+            ? 'Upload Ulang'
+            : (isEditMode ? 'Update Preset' : 'Simpan Preset')}
         </button>
       </form>
 
@@ -541,26 +587,93 @@ export default function AdminAddPreset() {
     </>
   )
 
-  const failedPanel = (
+  const openEditFromHistory = (id) => {
+    setEditingQueueId(id)
+    goToPanel(0)
+  }
+
+  const RING_R = 18
+  const RING_CIRC = 2 * Math.PI * RING_R
+
+  const STATUS_LABEL = {
+    queued: 'Nunggu antrian',
+    compressing: 'Ngompres video',
+    uploading: 'Ngupload',
+    saving: 'Nyimpen',
+    done: 'Selesai',
+    error: 'Gagal',
+    cancelled: 'Dibatalin',
+  }
+
+  const historyPanel = (
     <div style={{ padding: '0 18px' }}>
-      {failedJobs.length === 0 ? (
-        <div className="empty-state">Gak ada upload yang gagal. 🎉</div>
+      {history.length === 0 ? (
+        <div className="empty-state">Belum ada riwayat upload.</div>
       ) : (
-        failedJobs.map((f) => (
-          <div key={f.id} className="failed-job-card">
-            <div className="failed-job-title">{f.newSongName || 'Lagu yang udah ada'}</div>
-            <div className="failed-job-meta">@{f.creatorUsername || '-'}</div>
-            <div className="failed-job-error">❌ {f.errorMessage}</div>
-            <div className="failed-job-actions">
-              <button type="button" className="save-btn" style={{ padding: '8px 14px', fontSize: 13 }} onClick={() => retryFailedJob(f.id)}>
-                Upload Ulang
-              </button>
-              <button type="button" className="back-btn ghost-static" style={{ padding: '8px 14px', fontSize: 13 }} onClick={() => dismissFailedJob(f.id)}>
-                Hapus
-              </button>
+        history.map((it) => {
+          const isActive = ['queued', 'compressing', 'uploading', 'saving'].includes(it.status)
+          const canEdit = it.status === 'cancelled' || it.status === 'error'
+          const ringOffset = RING_CIRC - (Math.min(it.progress || 0, 100) / 100) * RING_CIRC
+          const icon =
+            it.status === 'done' ? '✓' : it.status === 'error' ? '×' : it.status === 'cancelled' ? '‖' : `${Math.round(it.progress || 0)}%`
+
+          return (
+            <div key={it.id} className={`queue-history-card queue-history-${it.status}`}>
+              <div
+                className="queue-history-info"
+                role={canEdit ? 'button' : undefined}
+                onClick={canEdit ? () => openEditFromHistory(it.id) : undefined}
+              >
+                <div className="queue-history-title">{it.newSongName || 'Lagu yang udah ada'}</div>
+                <div className="queue-history-meta">
+                  @{it.creatorUsername || '-'} · {STATUS_LABEL[it.status] || it.status}
+                </div>
+                {it.status === 'error' && it.errorMessage && (
+                  <div className="queue-history-error">❌ {it.errorMessage}</div>
+                )}
+                {canEdit && <div className="queue-history-hint">Ketuk buat edit &amp; upload ulang</div>}
+              </div>
+
+              <div className="queue-history-side">
+                <svg width="40" height="40" viewBox="0 0 40 40">
+                  <circle cx="20" cy="20" r={RING_R} className="upload-ring-bg" />
+                  <circle
+                    cx="20"
+                    cy="20"
+                    r={RING_R}
+                    className={isActive ? 'upload-ring-fg' : `upload-ring-fg queue-ring-${it.status}`}
+                    strokeDasharray={RING_CIRC}
+                    strokeDashoffset={isActive ? ringOffset : 0}
+                  />
+                </svg>
+                <span className="queue-history-icon">{icon}</span>
+              </div>
+
+              <div className="queue-history-actions">
+                {isActive && (
+                  <button type="button" className="back-btn ghost-static" onClick={() => cancelJob(it.id)}>
+                    Batalin
+                  </button>
+                )}
+                {canEdit && (
+                  <button
+                    type="button"
+                    className="save-btn"
+                    style={{ padding: '6px 12px', fontSize: 12.5 }}
+                    onClick={() => openEditFromHistory(it.id)}
+                  >
+                    Edit
+                  </button>
+                )}
+                {!isActive && (
+                  <button type="button" className="back-btn ghost-static" onClick={() => deleteHistoryItem(it.id)}>
+                    Hapus
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ))
+          )
+        })
       )}
     </div>
   )
@@ -587,20 +700,20 @@ export default function AdminAddPreset() {
                 className={`kreator-hub-tab${activePanel === 0 ? ' is-active' : ''}`}
                 onClick={() => goToPanel(0)}
               >
-                Tambah Preset
+                {editingQueueId ? 'Edit Upload' : 'Tambah Preset'}
               </button>
               <button
                 type="button"
                 className={`kreator-hub-tab${activePanel === 1 ? ' is-active' : ''}`}
                 onClick={() => goToPanel(1)}
               >
-                Gagal Upload{failedJobs.length > 0 ? ` (${failedJobs.length})` : ''}
+                Riwayat Upload{history.length > 0 ? ` (${history.length})` : ''}
               </button>
             </div>
 
             <div className="kreator-hub-scroller" ref={scrollerRef} onScroll={handlePanelScroll}>
               <div className="kreator-hub-page">{formPanel}</div>
-              <div className="kreator-hub-page">{failedPanel}</div>
+              <div className="kreator-hub-page">{historyPanel}</div>
             </div>
           </div>
         )}
