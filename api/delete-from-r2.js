@@ -18,21 +18,19 @@ export default async function handler(req, res) {
     const { url } = req.body;
     if (!url) return res.status(400).json({ error: "Missing url" });
 
-    // Ambil key dari URL, contoh:
-    // https://pub-xxxx.r2.dev/presets/migrated-123-abc.mp4 -> presets/migrated-123-abc.mp4
-    const key = url.split(`${process.env.R2_PUBLIC_URL}/`)[1];
-    if (!key) return res.status(400).json({ error: "URL bukan dari R2 bucket ini" });
+    const key = url.split(`${process.env.R2_AVATAR_PUBLIC_URL}/`)[1];
+    if (!key) return res.status(400).json({ error: "URL bukan dari R2 bucket avatar ini" });
 
     await s3.send(
       new DeleteObjectCommand({
-        Bucket: process.env.R2_BUCKET_NAME,
+        Bucket: process.env.R2_AVATAR_BUCKET_NAME,
         Key: key,
       })
     );
 
     return res.status(200).json({ success: true });
   } catch (err) {
-    console.error("Delete error:", err);
-    return res.status(500).json({ error: "Delete failed", detail: err.message });
+    console.error("Avatar delete error:", err);
+    return res.status(500).json({ error: "Delete PP gagal", detail: err.message });
   }
 }
