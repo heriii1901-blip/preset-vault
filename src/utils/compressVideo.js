@@ -3,6 +3,18 @@ import { toBlobURL, fetchFile } from '@ffmpeg/util'
 
 let ffmpegInstance = null
 
+async function loadWithTimeout(loadFn, ms, label) {
+  let timer
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} timeout (${ms / 1000}s) - jaringan lambat/CDN gak kebuka`)), ms)
+  })
+  try {
+    return await Promise.race([loadFn(), timeout])
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 export async function getFFmpeg(onProgress) {
   if (ffmpegInstance) {
     if (onProgress) {
@@ -26,16 +38,20 @@ export async function getFFmpeg(onProgress) {
     if (typeof SharedArrayBuffer === 'undefined' || !window.crossOriginIsolated) {
       throw new Error('cross-origin isolation belom aktif, skip multi-thread')
     }
-    const coreURL = await toBlobURL(`${baseURLmt}/ffmpeg-core.js`, 'text/javascript')
-    const wasmURL = await toBlobURL(`${baseURLmt}/ffmpeg-core.wasm`, 'application/wasm')
-    const workerURL = await toBlobURL(`${baseURLmt}/ffmpeg-core.worker.js`, 'text/javascript')
-    await ffmpeg.load({ coreURL, wasmURL, workerURL })
+    await loadWithTimeout(async () => {
+      const coreURL = await toBlobURL(`${baseURLmt}/ffmpeg-core.js`, 'text/javascript')
+      const wasmURL = await toBlobURL(`${baseURLmt}/ffmpeg-core.wasm`, 'application/wasm')
+      const workerURL = await toBlobURL(`${baseURLmt}/ffmpeg-core.worker.js`, 'text/javascript')
+      await ffmpeg.load({ coreURL, wasmURL, workerURL })
+    }, 20000, 'Load ffmpeg multi-thread')
   } catch (mtErr) {
     console.warn('Multi-thread ffmpeg gagal, fallback ke single-thread:', mtErr?.message)
     try {
-      const coreURL = await toBlobURL(`${baseURLst}/ffmpeg-core.js`, 'text/javascript')
-      const wasmURL = await toBlobURL(`${baseURLst}/ffmpeg-core.wasm`, 'application/wasm')
-      await ffmpeg.load({ coreURL, wasmURL })
+      await loadWithTimeout(async () => {
+        const coreURL = await toBlobURL(`${baseURLst}/ffmpeg-core.js`, 'text/javascript')
+        const wasmURL = await toBlobURL(`${baseURLst}/ffmpeg-core.wasm`, 'application/wasm')
+        await ffmpeg.load({ coreURL, wasmURL })
+      }, 20000, 'Load ffmpeg single-thread')
     } catch (err) {
       console.error('RAW error pas load ffmpeg core:', err)
       throw new Error(`Gagal fetch ffmpeg-core dari unpkg: ${err?.message || String(err)}`)
