@@ -2,20 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { usePresetCache } from '../context/PresetCacheContext'
-
-const COVER_TIME = 2
-function captureThumb(video, presetId, setCache) {
-  try {
-    const canvas = document.createElement('canvas')
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
-    if (!canvas.width || !canvas.height) return
-    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height)
-    setCache(`thumb:${presetId}`, canvas.toDataURL('image/jpeg', 0.6))
-  } catch {
-    // video beda origin tanpa izin CORS baca pixel, skip aja
-  }
-}
+import PresetVideoCell from '../components/PresetVideoCell'
 
 export default function SongPresets() {
   const { songId } = useParams()
@@ -36,20 +23,20 @@ export default function SongPresets() {
       setLoading(true)
       try {
         const [{ data: songData }, { data: presetsData, error }] = await Promise.all([
-  supabase.from('songs').select('*').eq('id', songId).single(),
-  supabase.from('presets').select('*').eq('song_id', songId),
-])
-if (error) throw error
-setSong(songData)
+          supabase.from('songs').select('*').eq('id', songId).single(),
+          supabase.from('presets').select('*').eq('song_id', songId),
+        ])
+        if (error) throw error
+        setSong(songData)
 
-// Acak urutan preset (Fisher-Yates shuffle) biar gak sesuai tanggal upload
-const shuffled = [...(presetsData || [])]
-for (let i = shuffled.length - 1; i > 0; i--) {
-  const j = Math.floor(Math.random() * (i + 1))
-  ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
-}
-setPresets(shuffled)
-setCache(cacheKey, { song: songData, presets: shuffled })
+        // Acak urutan preset (Fisher-Yates shuffle) biar gak sesuai tanggal upload
+        const shuffled = [...(presetsData || [])]
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1))
+          ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+        }
+        setPresets(shuffled)
+        setCache(cacheKey, { song: songData, presets: shuffled })
       } catch (err) {
         console.error('Gagal ambil preset lagu:', err)
       } finally {
@@ -63,19 +50,19 @@ setCache(cacheKey, { song: songData, presets: shuffled })
   function resetToCover(video) {
     if (!video) return
     video.pause()
-    video.currentTime = COVER_TIME
+    video.currentTime = 2
   }
 
-  function handleStartPlay(video) {
+  function handleHoverStart(video) {
     if (!video || activeVideoRef.current === video) return
     resetToCover(activeVideoRef.current)
     video.play().catch(() => {})
     activeVideoRef.current = video
   }
 
-  function handleLoadedMetadata(e) {
-    const video = e.currentTarget
-    if (video.currentTime === 0) video.currentTime = COVER_TIME
+  function handleHoverEnd(video) {
+    resetToCover(video)
+    if (activeVideoRef.current === video) activeVideoRef.current = null
   }
 
   useEffect(() => {
@@ -109,45 +96,20 @@ setCache(cacheKey, { song: songData, presets: shuffled })
 
       {!loading && presets.length > 0 && (
         <div className="preset-grid" ref={gridRef}>
-          {presets.map((preset) => (
-            <div
+          {presets.map((preset, i) => (
+            <PresetVideoCell
               key={preset.id}
-              className="grid-cell"
-              onClick={() => navigate(`/preset/${preset.id}`)}
-              onContextMenu={(e) => e.preventDefault()}
-              onPointerDown={(e) => handleStartPlay(e.currentTarget.querySelector('video'))}
-              onMouseEnter={(e) => handleStartPlay(e.currentTarget.querySelector('video'))}
-              onMouseLeave={(e) => {
-                resetToCover(e.currentTarget.querySelector('video'))
-                if (activeVideoRef.current === e.currentTarget.querySelector('video')) {
-                  activeVideoRef.current = null
-                }
-              }}
-            >
-              {preset.preview_video_url ? (
-                <video
-                  src={preset.preview_video_url}
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  crossOrigin="anonymous"
-                  disablePictureInPicture
-                  controlsList="nodownload"
-                  draggable={false}
-                  poster={getCache(`thumb:${preset.id}`)?.data}
-                  onLoadedMetadata={handleLoadedMetadata}
-                  onSeeked={(e) => captureThumb(e.currentTarget, preset.id, setCache)}
-                />
-              ) : (
-                <div className="grid-fallback">🎬</div>
-              )}
-              <div className="grid-cell-overlay">@{preset.creator_username}</div>
-            </div>
+              preset={preset}
+              index={i}
+              getCache={getCache}
+              setCache={setCache}
+              onNavigate={(p) => navigate(`/preset/${p.id}`)}
+              onHoverStart={handleHoverStart}
+              onHoverEnd={handleHoverEnd}
+            />
           ))}
         </div>
       )}
     </div>
   )
 }
-
