@@ -2,20 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { usePresetCache } from '../context/PresetCacheContext'
+import PresetVideoCell from '../components/PresetVideoCell'
 
 const CACHE_KEY = 'cari-kreator'
-function captureThumb(video, presetId, setCache) {
-  try {
-    const canvas = document.createElement('canvas')
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
-    if (!canvas.width || !canvas.height) return
-    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height)
-    setCache(`thumb:${presetId}`, canvas.toDataURL('image/jpeg', 0.6))
-  } catch {
-    // video beda origin tanpa izin CORS baca pixel, skip aja
-  }
-}
 
 export default function CariKreator() {
   const navigate = useNavigate()
@@ -108,35 +97,15 @@ export default function CariKreator() {
           )}
           {searched && !loading && results.length > 0 && (
             <div className="preset-grid">
-              {results.map((preset) => (
-                <div
+              {results.map((preset, i) => (
+                <PresetVideoCell
                   key={preset.id}
-                  className="grid-cell"
-                  onClick={() => navigate(`/preset/${preset.id}`, { state: { source: 'kreator', creatorUsername: preset.creator_username } })}
-                  onContextMenu={(e) => e.preventDefault()}
-                >
-                  {preset.preview_video_url ? (
-                    <video
-                      src={preset.preview_video_url}
-                      muted
-                      loop
-                      playsInline
-                      preload="metadata"
-                      disablePictureInPicture
-                      controlsList="nodownload"
-                      draggable={false}
-                      poster={getCache(`thumb:${preset.id}`)?.data}
-                      onLoadedMetadata={(e) => {
-                        const video = e.currentTarget
-                        if (video.currentTime === 0) video.currentTime = 2
-                      }}
-                      onSeeked={(e) => captureThumb(e.currentTarget, preset.id, setCache)}
-                    />
-                  ) : (
-                    <div className="grid-fallback">🎬</div>
-                  )}
-                  <div className="grid-cell-overlay">@{preset.creator_username}</div>
-                </div>
+                  preset={preset}
+                  index={i}
+                  getCache={getCache}
+                  setCache={setCache}
+                  onNavigate={(p) => navigate(`/preset/${p.id}`, { state: { source: 'kreator', creatorUsername: p.creator_username } })}
+                />
               ))}
             </div>
           )}
@@ -145,4 +114,3 @@ export default function CariKreator() {
     </div>
   )
 }
-
