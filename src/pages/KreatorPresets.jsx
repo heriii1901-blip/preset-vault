@@ -3,8 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { usePresetCache } from '../context/PresetCacheContext'
 import { creatorNameStyle } from '../utils/creatorFont'
-
-const COVER_TIME = 2
+import PresetVideoCell from '../components/PresetVideoCell'
 
 const THUMB_COLORS = [
   'linear-gradient(135deg,#7C5CFF,#4A32C9)',
@@ -18,18 +17,6 @@ function colorFor(username) {
   for (let i = 0; i < username.length; i++) hash = username.charCodeAt(i) + ((hash << 5) - hash)
   return THUMB_COLORS[Math.abs(hash) % THUMB_COLORS.length]
 }
-function captureThumb(video, presetId, setCache) {
-  try {
-    const canvas = document.createElement('canvas')
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
-    if (!canvas.width || !canvas.height) return
-    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height)
-    setCache(`thumb:${presetId}`, canvas.toDataURL('image/jpeg', 0.6))
-  } catch {
-    // video beda origin tanpa izin CORS baca pixel, skip aja
-  }
-}
 
 export default function KreatorPresets() {
   const { creatorUsername } = useParams()
@@ -42,7 +29,7 @@ export default function KreatorPresets() {
   const [creatorProfile, setCreatorProfile] = useState(null)
   const activeVideoRef = useRef(null)
   const gridRef = useRef(null)
-  
+
   useEffect(() => {
     async function loadData() {
       if (getCache(cacheKey)) return
@@ -82,23 +69,23 @@ export default function KreatorPresets() {
     }
     if (creatorUsername) loadCreatorProfile()
   }, [creatorUsername])
-  
+
   function resetToCover(video) {
     if (!video) return
     video.pause()
-    video.currentTime = COVER_TIME
+    video.currentTime = 2
   }
 
-  function handleStartPlay(video) {
+  function handleHoverStart(video) {
     if (!video || activeVideoRef.current === video) return
     resetToCover(activeVideoRef.current)
     video.play().catch(() => {})
     activeVideoRef.current = video
   }
 
-  function handleLoadedMetadata(e) {
-    const video = e.currentTarget
-    if (video.currentTime === 0) video.currentTime = COVER_TIME
+  function handleHoverEnd(video) {
+    resetToCover(video)
+    if (activeVideoRef.current === video) activeVideoRef.current = null
   }
 
   useEffect(() => {
@@ -147,7 +134,7 @@ export default function KreatorPresets() {
             <p style={{ fontSize: 12, lineHeight: 1.4, marginTop: 4, color: 'var(--text)' }}>{creatorProfile.bio}</p>
           )}
           {creatorProfile?.is_creator && (creatorProfile?.contact_link || creatorProfile?.tiktok_link) && (
-            <a
+            
               href={creatorProfile.contact_link || creatorProfile.tiktok_link}
               target="_blank"
               rel="noreferrer"
@@ -170,40 +157,18 @@ export default function KreatorPresets() {
 
       {!loading && presets.length > 0 && (
         <div className="preset-grid" ref={gridRef}>
-          {presets.map((preset) => (
-            <div
+          {presets.map((preset, i) => (
+            <PresetVideoCell
               key={preset.id}
-              className="grid-cell"
-              onClick={() => navigate(`/preset/${preset.id}`, { state: { source: 'kreator', creatorUsername } })}
-              onContextMenu={(e) => e.preventDefault()}
-              onPointerDown={(e) => handleStartPlay(e.currentTarget.querySelector('video'))}
-              onMouseEnter={(e) => handleStartPlay(e.currentTarget.querySelector('video'))}
-              onMouseLeave={(e) => {
-                resetToCover(e.currentTarget.querySelector('video'))
-                if (activeVideoRef.current === e.currentTarget.querySelector('video')) {
-                  activeVideoRef.current = null
-                }
-              }}
-            >
-              {preset.preview_video_url ? (
-                <video
-                  src={preset.preview_video_url}
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  crossOrigin="anonymous"
-                  disablePictureInPicture
-                  controlsList="nodownload"
-                  draggable={false}
-                  poster={getCache(`thumb:${preset.id}`)?.data}
-                  onLoadedMetadata={handleLoadedMetadata}
-                  onSeeked={(e) => captureThumb(e.currentTarget, preset.id, setCache)}
-                />
-              ) : (
-                <div className="grid-fallback">🎬</div>
-              )}
-            </div>
+              preset={preset}
+              index={i}
+              getCache={getCache}
+              setCache={setCache}
+              showOverlay={false}
+              onNavigate={(p) => navigate(`/preset/${p.id}`, { state: { source: 'kreator', creatorUsername } })}
+              onHoverStart={handleHoverStart}
+              onHoverEnd={handleHoverEnd}
+            />
           ))}
         </div>
       )}
