@@ -134,7 +134,7 @@ export default function KreatorPresets() {
             <p style={{ fontSize: 12, lineHeight: 1.4, marginTop: 4, color: 'var(--text)' }}>{creatorProfile.bio}</p>
           )}
           {creatorProfile?.is_creator && (creatorProfile?.contact_link || creatorProfile?.tiktok_link) && (
-            
+            <a
               href={creatorProfile.contact_link || creatorProfile.tiktok_link}
               target="_blank"
               rel="noreferrer"
