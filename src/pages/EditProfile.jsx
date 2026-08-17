@@ -27,7 +27,7 @@ export default function EditProfile() {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('username, account_name, bio, contact_link, avatar_url')
+          .select('username, account_name, bio, contact_link, avatar_url, avatar_is_custom')
           .eq('id', user.id)
           .single()
         if (error) throw error
