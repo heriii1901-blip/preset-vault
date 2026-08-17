@@ -5,6 +5,8 @@ import { supabase } from '../supabase'
 
 export default function EditProfile() {
   const { user, isCreator, creatorUsername } = useAuth()
+  const MAX_AVATAR_BYTES = 2 * 1024 * 1024
+  const ALLOWED_AVATAR_TYPES = ['image/png', 'image/gif']
   const navigate = useNavigate()
 
   const [loadingProfile, setLoadingProfile] = useState(true)
@@ -45,6 +47,17 @@ export default function EditProfile() {
   function handleAvatarPick(e) {
     const file = e.target.files?.[0]
     if (!file) return
+    if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+      setStatusMsg('❌ PP cuma boleh PNG atau GIF.')
+      e.target.value = ''
+      return
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      setStatusMsg('❌ PP kegedean, maksimal 2MB.')
+      e.target.value = ''
+      return
+    }
+    setStatusMsg('')
     setAvatarFile(file)
     setAvatarPreview(URL.createObjectURL(file))
   }
@@ -58,33 +71,46 @@ export default function EditProfile() {
     setSaving(true)
     try {
       let avatarUrl = profile?.avatar_url || null
+      let avatarIsCustom = profile?.avatar_is_custom || false
+      const oldAvatarUrl = profile?.avatar_url || null
 
-      if (isCreator && avatarFile) {
-        const uploadRes = await fetch('/api/upload-to-r2', {
+      if (avatarFile) {
+        const uploadRes = await fetch('/api/upload-avatar-to-r2', {
           method: 'POST',
           headers: {
             'x-file-name': avatarFile.name,
-            'x-upload-folder': 'avatars',
-            'Content-Type': avatarFile.type || 'image/jpeg',
+            'Content-Type': avatarFile.type,
           },
           body: avatarFile,
         })
-        if (!uploadRes.ok) throw new Error('Upload avatar gagal')
+        if (!uploadRes.ok) {
+          const errData = await uploadRes.json().catch(() => ({}))
+          throw new Error(errData.error || 'Upload PP gagal')
+        }
         const uploadData = await uploadRes.json()
         avatarUrl = uploadData.url
+        avatarIsCustom = true
       }
 
-      const updates = { bio: bioInput.trim() }
+      const updates = { bio: bioInput.trim(), avatar_url: avatarUrl, avatar_is_custom: avatarIsCustom }
       if (isCreator) {
         updates.account_name = nameInput.trim()
         updates.contact_link = contactInput.trim()
-        updates.avatar_url = avatarUrl
       } else {
         updates.username = nameInput.trim()
       }
-
+      
       const { error } = await supabase.from('profiles').update(updates).eq('id', user.id)
       if (error) throw error
+
+      // Hapus PP lama dari R2 kalau ada yang diganti (fire-and-forget, gak nge-block simpen profil)
+      if (avatarFile && avatarIsCustom && oldAvatarUrl && oldAvatarUrl !== avatarUrl && profile?.avatar_is_custom) {
+        fetch('/api/delete-avatar-from-r2', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: oldAvatarUrl }),
+        }).catch((err) => console.error('Gagal hapus PP lama:', err))
+      }
 
       setStatusMsg('✅ Profil berhasil disimpen!')
       setTimeout(() => navigate('/akun'), 700)
@@ -121,7 +147,7 @@ export default function EditProfile() {
         </div>
 
         <form onSubmit={handleSave}>
-          {isCreator && (
+          {(
             <div className="form-field">
               <label>Foto Profil</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
