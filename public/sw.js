@@ -1,4 +1,4 @@
-const CACHE_NAME = "pam-cache-v4"
+const CACHE_NAME = "pam-cache-v5"
 const APP_SHELL = "/index.html"
 
 self.addEventListener("install", (event) => {
@@ -30,6 +30,15 @@ self.addEventListener("fetch", (event) => {
   // (misal video-nya di-unload pas discroll lewat), sw.js bakal error karena
   // promise fetch-nya reject terus fallback cache-nya kosong.
   if (event.request.destination === "video" || event.request.headers.has("range")) {
+    return
+  }
+
+  // Request cross-origin (R2, foto Google, dll) dibiarin lewat langsung ke
+  // jaringan juga, JANGAN dicegat SW. Response opaque cross-origin yang
+  // di-handle balik lewat respondWith() ketolak browser gara-gara COEP,
+  // walau headernya udah "credentialless" - munculnya net::ERR_FAILED /
+  // "Cross-Origin-Resource-Policy prevented..." di console kayak PP kemarin.
+  if (new URL(event.request.url).origin !== self.location.origin) {
     return
   }
 
