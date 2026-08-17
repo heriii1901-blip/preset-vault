@@ -166,7 +166,7 @@ export default function EditProfile() {
                   {avatarFile ? `✅ ${avatarFile.name}` : '⬆ Ganti Foto'}
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/png,image/gif"
                     style={{ display: 'none' }}
                     onChange={handleAvatarPick}
                   />
