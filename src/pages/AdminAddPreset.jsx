@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { compressVideoIfNeeded } from '../utils/compressVideo'
 import { useUploadQueue } from '../context/UploadQueueContext'
@@ -15,11 +15,15 @@ const THUMB_COLORS = [
 export default function AdminAddPreset() {
   const navigate = useNavigate()
   const { presetId } = useParams()
+  const [searchParams] = useSearchParams()
   const isEditMode = Boolean(presetId)
+  const fromPending = searchParams.get('from') === 'pending'
   const { enqueuePresetUpload, history, cancelJob, resubmitQueueItem, deleteHistoryItem, getQueueItemForEdit } = useUploadQueue()
   const [editingQueueId, setEditingQueueId] = useState(null)
   const [activePanel, setActivePanel] = useState(0)
   const scrollerRef = useRef(null)
+  const [pendingLinkPresets, setPendingLinkPresets] = useState([])
+  const [loadingPendingLinks, setLoadingPendingLinks] = useState(true)
 
   const [songs, setSongs] = useState([])
   const [songMode, setSongMode] = useState('existing')
@@ -119,6 +123,27 @@ export default function AdminAddPreset() {
     }
   }, [])
 
+    useEffect(() => {
+    loadPendingLinkPresets()
+  }, [])
+
+  async function loadPendingLinkPresets() {
+    setLoadingPendingLinks(true)
+    try {
+      const { data, error } = await supabase
+        .from('presets')
+        .select('*, songs(name)')
+        .eq('link_pending', true)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      setPendingLinkPresets(data || [])
+    } catch (err) {
+      console.error('Gagal ambil preset yang link XML-nya kosong:', err)
+    } finally {
+      setLoadingPendingLinks(false)
+    }
+  }
+
   const resetForm = () => {
     setXmlLink('')
     setMbLink('')
@@ -144,8 +169,13 @@ export default function AdminAddPreset() {
     e.preventDefault()
     setStatusMsg('')
 
-    if (!xmlLink.trim()) return setStatusMsg('Link XML belum diisi.')
     if (!mbLink.trim()) return setStatusMsg('Link 5MB (Alight Creative) belum diisi.')
+    if (!xmlLink.trim()) {
+      const lanjut = window.confirm(
+        'Link XML belum diisi. Preset ini bakal disembunyiin dari publik dan masuk tab "Link Kosong" sampe link-nya diisi. Lanjut upload?'
+      )
+      if (!lanjut) return
+    }
     if (!creatorUsername.trim()) return setStatusMsg('Username kreator belum diisi.')
     if (songMode === 'new' && !newSongName.trim()) return setStatusMsg('Nama lagu baru belum diisi.')
     if (songMode === 'existing' && !selectedSongId) return setStatusMsg('Pilih lagunya dulu.')
@@ -259,11 +289,12 @@ export default function AdminAddPreset() {
           .from('presets')
           .update({
             song_id: songId,
-            xml_link: xmlLink.trim(),
+            xml_link: xmlLink.trim() || null,
             mb_link: mbLink.trim(),
             creator_username: creatorUsername.trim(),
             tiktok_link: tiktokLink.trim(),
             preview_video_url: previewVideoUrl,
+            link_pending: !xmlLink.trim(),
           })
           .eq('id', presetId)
         if (updateErr) throw updateErr
@@ -295,6 +326,9 @@ export default function AdminAddPreset() {
 
         setSaveProgress(100)
         setStatusMsg('✅ Preset berhasil diupdate!')
+        if (fromPending) {
+          setTimeout(() => navigate('/'), 600)
+        }
       } else {
         setSaveStage('Nyimpen preset...')
         const { error: presetErr } = await supabase.from('presets').insert({
@@ -304,6 +338,7 @@ export default function AdminAddPreset() {
           creator_username: creatorUsername.trim(),
           tiktok_link: tiktokLink.trim(),
           preview_video_url: previewVideoUrl,
+          link_pending: !xmlLink.trim(),
         })
         if (presetErr) throw presetErr
         setSaveProgress(92)
@@ -562,9 +597,11 @@ export default function AdminAddPreset() {
 
         <button className="save-btn" type="submit" disabled={saving}>
           {saving
-            ? (isEditMode ? 'Ngupdate...' : 'Nyimpen...')
+            ? (fromPending ? 'Nge-post...' : isEditMode ? 'Ngupdate...' : 'Nyimpen...')
             : editingQueueId
             ? 'Upload Ulang'
+            : fromPending
+            ? 'Post'
             : (isEditMode ? 'Update Preset' : 'Simpan Preset')}
         </button>
       </form>
@@ -678,6 +715,44 @@ export default function AdminAddPreset() {
     </div>
   )
 
+    const pendingLinkPanel = (
+    <div style={{ padding: '0 18px' }}>
+      {loadingPendingLinks && <div className="empty-state">Memuat...</div>}
+      {!loadingPendingLinks && pendingLinkPresets.length === 0 && (
+        <div className="empty-state">Semua preset udah punya link XML. 🎉</div>
+      )}
+      {!loadingPendingLinks &&
+        pendingLinkPresets.map((preset) => (
+          <div key={preset.id} className="queue-history-card">
+            <div className="queue-history-info">
+              <div className="queue-history-title">{preset.songs?.name || 'Lagu'}</div>
+              <div className="queue-history-meta">@{preset.creator_username}</div>
+              
+                href={preset.mb_link}
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                style={{ fontSize: 12.5, color: 'var(--lime)', display: 'inline-block', marginTop: 4 }}
+              >
+                🔗 Buka Link 5MB
+              </a>
+              <div className="queue-history-hint" style={{ marginTop: 6 }}>Link XML belum diisi</div>
+            </div>
+            <div className="queue-history-actions">
+              <button
+                type="button"
+                className="save-btn"
+                style={{ padding: '6px 12px', fontSize: 12.5 }}
+                onClick={() => navigate(`/admin/edit-preset/${preset.id}?from=pending`)}
+              >
+                Edit
+              </button>
+            </div>
+          </div>
+        ))}
+    </div>
+  )
+
   return (
     <div className="screen">
       <div className="admin-content">
@@ -702,18 +777,26 @@ export default function AdminAddPreset() {
               >
                 {editingQueueId ? 'Edit Upload' : 'Tambah Preset'}
               </button>
-              <button
+                            <button
                 type="button"
                 className={`kreator-hub-tab${activePanel === 1 ? ' is-active' : ''}`}
                 onClick={() => goToPanel(1)}
               >
                 Riwayat Upload{history.length > 0 ? ` (${history.length})` : ''}
               </button>
+              <button
+                type="button"
+                className={`kreator-hub-tab${activePanel === 2 ? ' is-active' : ''}`}
+                onClick={() => goToPanel(2)}
+              >
+                🔗 Link Kosong{pendingLinkPresets.length > 0 ? ` (${pendingLinkPresets.length})` : ''}
+              </button>
             </div>
 
             <div className="kreator-hub-scroller" ref={scrollerRef} onScroll={handlePanelScroll}>
               <div className="kreator-hub-page">{formPanel}</div>
               <div className="kreator-hub-page">{historyPanel}</div>
+              <div className="kreator-hub-page">{pendingLinkPanel}</div>
             </div>
           </div>
         )}
