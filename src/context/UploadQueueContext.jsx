@@ -1,7 +1,6 @@
 import { createContext, useContext, useRef, useState, useCallback, useEffect, useMemo } from 'react'
 import { supabase } from '../supabase'
 import { compressVideoIfNeeded } from '../utils/compressVideo'
-import { uploadToR2 } from '../utils/uploadToR2'
 import {
   saveQueueItem,
   deleteQueueItem,
