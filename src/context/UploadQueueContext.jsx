@@ -149,13 +149,14 @@ export function UploadQueueProvider({ children }) {
 
       if (cancelState.cancelled) return
 
-      const { error: presetErr } = await supabase.from('presets').insert({
+            const { error: presetErr } = await supabase.from('presets').insert({
         song_id: songId,
-        xml_link: job.xmlLink,
+        xml_link: job.xmlLink?.trim() || null,
         mb_link: job.mbLink,
         creator_username: job.creatorUsername,
         tiktok_link: job.tiktokLink,
         preview_video_url: previewVideoUrl,
+        link_pending: !job.xmlLink?.trim(),
       })
       if (presetErr) throw presetErr
 
