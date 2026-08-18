@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { compressVideoIfNeeded } from '../utils/compressVideo'
+import { uploadToR2 } from '../utils/uploadToR2'
 import { useUploadQueue } from '../context/UploadQueueContext'
 
 const THUMB_COLORS = [
@@ -257,27 +258,12 @@ export default function AdminAddPreset() {
         if (cancelledRef.current) return
         setSaveStage('Ngupload video contoh...')
 
-        progressIntervalRef.current = setInterval(() => {
-          setSaveProgress((prev) => (prev < 95 ? prev + 2 : prev))
-        }, 300)
-
-        const uploadRes = await fetch('/api/upload-to-r2', {
-          method: 'POST',
-          headers: {
-            'x-file-name': fileToUpload.name,
-            'Content-Type': fileToUpload.type || 'video/mp4',
-          },
-          body: fileToUpload,
+        previewVideoUrl = await uploadToR2(fileToUpload, 'presets', (p) => {
+          if (cancelledRef.current) return
+          setSaveProgress(35 + Math.min(Math.floor(p * 45), 45))
         })
 
-        clearInterval(progressIntervalRef.current)
-        progressIntervalRef.current = null
-
         if (cancelledRef.current) return
-        if (!uploadRes.ok) throw new Error('Upload ke R2 gagal')
-
-        const uploadData = await uploadRes.json()
-        previewVideoUrl = uploadData.url
         setSaveProgress(80)
       } else {
         setSaveProgress(80)
