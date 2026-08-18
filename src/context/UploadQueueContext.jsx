@@ -84,13 +84,21 @@ export function UploadQueueProvider({ children }) {
         })
         if (cancelState.cancelled) return
 
-         updateItem(job.id, { status: 'uploading', stage: 'Ngupload...', progress: 55 })
+        updateItem(job.id, { status: 'uploading', stage: 'Ngupload...', progress: 55 })
 
-        previewVideoUrl = await uploadToR2(compressed, 'presets', (p) => {
-          if (cancelState.cancelled) return
-          updateItem(job.id, { progress: Math.min(55 + Math.floor(p * 30), 85) })
+        const uploadRes = await fetch('/api/upload-to-r2', {
+          method: 'POST',
+          headers: {
+            'x-file-name': compressed.name,
+            'Content-Type': compressed.type || 'video/mp4',
+          },
+          body: compressed,
+          signal: cancelState.controller.signal,
         })
         if (cancelState.cancelled) return
+        if (!uploadRes.ok) throw new Error('Upload ke R2 gagal')
+        const uploadData = await uploadRes.json()
+        previewVideoUrl = uploadData.url
       }
 
       if (cancelState.cancelled) return
