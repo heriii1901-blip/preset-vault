@@ -333,7 +333,7 @@ export default function AdminAddPreset() {
         setSaveStage('Nyimpen preset...')
         const { error: presetErr } = await supabase.from('presets').insert({
           song_id: songId,
-          xml_link: xmlLink.trim(),
+          xml_link: xmlLink.trim() || null,
           mb_link: mbLink.trim(),
           creator_username: creatorUsername.trim(),
           tiktok_link: tiktokLink.trim(),
@@ -727,7 +727,7 @@ export default function AdminAddPreset() {
             <div className="queue-history-info">
               <div className="queue-history-title">{preset.songs?.name || 'Lagu'}</div>
               <div className="queue-history-meta">@{preset.creator_username}</div>
-              
+               <a
                 href={preset.mb_link}
                 target="_blank"
                 rel="noreferrer"
