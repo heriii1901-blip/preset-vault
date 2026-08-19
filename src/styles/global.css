@@ -604,7 +604,7 @@ button:focus, a:focus {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 24px 0 0;
+  padding: 24px 12px 12px;
   overflow-y: auto;
 }
 .admin-header { margin-bottom: 20px; }
