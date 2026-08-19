@@ -629,7 +629,7 @@ export default function AdminAddPreset() {
   }
 
   const historyPanel = (
-    <div style={{ padding: '0 18px' }}>
+    <div>
       {history.length === 0 ? (
         <div className="empty-state">Belum ada riwayat upload.</div>
       ) : (
@@ -702,7 +702,7 @@ export default function AdminAddPreset() {
   )
 
     const pendingLinkPanel = (
-    <div style={{ padding: '0 18px' }}>
+    <div>
       {loadingPendingLinks && <div className="empty-state">Memuat...</div>}
       {!loadingPendingLinks && pendingLinkPresets.length === 0 && (
         <div className="empty-state">Semua preset udah punya link XML. 🎉</div>
