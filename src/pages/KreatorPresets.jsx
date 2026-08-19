@@ -39,6 +39,7 @@ export default function KreatorPresets() {
           .from('presets')
           .select('*')
           .eq('creator_username', creatorUsername)
+          .eq('link_pending', false)
           .order('created_at', { ascending: false })
         if (error) throw error
         setPresets(data || [])
