@@ -43,7 +43,7 @@ export default function PresetFeed() {
 
         setSongName(clickedPreset.songs?.name || '')
 
-        let query = supabase.from('presets').select('*, songs(name)')
+        let query = supabase.from('presets').select('*, songs(name)').eq('link_pending', false)
 
         if (isFromTerbaru) {
           // Sama kayak query di Terbaru.jsx: preset terbaru lintas lagu
