@@ -19,9 +19,10 @@ export default function Terbaru() {
       // Kalo udah ada cache, tampilin dulu tanpa loading, terus refresh diem-diem
       if (!getCache(CACHE_KEY)) setLoading(true)
       try {
-        const { data, error } = await supabase
+          const { data, error } = await supabase
           .from('presets')
           .select('*')
+          .eq('link_pending', false)
           .order('created_at', { ascending: false })
           .limit(20)
         if (error) throw error
