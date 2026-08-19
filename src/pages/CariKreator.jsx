@@ -27,6 +27,7 @@ export default function CariKreator() {
         .from('presets')
         .select('*, songs(name)')
         .ilike('creator_username', `%${keyword}%`)
+        .eq('link_pending', false)
         .order('created_at', { ascending: false })
       if (error) throw error
       setResults(data || [])
