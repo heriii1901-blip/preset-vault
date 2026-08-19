@@ -742,7 +742,7 @@ export default function AdminAddPreset() {
   return (
     <div className="screen">
       <div className="admin-content">
-        <button className="back-btn ghost-static" style={{ marginBottom: 14, width: 'fit-content' }} onClick={() => navigate(-1)}>
+         <button className="back-btn ghost-static" style={{ marginBottom: 14, marginLeft: 14, width: 'fit-content' }} onClick={() => navigate(-1)}>
           ← Balik
         </button>
 
@@ -751,8 +751,8 @@ export default function AdminAddPreset() {
           <h2>{isEditMode ? 'Edit Preset' : 'Tambah Preset Baru'}</h2>
         </div>
         
-        {isEditMode ? (
-          formPanel
+          {isEditMode ? (
+          <div style={{ padding: '0 14px 14px' }}>{formPanel}</div>
         ) : (
           <div className="kreator-hub" style={{ padding: 0 }}>
             <div className="kreator-hub-tabs">
