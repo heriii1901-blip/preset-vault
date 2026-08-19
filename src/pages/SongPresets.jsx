@@ -24,7 +24,7 @@ export default function SongPresets() {
       try {
         const [{ data: songData }, { data: presetsData, error }] = await Promise.all([
           supabase.from('songs').select('*').eq('id', songId).single(),
-          supabase.from('presets').select('*').eq('song_id', songId),
+          supabase.from('presets').select('*').eq('song_id', songId).eq('link_pending', false),
         ])
         if (error) throw error
         setSong(songData)
