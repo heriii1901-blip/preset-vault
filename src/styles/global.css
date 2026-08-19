@@ -663,7 +663,7 @@ button:focus, a:focus {
 .finput-real {
   width: 100%;
   background: var(--surface-2);
-  border: 1px solid var(--line);
+  border: none;
   border-radius: 11px;
   padding: 12px 13px;
   font-size: 12.5px;
@@ -2001,7 +2001,7 @@ select.finput-real { cursor: pointer; }
   align-items: flex-start;
   gap: 12px;
   background: var(--card-bg, rgba(255,255,255,0.04));
-  border: 1px solid rgba(255,255,255,0.08);
+  border: none;
   border-radius: 14px;
   padding: 14px 14px 12px;
   margin-bottom: 12px;
