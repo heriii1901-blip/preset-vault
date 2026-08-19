@@ -1,6 +1,7 @@
 import { createContext, useContext, useRef, useState, useCallback, useEffect, useMemo } from 'react'
 import { supabase } from '../supabase'
 import { compressVideoIfNeeded } from '../utils/compressVideo'
+import { uploadToR2 } from '../utils/uploadToR2'
 import {
   saveQueueItem,
   deleteQueueItem,
@@ -85,19 +86,11 @@ export function UploadQueueProvider({ children }) {
 
         updateItem(job.id, { status: 'uploading', stage: 'Ngupload...', progress: 55 })
 
-        const uploadRes = await fetch('/api/upload-to-r2', {
-          method: 'POST',
-          headers: {
-            'x-file-name': compressed.name,
-            'Content-Type': compressed.type || 'video/mp4',
-          },
-          body: compressed,
-          signal: cancelState.controller.signal,
+        previewVideoUrl = await uploadToR2(compressed, 'presets', (p) => {
+          if (cancelState.cancelled) return
+          updateItem(job.id, { progress: Math.min(55 + Math.floor(p * 30), 85) })
         })
         if (cancelState.cancelled) return
-        if (!uploadRes.ok) throw new Error('Upload ke R2 gagal')
-        const uploadData = await uploadRes.json()
-        previewVideoUrl = uploadData.url
       }
 
       if (cancelState.cancelled) return
