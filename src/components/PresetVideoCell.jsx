@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 
 const COVER_TIME = 2
-const MAX_SEEK_RETRY = 3
-const SEEK_RETRY_DELAY = 900
+const MAX_SEEK_RETRY = 6
+const SEEK_RETRY_DELAY = 1200
 
 // Antrian global biar nggak semua video di grid nge-seek/decode bareng pas scroll cepet.
 // Ini yang paling ngaruh ke jank di hp kentang -> burst decode ditahan, jalan bergantian.
