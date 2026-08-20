@@ -147,25 +147,32 @@ export default function PresetVideoCell({
       onMouseEnter={(e) => onHoverStart?.(e.currentTarget.querySelector('video'))}
       onMouseLeave={(e) => onHoverEnd?.(e.currentTarget.querySelector('video'))}
     >
-      {preset.preview_video_url && !failed ? (
-        <video
-          src={isVisible ? preset.preview_video_url : undefined}
-          muted
-          loop
-          playsInline
-          preload={isVisible ? 'metadata' : 'none'}
-          crossOrigin="anonymous"
-          disablePictureInPicture
-          controlsList="nodownload"
-          draggable={false}
-          poster={getCache?.(`thumb:${preset.id}`)?.data}
-          onLoadedMetadata={handleLoadedMetadata}
-          onSeeked={handleSeeked}
-          onError={handleError}
-        />
-      ) : (
-        <div className="grid-fallback">🎬</div>
-      )}
+            {(() => {
+        const cachedThumb = getCache?.(`thumb:${preset.id}`)?.data
+        if (preset.preview_video_url && !failed) {
+          return (
+            <video
+              src={isVisible ? preset.preview_video_url : undefined}
+              muted
+              loop
+              playsInline
+              preload={isVisible ? 'metadata' : 'none'}
+              crossOrigin="anonymous"
+              disablePictureInPicture
+              controlsList="nodownload"
+              draggable={false}
+              poster={cachedThumb}
+              onLoadedMetadata={handleLoadedMetadata}
+              onSeeked={handleSeeked}
+              onError={handleError}
+            />
+          )
+        }
+        if (cachedThumb) {
+          return <img src={cachedThumb} alt="" className="grid-fallback-thumb" draggable={false} />
+        }
+        return <div className="grid-fallback">🎬</div>
+      })()}
       {showOverlay && <div className="grid-cell-overlay">@{preset.creator_username}</div>}
     </div>
   )
