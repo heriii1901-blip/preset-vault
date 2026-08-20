@@ -178,6 +178,7 @@ export default function AdminAddPreset() {
       if (!lanjut) return
     }
     if (!creatorUsername.trim()) return setStatusMsg('Username kreator belum diisi.')
+    if (!isEditMode && !previewFile) return setStatusMsg('Video contoh belum dipilih.')
     if (songMode === 'new' && !newSongName.trim()) return setStatusMsg('Nama lagu baru belum diisi.')
     if (songMode === 'existing' && !selectedSongId) return setStatusMsg('Pilih lagunya dulu.')
 
