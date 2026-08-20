@@ -53,11 +53,13 @@ export function AuthProvider({ children }) {
 
   // Sinkron foto profil Google ke tabel profiles, biar bisa ditampilin di list Kreator
   // Kreator skip: avatar mereka custom upload, jangan ditimpa Google
-  useEffect(() => {
+    useEffect(() => {
     if (!user || loading) return
     if (isCreator || hasCustomAvatar) return
     const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || null
     if (!avatarUrl) return
+    if (avatarSyncedRef.current === user.id) return
+    avatarSyncedRef.current = user.id
     supabase
       .from('profiles')
       .update({ avatar_url: avatarUrl })
