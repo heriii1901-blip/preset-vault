@@ -9,6 +9,7 @@ export function AuthProvider({ children }) {
   const [isCreator, setIsCreator] = useState(false)
   const [creatorUsername, setCreatorUsername] = useState('')
   const [hasCustomAvatar, setHasCustomAvatar] = useState(false)
+  const avatarSyncedRef = useRef(null)
   
   async function loadCreatorStatus(userId) {
     try {
