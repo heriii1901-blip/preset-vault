@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { supabase, ADMIN_EMAIL } from '../supabase'
 
 const AuthContext = createContext(null)
