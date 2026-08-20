@@ -150,17 +150,10 @@ export default function PresetFeed() {
     (entries) => {
       entries.forEach((entry) => {
         const id = entry.target.dataset.presetId
-        if (entry.isIntersecting) {
+          if (entry.isIntersecting) {
           setLoadedIds((prev) => {
             if (prev.has(id)) return prev
             return new Set(prev).add(id)
-          })
-        } else {
-          setLoadedIds((prev) => {
-            if (!prev.has(id)) return prev
-            const next = new Set(prev)
-            next.delete(id)
-            return next
           })
         }
       })
