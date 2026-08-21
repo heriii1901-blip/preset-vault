@@ -3,12 +3,34 @@ import { fetchFile } from '@ffmpeg/util'
 
 let ffmpegInstance = null
 
-// Download beberapa file core ffmpeg sekaligus (js/wasm/worker), share 1 AbortController.
-// Bedanya sama toBlobURL bawaan @ffmpeg/util: kalo timeout, request yang lagi jalan BENERAN
-// dibatalin (controller.abort()), bukan cuma ditinggal race doang - jadi koneksi ke unpkg
-// gak nyangkut di background dan bikin percobaan berikutnya (single-thread) ikut ngantri lama.
-// Bonus: bisa laporin progress download asli (byte diterima / total) ke UI.
-async function loadCoreFiles(urls, ms, label, onDownloadProgress, externalSignal) {
+async function fetchAsBlobURL(url, mimeType, signal, onBytes) {
+  const res = await fetch(url, { signal })
+  if (!res.ok) throw new Error(`gagal diunduh (status ${res.status})`)
+  const total = Number(res.headers.get('content-length')) || 0
+  if (!res.body) {
+    const buf = await res.arrayBuffer()
+    onBytes?.(buf.byteLength, total || buf.byteLength)
+    return URL.createObjectURL(new Blob([buf], { type: mimeType }))
+  }
+  const reader = res.body.getReader()
+  const chunks = []
+  let received = 0
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    chunks.push(value)
+    received += value.length
+    onBytes?.(received, total)
+  }
+  return URL.createObjectURL(new Blob(chunks, { type: mimeType }))
+}
+
+// Download file core ffmpeg (js/wasm/worker) LALU nyalain ffmpeg.load() - dua-duanya
+// digabung dalam 1 batas waktu bareng, di-share 1 AbortController. Sebelumnya cuma
+// download-nya doang yang ke-timeout; ffmpeg.load() (proses init worker/WASM) gak ke-cover
+// sama sekali, jadi kalo itu yang nyangkut (misal worker gagal nyala), ya beneran gak
+// pernah kelar. Sekarang dua-duanya ikut kena batas waktu yang sama.
+async function loadFFmpegCore(ffmpeg, urls, ms, label, onDownloadProgress, externalSignal, includeWorker) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), ms)
   if (externalSignal) {
@@ -24,44 +46,36 @@ async function loadCoreFiles(urls, ms, label, onDownloadProgress, externalSignal
   function reportProgress() {
     const totalSum = keys.reduce((s, k) => s + totals[k], 0)
     const receivedSum = keys.reduce((s, k) => s + receiveds[k], 0)
-    if (totalSum > 0) onDownloadProgress?.(receivedSum / totalSum)
-  }
-
-  async function fetchOne(key) {
-    const res = await fetch(urls[key], { signal: controller.signal })
-    if (!res.ok) throw new Error(`${label} gagal diunduh (status ${res.status})`)
-    const total = Number(res.headers.get('content-length')) || 0
-    totals[key] = total
-    if (!res.body) {
-      const buf = await res.arrayBuffer()
-      receiveds[key] = buf.byteLength
-      reportProgress()
-      return URL.createObjectURL(new Blob([buf], { type: mimeMap[key] }))
-    }
-    const reader = res.body.getReader()
-    const chunks = []
-    for (;;) {
-      const { done, value } = await reader.read()
-      if (done) break
-      chunks.push(value)
-      receiveds[key] += value.length
-      reportProgress()
-    }
-    return URL.createObjectURL(new Blob(chunks, { type: mimeMap[key] }))
+    // sisain dikit (max 97%) buat fase ffmpeg.load() sesudah download kelar
+    if (totalSum > 0) onDownloadProgress?.(Math.min(receivedSum / totalSum, 0.97))
   }
 
   try {
     const results = {}
-    await Promise.all(keys.map(async (k) => { results[k] = await fetchOne(k) }))
-    return results
+    await Promise.all(
+      keys.map(async (k) => {
+        results[k] = await fetchAsBlobURL(urls[k], mimeMap[k], controller.signal, (received, total) => {
+          receiveds[k] = received
+          totals[k] = total || receiveds[k]
+          reportProgress()
+        })
+      })
+    )
+    if (controller.signal.aborted) throw new DOMException('Aborted', 'AbortError')
+    onDownloadProgress?.(1)
+    await ffmpeg.load(
+      includeWorker
+        ? { coreURL: results.js, wasmURL: results.wasm, workerURL: results.worker }
+        : { coreURL: results.js, wasmURL: results.wasm }
+    )
   } catch (err) {
-    if (err.name === 'AbortError') {
-      throw new Error(`${label} timeout (${ms / 1000}s) - jaringan lambat/CDN gak kebuka`)
+    if (err?.name === 'AbortError' || controller.signal.aborted) {
+      throw new Error(`${label} timeout (${ms / 1000}s) - jaringan lambat/CDN gak kebuka atau compressor gagal nyala`)
     }
     throw err
   } finally {
     clearTimeout(timer)
-    controller.abort() // pastiin semua fetch yang belum kelar ikut ke-cancel, sukses atau engga
+    controller.abort() // pastiin fetch yang belum kelar ikut ke-cancel, sukses atau engga
   }
 }
 
@@ -88,28 +102,30 @@ export async function getFFmpeg(onProgress, onDownloadProgress, externalSignal) 
     if (typeof SharedArrayBuffer === 'undefined' || !window.crossOriginIsolated) {
       throw new Error('cross-origin isolation belom aktif, skip multi-thread')
     }
-    const { js: coreURL, wasm: wasmURL, worker: workerURL } = await loadCoreFiles(
+    await loadFFmpegCore(
+      ffmpeg,
       { js: `${baseURLmt}/ffmpeg-core.js`, wasm: `${baseURLmt}/ffmpeg-core.wasm`, worker: `${baseURLmt}/ffmpeg-core.worker.js` },
-      20000,
-      'Download compressor multi-thread',
+      25000,
+      'Compressor multi-thread',
       onDownloadProgress,
-      externalSignal
+      externalSignal,
+      true
     )
-    await ffmpeg.load({ coreURL, wasmURL, workerURL })
   } catch (mtErr) {
     console.warn('Multi-thread ffmpeg gagal, fallback ke single-thread:', mtErr?.message)
     try {
-      const { js: coreURL, wasm: wasmURL } = await loadCoreFiles(
+      await loadFFmpegCore(
+        ffmpeg,
         { js: `${baseURLst}/ffmpeg-core.js`, wasm: `${baseURLst}/ffmpeg-core.wasm` },
-        20000,
-        'Download compressor single-thread',
+        25000,
+        'Compressor single-thread',
         onDownloadProgress,
-        externalSignal
+        externalSignal,
+        false
       )
-      await ffmpeg.load({ coreURL, wasmURL })
     } catch (err) {
       console.error('RAW error pas load ffmpeg core:', err)
-      throw new Error(`Gagal fetch ffmpeg-core dari unpkg: ${err?.message || String(err)}`)
+      throw new Error(`Gagal siapin ffmpeg-core: ${err?.message || String(err)}`)
     }
   }
 
