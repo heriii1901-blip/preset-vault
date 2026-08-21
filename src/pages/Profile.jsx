@@ -301,7 +301,7 @@ export default function Profile() {
                     Belum ada preset yang di-favoritin. Pencet ikon ♡ di halaman video buat nyimpen.
                   </div>
                 )}
-                {!loadingFavs && favorites.length > 0 && renderGrid(favorites)}
+                {!loadingFavs && favorites.length > 0 && renderGrid(favorites, { source: 'favorit' })}
               </div>
             </div>
           </>
