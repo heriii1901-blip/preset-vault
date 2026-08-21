@@ -9,6 +9,7 @@ export default function PresetFeed() {
   const location = useLocation()
   const isFromTerbaru = location.state?.source === 'terbaru'
   const isFromKreator = location.state?.source === 'kreator'
+  const isFromFavorit = location.state?.source === 'favorit'
   const filterCreatorUsername = location.state?.creatorUsername
   const { user } = useAuth()
   const [presets, setPresets] = useState([])
@@ -43,6 +44,17 @@ export default function PresetFeed() {
 
         setSongName(clickedPreset.songs?.name || '')
 
+        // Ambil id favorit user duluan — dipakai buat filter feed (kalo dari Favorit) & buat tandain hati
+        let favIds = []
+        if (user) {
+          const { data: favs } = await supabase
+            .from('favorites')
+            .select('preset_id')
+            .eq('user_id', user.id)
+          favIds = (favs || []).map((f) => f.preset_id)
+          setFavoritedIds(new Set(favIds))
+        }
+
         let query = supabase.from('presets').select('*, songs(name)').eq('link_pending', false)
 
         if (isFromTerbaru) {
@@ -51,6 +63,9 @@ export default function PresetFeed() {
         } else if (isFromKreator && filterCreatorUsername) {
           // Kejebak di kreator yang sama aja, jangan nyasar ke video lain
           query = query.eq('creator_username', filterCreatorUsername).order('created_at', { ascending: false })
+        } else if (isFromFavorit) {
+          // Cuma yang di-favoritin, jangan nyampur sama preset lain di lagu yang sama
+          query = query.in('id', favIds.length > 0 ? favIds : [presetId]).order('created_at', { ascending: false })
         } else {
           // Fokus 1 lagu aja
           query = query.eq('song_id', clickedPreset.song_id).order('created_at', { ascending: true })
@@ -60,14 +75,6 @@ export default function PresetFeed() {
         if (listErr) throw listErr
 
         setPresets(allPresets || [])
-
-        if (user) {
-          const { data: favs } = await supabase
-            .from('favorites')
-            .select('preset_id')
-            .eq('user_id', user.id)
-          setFavoritedIds(new Set((favs || []).map((f) => f.preset_id)))
-        }
       } catch (err) {
         console.error('Gagal ambil feed preset:', err)
       } finally {
@@ -76,7 +83,7 @@ export default function PresetFeed() {
     }
     if (presetId) loadFeed()
     hasScrolledRef.current = false
-  }, [presetId, user, isFromTerbaru, isFromKreator, filterCreatorUsername])
+  }, [presetId, user, isFromTerbaru, isFromKreator, filterCreatorUsername, isFromFavorit])
   
   useEffect(() => {
     if (loading || presets.length === 0 || hasScrolledRef.current) return
