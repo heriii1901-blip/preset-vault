@@ -73,15 +73,22 @@ export function UploadQueueProvider({ children }) {
 
   const runJob = useCallback(async (job, cancelState) => {
     try {
-      updateItem(job.id, { status: 'compressing', stage: 'Ngompres video...', progress: 2 })
+      updateItem(job.id, { status: 'compressing', stage: 'Nyiapin video...', progress: 2 })
 
       let previewVideoUrl = ''
 
       if (job.previewFile) {
-        const compressed = await compressVideoIfNeeded(job.previewFile, (p) => {
-          if (cancelState.cancelled) return
-          updateItem(job.id, { progress: Math.min(2 + Math.floor(p * 48), 50) })
-        })
+        const compressed = await compressVideoIfNeeded(
+          job.previewFile,
+          (p) => {
+            if (cancelState.cancelled) return
+            updateItem(job.id, { progress: Math.min(2 + Math.floor(p * 48), 50) })
+          },
+          (stage) => {
+            if (cancelState.cancelled) return
+            updateItem(job.id, { stage })
+          }
+        )
         if (cancelState.cancelled) return
 
         updateItem(job.id, { status: 'uploading', stage: 'Ngupload...', progress: 55 })
