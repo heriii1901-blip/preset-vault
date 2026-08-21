@@ -25,6 +25,35 @@ async function fetchAsBlobURL(url, mimeType, signal, onBytes) {
   return URL.createObjectURL(new Blob(chunks, { type: mimeType }))
 }
 
+// AbortController cuma bisa nyekek fetch() - ffmpeg.load() (init worker/WASM) gak nerima
+// signal apapun, jadi kalo itu yang nyangkut, gak ada cara "beneran" ngebatalinnya. Yang bisa
+// kita lakuin cuma berenti NUNGGUIN promise-nya (biar kode lanjut jalan / nyerah), walau proses
+// aslinya tetep jalan sunyi di background. Ini penting: race manual, bukan cuma AbortController.
+function raceWithAbort(promise, ms, externalSignal, message) {
+  return new Promise((resolve, reject) => {
+    let done = false
+    function cleanup() {
+      clearTimeout(timer)
+      externalSignal?.removeEventListener('abort', onAbort)
+    }
+    function onAbort() {
+      if (done) return
+      done = true
+      cleanup()
+      reject(new Error(message))
+    }
+    const timer = setTimeout(onAbort, ms)
+    if (externalSignal) {
+      if (externalSignal.aborted) return onAbort()
+      externalSignal.addEventListener('abort', onAbort)
+    }
+    promise.then(
+      (v) => { if (done) return; done = true; cleanup(); resolve(v) },
+      (e) => { if (done) return; done = true; cleanup(); reject(e) }
+    )
+  })
+}
+
 // Download file core ffmpeg (js/wasm/worker) LALU nyalain ffmpeg.load() - dua-duanya
 // digabung dalam 1 batas waktu bareng, di-share 1 AbortController. Sebelumnya cuma
 // download-nya doang yang ke-timeout; ffmpeg.load() (proses init worker/WASM) gak ke-cover
@@ -63,11 +92,11 @@ async function loadFFmpegCore(ffmpeg, urls, ms, label, onDownloadProgress, exter
     )
     if (controller.signal.aborted) throw new DOMException('Aborted', 'AbortError')
     onDownloadProgress?.(1)
-    await ffmpeg.load(
-      includeWorker
-        ? { coreURL: results.js, wasmURL: results.wasm, workerURL: results.worker }
-        : { coreURL: results.js, wasmURL: results.wasm }
-    )
+    const loadOpts = includeWorker
+      ? { coreURL: results.js, wasmURL: results.wasm, workerURL: results.worker }
+      : { coreURL: results.js, wasmURL: results.wasm }
+    // Dikasih budget sendiri 15s buat fase ini - biasanya cepet (udah lokal, gak ada network lagi)
+    await raceWithAbort(ffmpeg.load(loadOpts), 15000, externalSignal, `${label}: compressor kelamaan/gagal nyala (15s)`)
   } catch (err) {
     if (err?.name === 'AbortError' || controller.signal.aborted) {
       throw new Error(`${label} timeout (${ms / 1000}s) - jaringan lambat/CDN gak kebuka atau compressor gagal nyala`)
