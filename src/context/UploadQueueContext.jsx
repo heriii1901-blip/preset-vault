@@ -87,7 +87,8 @@ export function UploadQueueProvider({ children }) {
           (stage) => {
             if (cancelState.cancelled) return
             updateItem(job.id, { stage })
-          }
+          },
+          cancelState.controller.signal
         )
         if (cancelState.cancelled) return
 
