@@ -93,9 +93,10 @@ function buildScaleFilter(maxDim) {
   return `if(gt(iw\\,ih)\\,min(iw\\,${maxDim})\\,-2):if(gt(iw\\,ih)\\,-2\\,min(ih\\,${maxDim}))`
 }
 
-export async function compressVideoIfNeeded(file, onProgress) {
+export async function compressVideoIfNeeded(file, onProgress, onStage) {
   if (!file || file.size <= SKIP_COMPRESS_BYTES) return file
   try {
+    onStage?.('Nyiapin video...')
     const duration = await getVideoDuration(file)
     if (!duration || duration <= 0) throw new Error('Durasi video ngga valid')
 
@@ -103,7 +104,22 @@ export async function compressVideoIfNeeded(file, onProgress) {
     let videoBitrateKbps = Math.floor(targetTotalKbps - AUDIO_BITRATE_KBPS)
     if (videoBitrateKbps < MIN_VIDEO_BITRATE_KBPS) videoBitrateKbps = MIN_VIDEO_BITRATE_KBPS
 
-    const ffmpeg = await getFFmpeg(onProgress)
+    onStage?.('Nyiapin compressor...')
+    // Progress asli dari ffmpeg (0-1) itu progress SATU exec/percobaan doang, dan reset
+    // ke 0 tiap percobaan baru mulai (kalo hasil kompres masih kegedean & diulang lagi).
+    // Kalo dikirim mentah-mentah ke UI, persen keliatan mundur pas retry. Makanya di sini
+    // tiap percobaan dijatah 1/MAX_ATTEMPTS dari total, dan progress gapernah dibolehin turun.
+    let peakProgress = 0
+    let currentAttempt = 1
+    const ffmpeg = await getFFmpeg((p) => {
+      const attemptShare = 1 / MAX_ATTEMPTS
+      const base = (currentAttempt - 1) * attemptShare
+      const val = base + Math.max(0, Math.min(p, 1)) * attemptShare
+      if (val > peakProgress) {
+        peakProgress = val
+        onProgress?.(val)
+      }
+    })
     const inputName = 'input' + (file.name.match(/\.\w+$/)?.[0] || '.mp4')
     const outputName = 'output.mp4'
     await ffmpeg.writeFile(inputName, await fetchFile(file))
@@ -122,6 +138,8 @@ export async function compressVideoIfNeeded(file, onProgress) {
 
     while (attempt < MAX_ATTEMPTS) {
       attempt++
+      currentAttempt = attempt
+      onStage?.(attempt > 1 ? `Ngompres ulang (percobaan ${attempt})...` : 'Ngompres video...')
       const maxDim = RESOLUTION_STEPS[resIndex]
       await ffmpeg.exec([
         '-i', inputName,
