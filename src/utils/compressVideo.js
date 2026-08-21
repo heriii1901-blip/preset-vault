@@ -8,9 +8,13 @@ let ffmpegInstance = null
 // dibatalin (controller.abort()), bukan cuma ditinggal race doang - jadi koneksi ke unpkg
 // gak nyangkut di background dan bikin percobaan berikutnya (single-thread) ikut ngantri lama.
 // Bonus: bisa laporin progress download asli (byte diterima / total) ke UI.
-async function loadCoreFiles(urls, ms, label, onDownloadProgress) {
+async function loadCoreFiles(urls, ms, label, onDownloadProgress, externalSignal) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), ms)
+  if (externalSignal) {
+    if (externalSignal.aborted) controller.abort()
+    else externalSignal.addEventListener('abort', () => controller.abort())
+  }
   const mimeMap = { js: 'text/javascript', wasm: 'application/wasm', worker: 'text/javascript' }
   const keys = Object.keys(urls)
   const totals = {}
@@ -61,7 +65,7 @@ async function loadCoreFiles(urls, ms, label, onDownloadProgress) {
   }
 }
 
-export async function getFFmpeg(onProgress, onDownloadProgress) {
+export async function getFFmpeg(onProgress, onDownloadProgress, externalSignal) {
   if (ffmpegInstance) {
     if (onProgress) {
       ffmpegInstance.off?.('progress')
@@ -88,7 +92,8 @@ export async function getFFmpeg(onProgress, onDownloadProgress) {
       { js: `${baseURLmt}/ffmpeg-core.js`, wasm: `${baseURLmt}/ffmpeg-core.wasm`, worker: `${baseURLmt}/ffmpeg-core.worker.js` },
       20000,
       'Download compressor multi-thread',
-      onDownloadProgress
+      onDownloadProgress,
+      externalSignal
     )
     await ffmpeg.load({ coreURL, wasmURL, workerURL })
   } catch (mtErr) {
@@ -98,7 +103,8 @@ export async function getFFmpeg(onProgress, onDownloadProgress) {
         { js: `${baseURLst}/ffmpeg-core.js`, wasm: `${baseURLst}/ffmpeg-core.wasm` },
         20000,
         'Download compressor single-thread',
-        onDownloadProgress
+        onDownloadProgress,
+        externalSignal
       )
       await ffmpeg.load({ coreURL, wasmURL })
     } catch (err) {
@@ -142,7 +148,7 @@ function buildScaleFilter(maxDim) {
   return `if(gt(iw\\,ih)\\,min(iw\\,${maxDim})\\,-2):if(gt(iw\\,ih)\\,-2\\,min(ih\\,${maxDim}))`
 }
 
-export async function compressVideoIfNeeded(file, onProgress, onStage) {
+export async function compressVideoIfNeeded(file, onProgress, onStage, signal) {
   if (!file || file.size <= SKIP_COMPRESS_BYTES) return file
   try {
     onStage?.('Nyiapin video...')
@@ -172,7 +178,8 @@ export async function compressVideoIfNeeded(file, onProgress, onStage) {
       },
       (dlP) => {
         onStage?.(`Download compressor (${Math.round(dlP * 100)}%)...`)
-      }
+      },
+      signal
     )
     const inputName = 'input' + (file.name.match(/\.\w+$/)?.[0] || '.mp4')
     const outputName = 'output.mp4'
