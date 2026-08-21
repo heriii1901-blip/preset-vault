@@ -1,21 +1,67 @@
 import { FFmpeg } from '@ffmpeg/ffmpeg'
-import { toBlobURL, fetchFile } from '@ffmpeg/util'
+import { fetchFile } from '@ffmpeg/util'
 
 let ffmpegInstance = null
 
-async function loadWithTimeout(loadFn, ms, label) {
-  let timer
-  const timeout = new Promise((_, reject) => {
-    timer = setTimeout(() => reject(new Error(`${label} timeout (${ms / 1000}s) - jaringan lambat/CDN gak kebuka`)), ms)
-  })
+// Download beberapa file core ffmpeg sekaligus (js/wasm/worker), share 1 AbortController.
+// Bedanya sama toBlobURL bawaan @ffmpeg/util: kalo timeout, request yang lagi jalan BENERAN
+// dibatalin (controller.abort()), bukan cuma ditinggal race doang - jadi koneksi ke unpkg
+// gak nyangkut di background dan bikin percobaan berikutnya (single-thread) ikut ngantri lama.
+// Bonus: bisa laporin progress download asli (byte diterima / total) ke UI.
+async function loadCoreFiles(urls, ms, label, onDownloadProgress) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), ms)
+  const mimeMap = { js: 'text/javascript', wasm: 'application/wasm', worker: 'text/javascript' }
+  const keys = Object.keys(urls)
+  const totals = {}
+  const receiveds = {}
+  keys.forEach((k) => { totals[k] = 0; receiveds[k] = 0 })
+
+  function reportProgress() {
+    const totalSum = keys.reduce((s, k) => s + totals[k], 0)
+    const receivedSum = keys.reduce((s, k) => s + receiveds[k], 0)
+    if (totalSum > 0) onDownloadProgress?.(receivedSum / totalSum)
+  }
+
+  async function fetchOne(key) {
+    const res = await fetch(urls[key], { signal: controller.signal })
+    if (!res.ok) throw new Error(`${label} gagal diunduh (status ${res.status})`)
+    const total = Number(res.headers.get('content-length')) || 0
+    totals[key] = total
+    if (!res.body) {
+      const buf = await res.arrayBuffer()
+      receiveds[key] = buf.byteLength
+      reportProgress()
+      return URL.createObjectURL(new Blob([buf], { type: mimeMap[key] }))
+    }
+    const reader = res.body.getReader()
+    const chunks = []
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      chunks.push(value)
+      receiveds[key] += value.length
+      reportProgress()
+    }
+    return URL.createObjectURL(new Blob(chunks, { type: mimeMap[key] }))
+  }
+
   try {
-    return await Promise.race([loadFn(), timeout])
+    const results = {}
+    await Promise.all(keys.map(async (k) => { results[k] = await fetchOne(k) }))
+    return results
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error(`${label} timeout (${ms / 1000}s) - jaringan lambat/CDN gak kebuka`)
+    }
+    throw err
   } finally {
     clearTimeout(timer)
+    controller.abort() // pastiin semua fetch yang belum kelar ikut ke-cancel, sukses atau engga
   }
 }
 
-export async function getFFmpeg(onProgress) {
+export async function getFFmpeg(onProgress, onDownloadProgress) {
   if (ffmpegInstance) {
     if (onProgress) {
       ffmpegInstance.off?.('progress')
@@ -38,20 +84,23 @@ export async function getFFmpeg(onProgress) {
     if (typeof SharedArrayBuffer === 'undefined' || !window.crossOriginIsolated) {
       throw new Error('cross-origin isolation belom aktif, skip multi-thread')
     }
-    await loadWithTimeout(async () => {
-      const coreURL = await toBlobURL(`${baseURLmt}/ffmpeg-core.js`, 'text/javascript')
-      const wasmURL = await toBlobURL(`${baseURLmt}/ffmpeg-core.wasm`, 'application/wasm')
-      const workerURL = await toBlobURL(`${baseURLmt}/ffmpeg-core.worker.js`, 'text/javascript')
-      await ffmpeg.load({ coreURL, wasmURL, workerURL })
-    }, 20000, 'Load ffmpeg multi-thread')
+    const { js: coreURL, wasm: wasmURL, worker: workerURL } = await loadCoreFiles(
+      { js: `${baseURLmt}/ffmpeg-core.js`, wasm: `${baseURLmt}/ffmpeg-core.wasm`, worker: `${baseURLmt}/ffmpeg-core.worker.js` },
+      20000,
+      'Download compressor multi-thread',
+      onDownloadProgress
+    )
+    await ffmpeg.load({ coreURL, wasmURL, workerURL })
   } catch (mtErr) {
     console.warn('Multi-thread ffmpeg gagal, fallback ke single-thread:', mtErr?.message)
     try {
-      await loadWithTimeout(async () => {
-        const coreURL = await toBlobURL(`${baseURLst}/ffmpeg-core.js`, 'text/javascript')
-        const wasmURL = await toBlobURL(`${baseURLst}/ffmpeg-core.wasm`, 'application/wasm')
-        await ffmpeg.load({ coreURL, wasmURL })
-      }, 20000, 'Load ffmpeg single-thread')
+      const { js: coreURL, wasm: wasmURL } = await loadCoreFiles(
+        { js: `${baseURLst}/ffmpeg-core.js`, wasm: `${baseURLst}/ffmpeg-core.wasm` },
+        20000,
+        'Download compressor single-thread',
+        onDownloadProgress
+      )
+      await ffmpeg.load({ coreURL, wasmURL })
     } catch (err) {
       console.error('RAW error pas load ffmpeg core:', err)
       throw new Error(`Gagal fetch ffmpeg-core dari unpkg: ${err?.message || String(err)}`)
@@ -111,15 +160,20 @@ export async function compressVideoIfNeeded(file, onProgress, onStage) {
     // tiap percobaan dijatah 1/MAX_ATTEMPTS dari total, dan progress gapernah dibolehin turun.
     let peakProgress = 0
     let currentAttempt = 1
-    const ffmpeg = await getFFmpeg((p) => {
-      const attemptShare = 1 / MAX_ATTEMPTS
-      const base = (currentAttempt - 1) * attemptShare
-      const val = base + Math.max(0, Math.min(p, 1)) * attemptShare
-      if (val > peakProgress) {
-        peakProgress = val
-        onProgress?.(val)
+    const ffmpeg = await getFFmpeg(
+      (p) => {
+        const attemptShare = 1 / MAX_ATTEMPTS
+        const base = (currentAttempt - 1) * attemptShare
+        const val = base + Math.max(0, Math.min(p, 1)) * attemptShare
+        if (val > peakProgress) {
+          peakProgress = val
+          onProgress?.(val)
+        }
+      },
+      (dlP) => {
+        onStage?.(`Download compressor (${Math.round(dlP * 100)}%)...`)
       }
-    })
+    )
     const inputName = 'input' + (file.name.match(/\.\w+$/)?.[0] || '.mp4')
     const outputName = 'output.mp4'
     await ffmpeg.writeFile(inputName, await fetchFile(file))
