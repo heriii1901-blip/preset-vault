@@ -650,7 +650,7 @@ export default function AdminAddPreset() {
               >
                 <div className="queue-history-title">{it.newSongName || 'Lagu yang udah ada'}</div>
                 <div className="queue-history-meta">
-                  @{it.creatorUsername || '-'} · {STATUS_LABEL[it.status] || it.status}
+                  @{it.creatorUsername || '-'} · {isActive ? (it.stage || STATUS_LABEL[it.status] || it.status) : (STATUS_LABEL[it.status] || it.status)}
                 </div>
                 {it.status === 'error' && it.errorMessage && (
                   <div className="queue-history-error">❌ {it.errorMessage}</div>
