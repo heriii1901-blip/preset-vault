@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { compressVideoIfNeeded } from '../utils/compressVideo'
 import { uploadToR2 } from '../utils/uploadToR2'
+import { generateCoverFromVideo } from '../utils/generateCoverFromVideo'
 import { useUploadQueue } from '../context/UploadQueueContext'
 
 const THUMB_COLORS = [
@@ -251,6 +252,7 @@ export default function AdminAddPreset() {
       setSaveProgress(15)
 
       let previewVideoUrl = isEditMode ? existingPreviewUrl : ''
+      let coverUrl = null
       if (previewFile) {
         setSaveStage(skipCompress ? 'Ngupload video contoh (tanpa kompres)...' : 'Ngompres video...')
 
@@ -270,6 +272,14 @@ export default function AdminAddPreset() {
 
         if (cancelledRef.current) return
         setSaveProgress(80)
+
+        setSaveStage('Bikin cover...')
+        try {
+          const coverFile = await generateCoverFromVideo(fileToUpload)
+          coverUrl = await uploadToR2(coverFile, 'covers')
+        } catch (err) {
+          console.error('Gagal bikin cover:', err)
+        }
       } else {
         setSaveProgress(80)
       }
@@ -286,6 +296,7 @@ export default function AdminAddPreset() {
             tiktok_link: tiktokLink.trim(),
             preview_video_url: previewVideoUrl,
             link_pending: !xmlLink.trim(),
+            ...(coverUrl ? { cover_url: coverUrl } : {}),
           })
           .eq('id', presetId)
         if (updateErr) throw updateErr
@@ -329,6 +340,7 @@ export default function AdminAddPreset() {
           creator_username: creatorUsername.trim(),
           tiktok_link: tiktokLink.trim(),
           preview_video_url: previewVideoUrl,
+          cover_url: coverUrl,
           link_pending: !xmlLink.trim(),
         })
         if (presetErr) throw presetErr
