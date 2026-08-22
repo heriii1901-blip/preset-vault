@@ -37,6 +37,7 @@ export default function AdminAddPreset() {
   const [creatorUsername, setCreatorUsername] = useState('')
   const [tiktokLink, setTiktokLink] = useState('')
   const [previewFile, setPreviewFile] = useState(null)
+  const [skipCompress, setSkipCompress] = useState(false)
   const [existingPreviewUrl, setExistingPreviewUrl] = useState('')
   const [saving, setSaving] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
@@ -151,6 +152,7 @@ export default function AdminAddPreset() {
     setCreatorUsername('')
     setTiktokLink('')
     setPreviewFile(null)
+    setSkipCompress(false)
     setNewSongName('')
   }
 
@@ -250,11 +252,13 @@ export default function AdminAddPreset() {
 
       let previewVideoUrl = isEditMode ? existingPreviewUrl : ''
       if (previewFile) {
-        setSaveStage('Ngompres video...')
+        setSaveStage(skipCompress ? 'Ngupload video contoh (tanpa kompres)...' : 'Ngompres video...')
 
-        const fileToUpload = await compressVideoIfNeeded(previewFile, (progress) => {
-          setSaveProgress(15 + Math.min(Math.floor(progress * 35), 35))
-        })
+        const fileToUpload = skipCompress
+          ? previewFile
+          : await compressVideoIfNeeded(previewFile, (progress) => {
+              setSaveProgress(15 + Math.min(Math.floor(progress * 35), 35))
+            })
 
                 if (cancelledRef.current) return
         setSaveStage('Ngupload video contoh...')
@@ -441,6 +445,12 @@ export default function AdminAddPreset() {
               onChange={(e) => setPreviewFile(e.target.files?.[0] || null)}
             />
           </label>
+          {previewFile && previewFile.size > 5 * 1024 * 1024 && (
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: 13, color: '#aaa' }}>
+              <input type="checkbox" checked={skipCompress} onChange={(e) => setSkipCompress(e.target.checked)} />
+              Lewati kompres (upload video mentah - lebih gede, tapi gak nunggu compressor)
+            </label>
+          )}
         </div>
 
         <div className="form-field">
