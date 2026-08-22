@@ -80,6 +80,7 @@ export default function AdminSongRequests() {
         creator_username: req.creator_username,
         tiktok_link: req.tiktok_link,
         preview_video_url: req.preview_video_url,
+        cover_url: req.cover_url,
       })
       if (presetErr) throw presetErr
 
