@@ -461,6 +461,7 @@ export default function PresetFeed() {
                     src={loadedIds.has(preset.id) ? preset.preview_video_url : undefined}
                     loop
                     playsInline
+                    poster={preset.cover_url}
                     preload={activeId === preset.id ? 'auto' : loadedIds.has(preset.id) ? 'metadata' : 'none'}
                     onClick={() => togglePlayPause(preset.id)}
                     onTimeUpdate={(e) => handleTimeUpdate(preset.id, e)}
