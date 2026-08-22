@@ -184,6 +184,34 @@ export default function PresetFeed() {
   }
 }, [presets])
 
+  // Backstop buat snap scroll: CSS scroll-snap-stop kadang nggak kepegang pas
+  // fling cepet di browser mobile, jadi video suka ke-skip. Ini maksa posisi
+  // scroll pas ke batas video terdekat begitu scroll-nya berhenti total.
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+
+    let scrollTimeout
+    function handleScroll() {
+      clearTimeout(scrollTimeout)
+      scrollTimeout = setTimeout(() => {
+        const itemHeight = el.clientHeight
+        if (!itemHeight) return
+        const nearestIndex = Math.round(el.scrollTop / itemHeight)
+        const targetTop = nearestIndex * itemHeight
+        if (Math.abs(el.scrollTop - targetTop) > 2) {
+          el.scrollTo({ top: targetTop, behavior: 'smooth' })
+        }
+      }, 120)
+    }
+
+    el.addEventListener('scroll', handleScroll, { passive: true })
+    return () => {
+      el.removeEventListener('scroll', handleScroll)
+      clearTimeout(scrollTimeout)
+    }
+  }, [presets])
+
   const togglePlayPause = (id) => {
     const video = videoRefs.current[id]
     if (!video) return
