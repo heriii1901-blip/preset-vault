@@ -161,15 +161,15 @@ export default function PresetVideoCell({
               disablePictureInPicture
               controlsList="nodownload"
               draggable={false}
-              poster={cachedThumb}
+              poster={cachedThumb || preset.cover_url}
               onLoadedMetadata={handleLoadedMetadata}
               onSeeked={handleSeeked}
               onError={handleError}
             />
           )
         }
-        if (cachedThumb) {
-          return <img src={cachedThumb} alt="" className="grid-fallback-thumb" draggable={false} />
+        if (cachedThumb || preset.cover_url) {
+          return <img src={cachedThumb || preset.cover_url} alt="" className="grid-fallback-thumb" draggable={false} />
         }
         return <div className="grid-fallback">🎬</div>
       })()}
