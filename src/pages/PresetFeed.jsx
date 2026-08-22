@@ -212,6 +212,63 @@ export default function PresetFeed() {
     }
   }, [presets])
 
+  // Kontrol geser manual: 1x sentuh-geser = pindah PERSIS 1 video, seberapa
+  // jauh/kenceng pun ditarik, nggak akan pernah lompat lebih dari 1.
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el || presets.length === 0) return
+
+    let startY = 0
+    let startScrollTop = 0
+    let baseIndex = 0
+    let dragging = false
+
+    function handleTouchStart(e) {
+      if (e.touches.length !== 1) return
+      dragging = true
+      startY = e.touches[0].clientY
+      startScrollTop = el.scrollTop
+      const itemHeight = el.clientHeight
+      baseIndex = itemHeight ? Math.round(startScrollTop / itemHeight) : 0
+    }
+
+    function handleTouchMove(e) {
+      if (!dragging || e.touches.length !== 1) return
+      const itemHeight = el.clientHeight
+      if (!itemHeight) return
+      e.preventDefault()
+      const currentY = e.touches[0].clientY
+      let delta = startY - currentY
+      delta = Math.max(Math.min(delta, itemHeight), -itemHeight)
+      el.scrollTop = startScrollTop + delta
+    }
+
+    function handleTouchEnd(e) {
+      if (!dragging) return
+      dragging = false
+      const itemHeight = el.clientHeight
+      if (!itemHeight) return
+      const endY = e.changedTouches?.[0]?.clientY ?? startY
+      const delta = startY - endY
+      const threshold = itemHeight * 0.12
+      let targetIndex = baseIndex
+      if (delta > threshold) targetIndex = baseIndex + 1
+      else if (delta < -threshold) targetIndex = baseIndex - 1
+      targetIndex = Math.max(0, Math.min(targetIndex, presets.length - 1))
+      el.scrollTo({ top: targetIndex * itemHeight, behavior: 'smooth' })
+    }
+
+    el.addEventListener('touchstart', handleTouchStart, { passive: true })
+    el.addEventListener('touchmove', handleTouchMove, { passive: false })
+    el.addEventListener('touchend', handleTouchEnd, { passive: true })
+
+    return () => {
+      el.removeEventListener('touchstart', handleTouchStart)
+      el.removeEventListener('touchmove', handleTouchMove)
+      el.removeEventListener('touchend', handleTouchEnd)
+    }
+  }, [presets])
+
   const togglePlayPause = (id) => {
     const video = videoRefs.current[id]
     if (!video) return
