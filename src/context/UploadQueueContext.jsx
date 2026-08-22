@@ -2,6 +2,7 @@ import { createContext, useContext, useRef, useState, useCallback, useEffect, us
 import { supabase } from '../supabase'
 import { compressVideoIfNeeded } from '../utils/compressVideo'
 import { uploadToR2 } from '../utils/uploadToR2'
+import { generateCoverFromVideo } from '../utils/generateCoverFromVideo'
 import {
   saveQueueItem,
   deleteQueueItem,
@@ -76,6 +77,7 @@ export function UploadQueueProvider({ children }) {
       updateItem(job.id, { status: 'compressing', stage: 'Nyiapin video...', progress: 2 })
 
       let previewVideoUrl = ''
+      let coverUrl = null
 
       if (job.previewFile) {
         const compressed = job.skipCompress
@@ -101,6 +103,14 @@ export function UploadQueueProvider({ children }) {
           updateItem(job.id, { progress: Math.min(55 + Math.floor(p * 30), 85) })
         })
         if (cancelState.cancelled) return
+
+        updateItem(job.id, { status: 'uploading', stage: 'Bikin cover...', progress: 87 })
+        try {
+          const coverFile = await generateCoverFromVideo(compressed)
+          coverUrl = await uploadToR2(coverFile, 'covers')
+        } catch (err) {
+          console.error('Gagal bikin cover:', err)
+        }
       }
 
       if (cancelState.cancelled) return
@@ -141,6 +151,7 @@ export function UploadQueueProvider({ children }) {
             mb_link: job.mbLink,
             tiktok_link: job.tiktokLink,
             preview_video_url: previewVideoUrl,
+            cover_url: coverUrl,
           })
           if (reqErr) throw reqErr
           if (cancelState.cancelled) return
@@ -159,6 +170,7 @@ export function UploadQueueProvider({ children }) {
         creator_username: job.creatorUsername,
         tiktok_link: job.tiktokLink,
         preview_video_url: previewVideoUrl,
+        cover_url: coverUrl,
         link_pending: !job.xmlLink?.trim(),
       })
       if (presetErr) throw presetErr
