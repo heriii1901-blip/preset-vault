@@ -147,6 +147,68 @@ export default function AdminAddPreset() {
     }
   }
 
+  const [missingCoverPresets, setMissingCoverPresets] = useState([])
+  const [loadingMissingCovers, setLoadingMissingCovers] = useState(true)
+  const [coverGenStatus, setCoverGenStatus] = useState({})
+  const [coverGenRunning, setCoverGenRunning] = useState(false)
+
+  // Cuma jalan 1x pas halaman admin dibuka (deps kosong []), bukan tiap render -
+  // jadi ga ada resiko query berulang / egress bengkak.
+  useEffect(() => {
+    loadMissingCoverPresets()
+  }, [])
+
+  async function loadMissingCoverPresets() {
+    setLoadingMissingCovers(true)
+    try {
+      const { data, error } = await supabase
+        .from('presets')
+        .select('id, creator_username, preview_video_url')
+        .is('cover_url', null)
+        .not('preview_video_url', 'is', null)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      setMissingCoverPresets(data || [])
+    } catch (err) {
+      console.error('Gagal ambil preset yang belum punya cover:', err)
+    } finally {
+      setLoadingMissingCovers(false)
+    }
+  }
+
+  async function generateCoverForPreset(preset) {
+    setCoverGenStatus((prev) => ({ ...prev, [preset.id]: 'Ngambil video...' }))
+    try {
+      const res = await fetch(preset.preview_video_url)
+      if (!res.ok) throw new Error('Gagal ambil video dari R2')
+      const videoBlob = await res.blob()
+
+      setCoverGenStatus((prev) => ({ ...prev, [preset.id]: 'Bikin cover...' }))
+      const coverFile = await generateCoverFromVideo(videoBlob)
+      const coverUrl = await uploadToR2(coverFile, 'covers')
+
+      const { error: updateErr } = await supabase
+        .from('presets')
+        .update({ cover_url: coverUrl })
+        .eq('id', preset.id)
+      if (updateErr) throw updateErr
+
+      setMissingCoverPresets((prev) => prev.filter((p) => p.id !== preset.id))
+    } catch (err) {
+      console.error('Gagal generate cover buat preset', preset.id, err)
+      setCoverGenStatus((prev) => ({ ...prev, [preset.id]: '❌ Gagal, coba lagi' }))
+    }
+  }
+
+  async function generateAllMissingCovers() {
+    setCoverGenRunning(true)
+    const list = [...missingCoverPresets]
+    for (const preset of list) {
+      await generateCoverForPreset(preset)
+    }
+    setCoverGenRunning(false)
+  }
+
   const resetForm = () => {
     setXmlLink('')
     setMbLink('')
@@ -762,6 +824,47 @@ export default function AdminAddPreset() {
     </div>
   )
 
+  const missingCoverPanel = (
+    <div>
+      {loadingMissingCovers && <div className="empty-state">Memuat...</div>}
+      {!loadingMissingCovers && missingCoverPresets.length === 0 && (
+        <div className="empty-state">Semua preset udah punya cover. 🎉</div>
+      )}
+      {!loadingMissingCovers && missingCoverPresets.length > 0 && (
+        <div style={{ padding: '0 14px 10px' }}>
+          <button
+            type="button"
+            className="save-btn"
+            disabled={coverGenRunning}
+            onClick={generateAllMissingCovers}
+          >
+            {coverGenRunning ? 'Lagi jalan...' : `Generate Semua (${missingCoverPresets.length})`}
+          </button>
+        </div>
+      )}
+      {!loadingMissingCovers &&
+        missingCoverPresets.map((preset) => (
+          <div key={preset.id} className="queue-history-card">
+            <div className="queue-history-info">
+              <div className="queue-history-title">@{preset.creator_username || 'tanpa username'}</div>
+              <div className="queue-history-hint">{coverGenStatus[preset.id] || 'Belum digenerate'}</div>
+            </div>
+            <div className="queue-history-actions">
+              <button
+                type="button"
+                className="save-btn"
+                style={{ padding: '6px 12px', fontSize: 12.5 }}
+                disabled={coverGenRunning}
+                onClick={() => generateCoverForPreset(preset)}
+              >
+                Generate
+              </button>
+            </div>
+          </div>
+        ))}
+    </div>
+  )
+
   return (
     <div className="screen">
       <div className="admin-content">
@@ -800,12 +903,20 @@ export default function AdminAddPreset() {
               >
                 🔗 Link Kosong{pendingLinkPresets.length > 0 ? ` (${pendingLinkPresets.length})` : ''}
               </button>
+              <button
+                type="button"
+                className={`kreator-hub-tab${activePanel === 3 ? ' is-active' : ''}`}
+                onClick={() => goToPanel(3)}
+              >
+                🖼️ Cover Lama{missingCoverPresets.length > 0 ? ` (${missingCoverPresets.length})` : ''}
+              </button>
             </div>
 
             <div className="kreator-hub-scroller" ref={scrollerRef} onScroll={handlePanelScroll}>
               <div className="kreator-hub-page">{formPanel}</div>
               <div className="kreator-hub-page">{historyPanel}</div>
               <div className="kreator-hub-page">{pendingLinkPanel}</div>
+              <div className="kreator-hub-page">{missingCoverPanel}</div>
             </div>
           </div>
         )}
