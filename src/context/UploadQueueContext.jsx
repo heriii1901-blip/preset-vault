@@ -78,18 +78,20 @@ export function UploadQueueProvider({ children }) {
       let previewVideoUrl = ''
 
       if (job.previewFile) {
-        const compressed = await compressVideoIfNeeded(
-          job.previewFile,
-          (p) => {
-            if (cancelState.cancelled) return
-            updateItem(job.id, { progress: Math.min(2 + Math.floor(p * 48), 50) })
-          },
-          (stage) => {
-            if (cancelState.cancelled) return
-            updateItem(job.id, { stage })
-          },
-          cancelState.controller.signal
-        )
+        const compressed = job.skipCompress
+          ? job.previewFile
+          : await compressVideoIfNeeded(
+              job.previewFile,
+              (p) => {
+                if (cancelState.cancelled) return
+                updateItem(job.id, { progress: Math.min(2 + Math.floor(p * 48), 50) })
+              },
+              (stage) => {
+                if (cancelState.cancelled) return
+                updateItem(job.id, { stage })
+              },
+              cancelState.controller.signal
+            )
         if (cancelState.cancelled) return
 
         updateItem(job.id, { status: 'uploading', stage: 'Ngupload...', progress: 55 })
