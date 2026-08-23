@@ -28,7 +28,8 @@ export default function App() {
   const location = useLocation()
 
   const showNavRoutes = ['/', '/lagu', '/cari', '/kreator', '/akun']
-  const shouldShowNav = showNavRoutes.includes(location.pathname) || location.pathname.startsWith('/preset/')
+  const isFullscreenFromTerbaru = location.pathname.startsWith('/preset/') && location.state?.source === 'terbaru'
+  const shouldShowNav = showNavRoutes.includes(location.pathname) || isFullscreenFromTerbaru
   
   return (
     <AuthProvider>
