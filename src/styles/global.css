@@ -2043,7 +2043,7 @@ select.finput-real { cursor: pointer; }
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  padding: 0 20px 16px;
+  padding: 0 0 16px;
 }
 .server-notice-backdrop {
   position: fixed;
