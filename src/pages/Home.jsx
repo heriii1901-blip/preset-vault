@@ -26,18 +26,24 @@ export default function Home() {
       try {
         const [{ data: songList, error: songErr }, { data: presetRows, error: presetErr }] = await Promise.all([
           supabase.from('songs').select('*'),
-          supabase.from('presets').select('song_id'),
+          supabase.from('presets').select('song_id, cover_url').eq('link_pending', false),
         ])
         if (songErr) throw songErr
         if (presetErr) throw presetErr
 
         const countMap = {}
+        const coverMap = {}
         for (const row of presetRows || []) {
           countMap[row.song_id] = (countMap[row.song_id] || 0) + 1
+          if (!coverMap[row.song_id] && row.cover_url) coverMap[row.song_id] = row.cover_url
         }
 
         const withRealCount = songList
-          .map((song) => ({ ...song, presetCount: countMap[song.id] ?? song.preset_count ?? 0 }))
+          .map((song) => ({
+            ...song,
+            presetCount: countMap[song.id] ?? song.preset_count ?? 0,
+            coverUrl: coverMap[song.id] || null,
+          }))
           .sort((a, b) => a.name.localeCompare(b.name))
 
         setSongs(withRealCount)
@@ -204,11 +210,26 @@ export default function Home() {
               onMouseLeave={cancelLongPress}
               onContextMenu={(e) => e.preventDefault()}
             >
-              <div className="song-thumb" style={{ background: song.color }}>♪</div>
+              <div className="song-thumb" style={{ background: song.color }}>
+                {song.coverUrl ? <img src={song.coverUrl} alt="" draggable={false} /> : '♪'}
+              </div>
               <div className="song-text">
                 <h4>{song.name}</h4>
+                <div className="song-meta-row">{song.presetCount || 0} preset</div>
               </div>
-              <span className="song-count">{song.presetCount || 0}</span>
+              {isAdmin && (
+                <button
+                  type="button"
+                  className="song-menu-btn"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setSelectionMode(true)
+                    setSelectedIds((prev) => (prev.includes(song.id) ? prev : [...prev, song.id]))
+                  }}
+                >
+                  ⋮
+                </button>
+              )}
             </div>
           ))}
         </div>
