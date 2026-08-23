@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { useAuth } from '../context/AuthContext'
@@ -88,7 +88,7 @@ export default function PresetFeed() {
   }, [presetId, user, isFromTerbaru, isFromKreator, filterCreatorUsername, isFromFavorit])
   // Ukur tinggi container sekali & tiap resize (dipake buat hitung transform px)
     
-  useEffect(() => {
+  useLayoutEffect(() => {
     function measure() {
       const h = containerRef.current?.clientHeight || window.innerHeight
       containerHeightRef.current = h
