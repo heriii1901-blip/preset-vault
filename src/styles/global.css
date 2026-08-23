@@ -1410,6 +1410,18 @@ select.finput-real { cursor: pointer; }
   cursor: pointer;
 }
 
+/* Pas fullscreen dari Terbaru (ada bottom nav), naikin dikit tombol/teks
+   biar ngga mepet pas di garis batas video - kasih jarak nafas kayak TikTok */
+.feed-item--with-nav .feed-progress-container {
+  bottom: 16px;
+}
+.feed-item--with-nav .feed-side-actions {
+  bottom: 116px;
+}
+.feed-item--with-nav .feed-overlay {
+  padding-bottom: 36px;
+}
+
 .feed-time-text {
   color: rgba(255, 255, 255, 0.9);
   font-size: 11px;
