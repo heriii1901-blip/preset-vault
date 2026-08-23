@@ -2171,3 +2171,109 @@ select.finput-real { cursor: pointer; }
 .upload-queue-error .upload-queue-icon {
   color: var(--pink);
 }
+
+.selection-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 18px 12px;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.selection-bar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.selection-cancel {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.selection-count {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.selection-actions {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  padding-top: 4px;
+}
+
+.selection-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 11px;
+  cursor: pointer;
+}
+.selection-action-btn:active { opacity: 0.7; }
+.selection-action-danger { color: #FF5C5C; }
+
+.song-radio {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--muted);
+  position: relative;
+}
+.song-radio.is-checked {
+  border-color: var(--violet);
+  background: var(--violet);
+}
+.song-radio.is-checked::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #0E0E14;
+  transform: translate(-50%, -50%);
+}
+
+.row-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 40;
+}
+.row-menu {
+  position: fixed;
+  z-index: 41;
+  min-width: 168px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 6px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+.row-menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px;
+  background: none;
+  border: none;
+  border-radius: 9px;
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.row-menu-item:active { background: var(--surface); }
+.row-menu-danger { color: #FF5C5C; }
