@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { useAuth } from '../context/AuthContext'
@@ -16,10 +16,14 @@ export default function PresetFeed() {
   const [songName, setSongName] = useState('')
   const [loading, setLoading] = useState(true)
   const containerRef = useRef(null)
-  const itemRefs = useRef({})
+  const trackRef = useRef(null)
   const videoRefs = useRef({})
   const hasScrolledRef = useRef(false)
+  const containerHeightRef = useRef(0)
+  const firstApplyRef = useRef(true)
+  const dragRef = useRef({ startY: 0, dragging: false, currentDelta: 0 })
 
+  const [activeIndex, setActiveIndex] = useState(0)
   const [linkModal, setLinkModal] = useState(null) // { label, link } | null
   const [copied, setCopied] = useState(false)
   const [favoritedIds, setFavoritedIds] = useState(new Set())
@@ -28,9 +32,9 @@ export default function PresetFeed() {
   const [activeId, setActiveId] = useState(null)
   const retryCountRef = useRef({})
   const videoUrlsRef = useRef({})
-  const [videoProgress, setVideoProgress] = useState({}) // Menyimpan progress tiap video { [id]: { current, duration } }
+  const [videoProgress, setVideoProgress] = useState({}) // { [id]: { current, duration } }
   const [loadedIds, setLoadedIds] = useState(new Set())
-  
+
   useEffect(() => {
     async function loadFeed() {
       setLoading(true)
@@ -44,7 +48,6 @@ export default function PresetFeed() {
 
         setSongName(clickedPreset.songs?.name || '')
 
-        // Ambil id favorit user duluan — dipakai buat filter feed (kalo dari Favorit) & buat tandain hati
         let favIds = []
         if (user) {
           const { data: favs } = await supabase
@@ -58,16 +61,12 @@ export default function PresetFeed() {
         let query = supabase.from('presets').select('*, songs(name)').eq('link_pending', false)
 
         if (isFromTerbaru) {
-          // Sama kayak query di Terbaru.jsx: preset terbaru lintas lagu
           query = query.order('created_at', { ascending: false }).limit(20)
         } else if (isFromKreator && filterCreatorUsername) {
-          // Kejebak di kreator yang sama aja, jangan nyasar ke video lain
           query = query.eq('creator_username', filterCreatorUsername).order('created_at', { ascending: false })
         } else if (isFromFavorit) {
-          // Cuma yang di-favoritin, jangan nyampur sama preset lain di lagu yang sama
           query = query.in('id', favIds.length > 0 ? favIds : [presetId]).order('created_at', { ascending: false })
         } else {
-          // Fokus 1 lagu aja
           query = query.eq('song_id', clickedPreset.song_id).order('created_at', { ascending: true })
         }
 
@@ -83,18 +82,60 @@ export default function PresetFeed() {
     }
     if (presetId) loadFeed()
     hasScrolledRef.current = false
+    firstApplyRef.current = true
   }, [presetId, user, isFromTerbaru, isFromKreator, filterCreatorUsername, isFromFavorit])
-  
+
+  // Ukur tinggi container sekali & tiap resize (dipake buat hitung transform px)
+  useEffect(() => {
+    function measure() {
+      containerHeightRef.current = containerRef.current?.clientHeight || window.innerHeight
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [])
+
+  // Posisi awal begitu data kelar dimuat — cari index preset yang diklik dari list
   useEffect(() => {
     if (loading || presets.length === 0 || hasScrolledRef.current) return
-    const el = itemRefs.current[presetId]
-    if (el) {
-      el.scrollIntoView({ block: 'start' })
-      hasScrolledRef.current = true
-    }
+    const idx = presets.findIndex((p) => p.id === presetId)
+    setActiveIndex(idx >= 0 ? idx : 0)
+    hasScrolledRef.current = true
   }, [loading, presets, presetId])
 
-  // Cuma dipanggil pas scroll pindah ke video lain, bukan pas pause/play manual
+  const applyTransform = useCallback((indexFloat, animate) => {
+    const track = trackRef.current
+    if (!track) return
+    const h = containerHeightRef.current
+    track.style.transition = animate ? 'transform 280ms cubic-bezier(.22,.68,0,1)' : 'none'
+    track.style.transform = `translate3d(0, ${-indexFloat * h}px, 0)`
+  }, [])
+
+  // Tiap activeIndex berubah, geser track ke posisi itu (animasi kecuali pas pertama kali)
+  useEffect(() => {
+    applyTransform(activeIndex, !firstApplyRef.current)
+    firstApplyRef.current = false
+  }, [activeIndex, presets.length, applyTransform])
+
+  // Load video di sekitar index aktif aja (current, sebelum, sesudah) - biar hemat & instan
+  useEffect(() => {
+    const idsToLoad = [activeIndex - 1, activeIndex, activeIndex + 1]
+      .map((i) => presets[i]?.id)
+      .filter(Boolean)
+    if (idsToLoad.length === 0) return
+    setLoadedIds((prev) => {
+      let changed = false
+      const next = new Set(prev)
+      idsToLoad.forEach((id) => {
+        if (!next.has(id)) {
+          next.add(id)
+          changed = true
+        }
+      })
+      return changed ? next : prev
+    })
+  }, [activeIndex, presets])
+
   function switchToVideo(id) {
     if (activeVideoIdRef.current === id) return
     const oldId = activeVideoIdRef.current
@@ -112,10 +153,6 @@ export default function PresetFeed() {
       if (!url) return
       video.src = url
       video.load()
-      setLoadedIds((prev) => {
-        if (prev.has(id)) return prev
-        return new Set(prev).add(id)
-      })
     }
 
     video.play()
@@ -132,142 +169,67 @@ export default function PresetFeed() {
       })
   }
 
-  // Autoplay video yang lagi penuh di layar, pause sisanya
+  // Video yang lagi aktif (posisi tengah layar) itu yang otomatis diputer, sisanya di-pause
   useEffect(() => {
-  if (presets.length === 0) return
-
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        const video = entry.target
-        const id = video.dataset.presetId
-        if (entry.isIntersecting && entry.intersectionRatio > 0.75) {
-          switchToVideo(id)
-        } else if (activeVideoIdRef.current === id) {
-          video.pause()
-          activeVideoIdRef.current = null
-          setActiveId(null)
-        }
-      })
-    },
-    { threshold: [0, 0.75, 1] }
-  )
-
-  const loadObserver = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        const id = entry.target.dataset.presetId
-          if (entry.isIntersecting) {
-          setLoadedIds((prev) => {
-            if (prev.has(id)) return prev
-            return new Set(prev).add(id)
-          })
-        }
-      })
-    },
-    { rootMargin: '100% 0px 100% 0px' }
-  )
-
-  const timer = setTimeout(() => {
-    Object.values(itemRefs.current).forEach((el) => {
-      if (el) loadObserver.observe(el)
-    })
-    Object.values(videoRefs.current).forEach((v) => {
-      if (v) observer.observe(v)
-    })
-  }, 150)
-
-  return () => {
-    clearTimeout(timer)
-    observer.disconnect()
-    loadObserver.disconnect()
-  }
-}, [presets])
-
-  // Backstop buat snap scroll: CSS scroll-snap-stop kadang nggak kepegang pas
-  // fling cepet di browser mobile, jadi video suka ke-skip. Ini maksa posisi
-  // scroll pas ke batas video terdekat begitu scroll-nya berhenti total.
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-
-    let scrollTimeout
-    function handleScroll() {
-      clearTimeout(scrollTimeout)
-      scrollTimeout = setTimeout(() => {
-        const itemHeight = el.clientHeight
-        if (!itemHeight) return
-        const nearestIndex = Math.round(el.scrollTop / itemHeight)
-        const targetTop = nearestIndex * itemHeight
-        if (Math.abs(el.scrollTop - targetTop) > 2) {
-          el.scrollTo({ top: targetTop, behavior: 'smooth' })
-        }
-      }, 120)
-    }
-
-    el.addEventListener('scroll', handleScroll, { passive: true })
-    return () => {
-      el.removeEventListener('scroll', handleScroll)
-      clearTimeout(scrollTimeout)
-    }
-  }, [presets])
+    if (presets.length === 0) return
+    const activePreset = presets[activeIndex]
+    if (activePreset) switchToVideo(activePreset.id)
+  }, [activeIndex, presets])
 
   // Kontrol geser manual: 1x sentuh-geser = pindah PERSIS 1 video, seberapa
-  // jauh/kenceng pun ditarik, nggak akan pernah lompat lebih dari 1.
+  // jauh/kenceng pun ditarik, ngikutin jari 1:1 (bukan native scroll lagi).
   useEffect(() => {
     const el = containerRef.current
     if (!el || presets.length === 0) return
 
-    let startY = 0
-    let startScrollTop = 0
-    let baseIndex = 0
-    let dragging = false
-
     function handleTouchStart(e) {
       if (e.touches.length !== 1) return
-      dragging = true
-      startY = e.touches[0].clientY
-      startScrollTop = el.scrollTop
-      const itemHeight = el.clientHeight
-      baseIndex = itemHeight ? Math.round(startScrollTop / itemHeight) : 0
+      dragRef.current.dragging = true
+      dragRef.current.startY = e.touches[0].clientY
+      dragRef.current.currentDelta = 0
     }
 
     function handleTouchMove(e) {
-      if (!dragging || e.touches.length !== 1) return
-      const itemHeight = el.clientHeight
-      if (!itemHeight) return
+      if (!dragRef.current.dragging || e.touches.length !== 1) return
       e.preventDefault()
-      const currentY = e.touches[0].clientY
-      let delta = startY - currentY
-      delta = Math.max(Math.min(delta, itemHeight), -itemHeight)
-      el.scrollTop = startScrollTop + delta
+      const h = containerHeightRef.current
+      let delta = dragRef.current.startY - e.touches[0].clientY
+      delta = Math.max(Math.min(delta, h), -h)
+      dragRef.current.currentDelta = delta
+      const track = trackRef.current
+      if (track) {
+        track.style.transition = 'none'
+        track.style.transform = `translate3d(0, ${-(activeIndex * h) - delta}px, 0)`
+      }
     }
 
-    function handleTouchEnd(e) {
-      if (!dragging) return
-      dragging = false
-      const itemHeight = el.clientHeight
-      if (!itemHeight) return
-      const endY = e.changedTouches?.[0]?.clientY ?? startY
-      const delta = startY - endY
-      const threshold = itemHeight * 0.12
-      let targetIndex = baseIndex
-      if (delta > threshold) targetIndex = baseIndex + 1
-      else if (delta < -threshold) targetIndex = baseIndex - 1
-      targetIndex = Math.max(0, Math.min(targetIndex, presets.length - 1))
-      el.scrollTo({ top: targetIndex * itemHeight, behavior: 'smooth' })
+    function handleTouchEnd() {
+      if (!dragRef.current.dragging) return
+      dragRef.current.dragging = false
+      const h = containerHeightRef.current
+      const delta = dragRef.current.currentDelta
+      const threshold = h * 0.15
+      let newIndex = activeIndex
+      if (delta > threshold) newIndex = activeIndex + 1
+      else if (delta < -threshold) newIndex = activeIndex - 1
+      newIndex = Math.max(0, Math.min(newIndex, presets.length - 1))
+      dragRef.current.currentDelta = 0
+      applyTransform(newIndex, true)
+      setActiveIndex(newIndex)
     }
 
     el.addEventListener('touchstart', handleTouchStart, { passive: true })
     el.addEventListener('touchmove', handleTouchMove, { passive: false })
     el.addEventListener('touchend', handleTouchEnd, { passive: true })
+    el.addEventListener('touchcancel', handleTouchEnd, { passive: true })
 
     return () => {
       el.removeEventListener('touchstart', handleTouchStart)
       el.removeEventListener('touchmove', handleTouchMove)
       el.removeEventListener('touchend', handleTouchEnd)
+      el.removeEventListener('touchcancel', handleTouchEnd)
     }
-  }, [presets])
+  }, [activeIndex, presets.length, applyTransform])
 
   const togglePlayPause = (id) => {
     const video = videoRefs.current[id]
@@ -291,6 +253,7 @@ export default function PresetFeed() {
       setPausedIds((prev) => new Set(prev).add(id))
     }
   }
+
   const handleTimeUpdate = (id, e) => {
     const video = e.target
     setVideoProgress((prev) => ({
@@ -412,20 +375,20 @@ export default function PresetFeed() {
   }
 
   function handleVideoError(id, e) {
-  const video = e.currentTarget
-  const attempts = retryCountRef.current[id] || 0
-  if (attempts >= 2) return
-  retryCountRef.current[id] = attempts + 1
-  setTimeout(() => {
-    if (!video) return
-    video.load()
-    if (activeVideoIdRef.current === id) {
-      video.play().catch(() => {
-        setPausedIds((prev) => new Set(prev).add(id))
-      })
-    }
-  }, 800)
-}
+    const video = e.currentTarget
+    const attempts = retryCountRef.current[id] || 0
+    if (attempts >= 2) return
+    retryCountRef.current[id] = attempts + 1
+    setTimeout(() => {
+      if (!video) return
+      video.load()
+      if (activeVideoIdRef.current === id) {
+        video.play().catch(() => {
+          setPausedIds((prev) => new Set(prev).add(id))
+        })
+      }
+    }, 800)
+  }
 
   return (
     <div className="screen">
@@ -439,152 +402,149 @@ export default function PresetFeed() {
 
       {!loading && (
         <div className="feed-container" ref={containerRef}>
-          {presets.map((preset) => {
-            const isFav = favoritedIds.has(preset.id)
-            const isPaused = pausedIds.has(preset.id)
+          <div className="feed-track" ref={trackRef}>
+            {presets.map((preset) => {
+              const isFav = favoritedIds.has(preset.id)
+              const isPaused = pausedIds.has(preset.id)
 
-            const currentSec = videoProgress[preset.id]?.current || 0
-            const durationSec = videoProgress[preset.id]?.duration || 0
-            videoUrlsRef.current[preset.id] = preset.preview_video_url
+              const currentSec = videoProgress[preset.id]?.current || 0
+              const durationSec = videoProgress[preset.id]?.duration || 0
+              videoUrlsRef.current[preset.id] = preset.preview_video_url
 
-            return (
-              <div
-                key={preset.id}
-                className="feed-item"
-                data-preset-id={preset.id}
-                ref={(el) => { itemRefs.current[preset.id] = el }}
-              >
-                {preset.preview_video_url ? (
-                  <video
-                    ref={(el) => { videoRefs.current[preset.id] = el }}
-                    data-preset-id={preset.id}
-                    src={loadedIds.has(preset.id) ? preset.preview_video_url : undefined}
-                    loop
-                    playsInline
-                    poster={preset.cover_url}
-                    preload={activeId === preset.id ? 'auto' : loadedIds.has(preset.id) ? 'metadata' : 'none'}
-                    onClick={() => togglePlayPause(preset.id)}
-                    onTimeUpdate={(e) => handleTimeUpdate(preset.id, e)}
-                    onError={(e) => handleVideoError(preset.id, e)}
-                    onLoadedData={() => {
-                      if (activeVideoIdRef.current === preset.id) {
-                        videoRefs.current[preset.id]?.play()
-                          .then(() => {
-                            setPausedIds((prev) => {
-                              if (!prev.has(preset.id)) return prev
-                              const next = new Set(prev)
-                              next.delete(preset.id)
-                              return next
+              return (
+                <div key={preset.id} className="feed-item" data-preset-id={preset.id}>
+                  {preset.preview_video_url ? (
+                    <video
+                      ref={(el) => { videoRefs.current[preset.id] = el }}
+                      data-preset-id={preset.id}
+                      src={loadedIds.has(preset.id) ? preset.preview_video_url : undefined}
+                      poster={preset.cover_url}
+                      loop
+                      playsInline
+                      preload={activeId === preset.id ? 'auto' : loadedIds.has(preset.id) ? 'metadata' : 'none'}
+                      onClick={() => togglePlayPause(preset.id)}
+                      onTimeUpdate={(e) => handleTimeUpdate(preset.id, e)}
+                      onError={(e) => handleVideoError(preset.id, e)}
+                      onLoadedData={() => {
+                        if (activeVideoIdRef.current === preset.id) {
+                          videoRefs.current[preset.id]?.play()
+                            .then(() => {
+                              setPausedIds((prev) => {
+                                if (!prev.has(preset.id)) return prev
+                                const next = new Set(prev)
+                                next.delete(preset.id)
+                                return next
+                              })
                             })
-                          })
-                          .catch(() => {
-                            setPausedIds((prev) => new Set(prev).add(preset.id))
-                          })
+                            .catch(() => {
+                              setPausedIds((prev) => new Set(prev).add(preset.id))
+                            })
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="grid-fallback" style={{ fontSize: 40 }}>🎬</div>
+                  )}
+                  {isPaused && (
+                    <div className="feed-pause-icon" onClick={() => togglePlayPause(preset.id)}>▶</div>
+                  )}
+
+                  <div className="feed-overlay">
+                    <h4>{preset.songs?.name || songName}</h4>
+                    <p>@{preset.creator_username}</p>
+                    <div className="feed-actions">
+                      <button
+                        type="button"
+                        className="feed-btn"
+                        onClick={() => openLinkModal('Link XML', preset.xml_link)}
+                      >
+                        Link XML
+                      </button>
+                      <button
+                        type="button"
+                        className="feed-btn"
+                        onClick={() => openLinkModal('Link 5MB', preset.mb_link)}
+                      >
+                        Link 5MB
+                      </button>
+                      {preset.tiktok_link && (
+                        isValidUrl(preset.tiktok_link) ? (
+                          <a className="feed-btn" href={preset.tiktok_link} target="_blank" rel="noreferrer">
+                            Vid Kreator
+                          </a>
+                        ) : (
+                          <button
+                            type="button"
+                            className="feed-btn"
+                            onClick={() => openLinkModal('Vid Kreator', preset.tiktok_link)}
+                          >
+                            Vid Kreator
+                          </button>
+                        )
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="feed-side-actions">
+                    <button
+                      type="button"
+                      className={isFav ? 'feed-icon-btn love active' : 'feed-icon-btn love'}
+                      onClick={() => toggleFavorite(preset.id)}
+                      aria-label="Favoritkan"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      className="feed-icon-btn"
+                      onClick={() =>
+                        navigate(`/download/${preset.id}`, {
+                          state: {
+                            videoUrl: preset.preview_video_url,
+                            songName: preset.songs?.name || songName,
+                          },
+                        })
                       }
-                    }}
-                  />
-                ) : (
-                  <div className="grid-fallback" style={{ fontSize: 40 }}>🎬</div>
-                )}
-                {isPaused && (
-                  <div className="feed-pause-icon" onClick={() => togglePlayPause(preset.id)}>▶</div>
-                )}
-
-                <div className="feed-overlay">
-                  <h4>{preset.songs?.name || songName}</h4>
-                  <p>@{preset.creator_username}</p>
-                  <div className="feed-actions">
-                    <button
-                      type="button"
-                      className="feed-btn"
-                      onClick={() => openLinkModal('Link XML', preset.xml_link)}
+                      aria-label="Download"
                     >
-                      Link XML
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 3v12" />
+                        <path d="M7.5 10.5L12 15l4.5-4.5" />
+                        <path d="M5 21h14" />
+                      </svg>
                     </button>
                     <button
                       type="button"
-                      className="feed-btn"
-                      onClick={() => openLinkModal('Link 5MB', preset.mb_link)}
+                      className="feed-icon-btn"
+                      onClick={() => handleShare(preset)}
+                      aria-label="Bagikan"
                     >
-                      Link 5MB
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13" />
+                        <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                      </svg>
                     </button>
-                    {preset.tiktok_link && (
-                      isValidUrl(preset.tiktok_link) ? (
-                        <a className="feed-btn" href={preset.tiktok_link} target="_blank" rel="noreferrer">
-                          Vid Kreator
-                        </a>
-                      ) : (
-                        <button
-                          type="button"
-                          className="feed-btn"
-                          onClick={() => openLinkModal('Vid Kreator', preset.tiktok_link)}
-                        >
-                          Vid Kreator
-                        </button>
-                      )
-                    )}
+                  </div>
+
+                  <div className="feed-progress-container">
+                    <div className="feed-time-text">
+                      {formatTime(currentSec)} / {formatTime(durationSec)}
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max={durationSec || 100}
+                      value={currentSec}
+                      onChange={(e) => handleScrub(preset.id, parseFloat(e.target.value))}
+                      className="feed-progress-bar"
+                    />
                   </div>
                 </div>
-
-                <div className="feed-side-actions">
-                  <button
-                    type="button"
-                    className={isFav ? 'feed-icon-btn love active' : 'feed-icon-btn love'}
-                    onClick={() => toggleFavorite(preset.id)}
-                    aria-label="Favoritkan"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    className="feed-icon-btn"
-                    onClick={() =>
-                      navigate(`/download/${preset.id}`, {
-                        state: {
-                          videoUrl: preset.preview_video_url,
-                          songName: preset.songs?.name || songName,
-                        },
-                      })
-                    }
-                    aria-label="Download"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 3v12" />
-                      <path d="M7.5 10.5L12 15l4.5-4.5" />
-                      <path d="M5 21h14" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    className="feed-icon-btn"
-                    onClick={() => handleShare(preset)}
-                    aria-label="Bagikan"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="22" y1="2" x2="11" y2="13" />
-                      <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                    </svg>
-                  </button>
-                </div>
-
-                <div className="feed-progress-container">
-                  <div className="feed-time-text">
-                    {formatTime(currentSec)} / {formatTime(durationSec)}
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max={durationSec || 100}
-                    value={currentSec}
-                    onChange={(e) => handleScrub(preset.id, parseFloat(e.target.value))}
-                    className="feed-progress-bar"
-                  />
-                </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
       )}
 
@@ -597,7 +557,7 @@ export default function PresetFeed() {
             </div>
 
             {isValidUrl(linkModal.link) ? (
-             <a
+              
                 href={linkModal.link}
                 target="_blank"
                 rel="noreferrer"
@@ -620,7 +580,7 @@ export default function PresetFeed() {
                 {linkModal.link}
               </div>
             )}
-            
+
             <button type="button" className="link-modal-copy-btn" onClick={handleCopy}>
               {copied ? '✓ Tersalin' : 'Salin Link'}
             </button>
