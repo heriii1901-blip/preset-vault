@@ -24,6 +24,7 @@ export default function PresetFeed() {
   const dragRef = useRef({ startY: 0, dragging: false, currentDelta: 0 })
 
   const [activeIndex, setActiveIndex] = useState(0)
+  const [feedReady, setFeedReady] = useState(false)
   const [linkModal, setLinkModal] = useState(null) // { label, link } | null
   const [copied, setCopied] = useState(false)
   const [favoritedIds, setFavoritedIds] = useState(new Set())
@@ -83,8 +84,8 @@ export default function PresetFeed() {
     if (presetId) loadFeed()
     hasScrolledRef.current = false
     firstApplyRef.current = true
+    setFeedReady(false)
   }, [presetId, user, isFromTerbaru, isFromKreator, filterCreatorUsername, isFromFavorit])
-
   // Ukur tinggi container sekali & tiap resize (dipake buat hitung transform px)
   useEffect(() => {
     function measure() {
@@ -116,6 +117,7 @@ export default function PresetFeed() {
     const idx = presets.findIndex((p) => p.id === presetId)
     setActiveIndex(idx >= 0 ? idx : 0)
     hasScrolledRef.current = true
+    setFeedReady(true)
   }, [loading, presets, presetId])
 
   const applyTransform = useCallback((indexFloat, animate) => {
@@ -128,12 +130,14 @@ export default function PresetFeed() {
 
   // Tiap activeIndex berubah, geser track ke posisi itu (animasi kecuali pas pertama kali)
   useEffect(() => {
+    if (!feedReady) return
     applyTransform(activeIndex, !firstApplyRef.current)
     firstApplyRef.current = false
-  }, [activeIndex, presets.length, applyTransform])
+  }, [activeIndex, presets.length, applyTransform, feedReady])
 
   // Load video di sekitar index aktif aja (current, sebelum, sesudah) - biar hemat & instan
   useEffect(() => {
+    if (!feedReady) return
     const idsToLoad = [activeIndex - 1, activeIndex, activeIndex + 1]
       .map((i) => presets[i]?.id)
       .filter(Boolean)
@@ -149,8 +153,8 @@ export default function PresetFeed() {
       })
       return changed ? next : prev
     })
-  }, [activeIndex, presets])
-
+  }, [activeIndex, presets, feedReady])
+  
   function switchToVideo(id) {
     if (activeVideoIdRef.current === id) return
     const oldId = activeVideoIdRef.current
@@ -186,10 +190,10 @@ export default function PresetFeed() {
 
   // Video yang lagi aktif (posisi tengah layar) itu yang otomatis diputer, sisanya di-pause
   useEffect(() => {
-    if (presets.length === 0) return
+    if (!feedReady || presets.length === 0) return
     const activePreset = presets[activeIndex]
     if (activePreset) switchToVideo(activePreset.id)
-  }, [activeIndex, presets])
+  }, [activeIndex, presets, feedReady])
 
   // Kontrol geser manual: 1x sentuh-geser = pindah PERSIS 1 video, seberapa
   // jauh/kenceng pun ditarik, ngikutin jari 1:1 (bukan native scroll lagi).
