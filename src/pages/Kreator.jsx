@@ -7,6 +7,7 @@ import { usePresetCache } from '../context/PresetCacheContext'
 
 const CACHE_KEY = 'kreator-list'
 const REGISTERED_CACHE_KEY = 'kreator-list-registered'
+const ADMIN_PROFILE_CACHE_KEY = 'kreator-admin-profile'
 
 const THUMB_COLORS = [
   'linear-gradient(135deg,#7C5CFF,#4A32C9)',
@@ -41,7 +42,7 @@ function CreatorAvatar({ displayKey, avatarUrl }) {
 }
 
 export default function Kreator({ hideHeader = false }) {
-  const { user, isAdmin } = useAuth()
+  const { isAdmin } = useAuth()
   const navigate = useNavigate()
   const { getCache, setCache } = usePresetCache()
   const [pendingSongCount, setPendingSongCount] = useState(0)
@@ -64,7 +65,7 @@ export default function Kreator({ hideHeader = false }) {
   const [creatorList, setCreatorList] = useState(cachedList?.data || [])
   const [loadingList, setLoadingList] = useState(!cachedList)
   const [registeredMap, setRegisteredMap] = useState(cachedRegistered?.data || {})
-  const [ownProfile, setOwnProfile] = useState(null)
+  const [adminProfile, setAdminProfile] = useState(getCache(ADMIN_PROFILE_CACHE_KEY)?.data || null)
 
   useEffect(() => {
     async function loadCreatorList() {
@@ -121,31 +122,35 @@ export default function Kreator({ hideHeader = false }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Diambil buat SEMUA viewer (bukan cuma pas login admin), biar baris admin
+  // ke-pin + label "Admin" konsisten muncul di akun user biasa juga.
+  // Query publik ke tabel profiles doang, dep array kosong + dijaga cache -> ngga ada resiko egress loop.
   useEffect(() => {
-    if (!isAdmin || !user) return
-    async function loadOwnProfile() {
+    async function loadAdminProfile() {
+      if (getCache(ADMIN_PROFILE_CACHE_KEY)) return
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('username, creator_username, is_creator, account_name, avatar_url, account_font, account_bold')
-          .eq('id', user.id)
-          .single()
+          .select('username, creator_username, account_name, avatar_url, account_font, account_bold')
+          .eq('is_admin', true)
+          .maybeSingle()
         if (error) throw error
-        setOwnProfile(data)
+        setAdminProfile(data)
+        setCache(ADMIN_PROFILE_CACHE_KEY, data)
       } catch (err) {
         console.error('Gagal ambil profil admin:', err)
       }
     }
-    loadOwnProfile()
-  }, [isAdmin, user])
+    loadAdminProfile()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-  const adminKey = isAdmin ? (ownProfile?.creator_username || null) : null
-  const otherCreators = isAdmin
+  const adminKey = adminProfile?.creator_username || null
+  const otherCreators = adminKey
     ? creatorList.filter((c) => c.creator_username !== adminKey)
     : creatorList
-  const adminCount = adminKey ? creatorList.find((c) => c.creator_username === adminKey)?.count || 0 : 0
-  const adminDisplayName = ownProfile?.account_name || adminKey || ownProfile?.username || 'Kamu'
-  const adminAvatar = ownProfile?.avatar_url || null
+  const adminDisplayName = adminProfile?.account_name || adminKey || adminProfile?.username || 'Admin'
+  const adminAvatar = adminProfile?.avatar_url || null
 
   return (
     <div className="screen">
@@ -160,21 +165,20 @@ export default function Kreator({ hideHeader = false }) {
 
         {!loadingList && (
           <>
-            {/* Akun admin selalu di-pin di paling atas */}
-            {isAdmin && (
+            {/* Akun admin selalu di-pin di paling atas, buat semua viewer */}
+            {adminKey && (
               <div
                 className="song-row"
-                onClick={() => adminKey && navigate(`/kreator/${adminKey}`)}
+                onClick={() => navigate(`/kreator/${adminKey}`)}
               >
                 <CreatorAvatar displayKey={adminDisplayName} avatarUrl={adminAvatar} />
                 <div className="song-text">
-                  <h4 style={creatorNameStyle(ownProfile?.account_font, ownProfile?.account_bold)}>
+                  <h4 style={creatorNameStyle(adminProfile?.account_font, adminProfile?.account_bold)}>
                   {adminDisplayName}{' '}
                   <span style={{ color: '#FF3D3D', fontWeight: 800, fontSize: 12, fontFamily: 'var(--font-sans)' }}>(ADMIN)</span>
                 </h4>
-                  {adminKey && <p style={{ fontSize: 11, color: 'var(--muted)', margin: 0 }}>@{adminKey}</p>}
+                  <p style={{ fontSize: 11, color: 'var(--muted)', margin: 0 }}>@{adminKey}</p>
                 </div>
-                <span className="song-count">{adminCount}</span>
               </div>
             )}
 
@@ -201,7 +205,6 @@ export default function Kreator({ hideHeader = false }) {
                       <p style={{ fontSize: 11, color: 'var(--muted)', margin: 0 }}>@{c.creator_username}</p>
                     )}
                   </div>
-                  <span className="song-count">{c.count}</span>
                 </div>
               )
             })}
