@@ -28,8 +28,8 @@ export default function App() {
   const location = useLocation()
 
   const showNavRoutes = ['/', '/lagu', '/cari', '/kreator', '/akun']
-  const shouldShowNav = showNavRoutes.includes(location.pathname)
-
+  const shouldShowNav = showNavRoutes.includes(location.pathname) || location.pathname.startsWith('/preset/')
+  
   return (
     <AuthProvider>
       <PresetCacheProvider>
