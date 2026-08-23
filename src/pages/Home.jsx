@@ -14,6 +14,8 @@ export default function Home() {
   const [loading, setLoading] = useState(!cached)
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState([])
+  const [menuSong, setMenuSong] = useState(null)
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 })
   const navigate = useNavigate()
   const { isAdmin } = useAuth()
   const longPressTimer = useRef(null)
@@ -110,8 +112,28 @@ export default function Home() {
     setSelectedIds([])
   }
 
-  async function handleEditSelected() {
-    const song = songs.find((s) => s.id === selectedIds[0])
+  function openRowMenu(song, e) {
+    e.stopPropagation()
+    const rect = e.currentTarget.getBoundingClientRect()
+    setMenuPos({ top: rect.bottom + 6, right: Math.max(12, window.innerWidth - rect.right) })
+    setMenuSong(song)
+  }
+  function closeRowMenu() {
+    setMenuSong(null)
+  }
+  async function handleMenuEdit() {
+    const song = menuSong
+    closeRowMenu()
+    if (song) await handleEditSelected([song.id])
+  }
+  async function handleMenuDelete() {
+    const song = menuSong
+    closeRowMenu()
+    if (song) await handleDeleteSelected([song.id])
+  }
+
+  async function handleEditSelected(ids = selectedIds) {
+    const song = songs.find((s) => s.id === ids[0])
     if (!song) return
     const newName = window.prompt('Ganti nama lagu jadi:', song.name)
     if (!newName || newName.trim() === '' || newName === song.name) {
@@ -135,8 +157,8 @@ export default function Home() {
     }
   }
 
-  async function handleDeleteSelected() {
-    const count = selectedIds.length
+  async function handleDeleteSelected(ids = selectedIds) {
+    const count = ids.length
     const ok = window.confirm(
       count === 1
         ? 'Yakin mau hapus lagu ini? Semua preset di dalamnya ikut kehapus.'
@@ -144,11 +166,11 @@ export default function Home() {
     )
     if (!ok) return
     try {
-      const { error: presetErr } = await supabase.from('presets').delete().in('song_id', selectedIds)
+      const { error: presetErr } = await supabase.from('presets').delete().in('song_id', ids)
       if (presetErr) throw presetErr
-      const { error: songErr } = await supabase.from('songs').delete().in('id', selectedIds)
+      const { error: songErr } = await supabase.from('songs').delete().in('id', ids)
       if (songErr) throw songErr
-      setSongs((prev) => prev.filter((s) => !selectedIds.includes(s.id)))
+      setSongs((prev) => prev.filter((s) => !ids.includes(s.id)))
     } catch (err) {
       console.error('Gagal hapus lagu:', err)
       alert('Gagal hapus lagu, coba lagi.')
@@ -210,6 +232,9 @@ export default function Home() {
               onMouseLeave={cancelLongPress}
               onContextMenu={(e) => e.preventDefault()}
             >
+              {selectionMode && (
+                <span className={`song-radio${selectedIds.includes(song.id) ? ' is-checked' : ''}`} />
+              )}
               <div className="song-thumb" style={{ background: song.color }}>
                 {song.coverUrl ? <img src={song.coverUrl} alt="" draggable={false} /> : '♪'}
               </div>
@@ -217,16 +242,8 @@ export default function Home() {
                 <h4>{song.name}</h4>
                 <div className="song-meta-row">{song.presetCount || 0} preset</div>
               </div>
-              {isAdmin && (
-                <button
-                  type="button"
-                  className="song-menu-btn"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setSelectionMode(true)
-                    setSelectedIds((prev) => (prev.includes(song.id) ? prev : [...prev, song.id]))
-                  }}
-                >
+              {isAdmin && !selectionMode && (
+                <button type="button" className="song-menu-btn" onClick={(e) => openRowMenu(song, e)}>
                   ⋮
                 </button>
               )}
@@ -248,15 +265,55 @@ export default function Home() {
 
       {selectionMode && (
         <div className="selection-bar">
-          <button className="selection-cancel" onClick={exitSelectionMode}>Batal</button>
-          <span className="selection-count">{selectedIds.length} dipilih</span>
+          <div className="selection-bar-top">
+            <span className="selection-count">{selectedIds.length} dipilih</span>
+            <button className="selection-cancel" onClick={exitSelectionMode}>Batal</button>
+          </div>
           <div className="selection-actions">
             {selectedIds.length === 1 && (
-              <button className="selection-edit" onClick={handleEditSelected}>Edit nama</button>
+              <button className="selection-action-btn" onClick={() => handleEditSelected()}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="19" height="19">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
+                <span>Edit Nama</span>
+              </button>
             )}
-            <button className="selection-delete" onClick={handleDeleteSelected}>Hapus</button>
+            <button className="selection-action-btn selection-action-danger" onClick={() => handleDeleteSelected()}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="19" height="19">
+                <path d="M3 6h18" />
+                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                <path d="M10 11v6" /><path d="M14 11v6" />
+              </svg>
+              <span>Hapus</span>
+            </button>
           </div>
         </div>
+      )}
+
+      {menuSong && (
+        <>
+          <div className="row-menu-backdrop" onClick={closeRowMenu} />
+          <div className="row-menu" style={{ top: menuPos.top, right: menuPos.right }}>
+            <button type="button" className="row-menu-item" onClick={handleMenuEdit}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg>
+              <span>Edit Nama</span>
+            </button>
+            <button type="button" className="row-menu-item row-menu-danger" onClick={handleMenuDelete}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                <path d="M3 6h18" />
+                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                <path d="M10 11v6" /><path d="M14 11v6" />
+              </svg>
+              <span>Hapus</span>
+            </button>
+          </div>
+        </>
       )}
     </div>
   )
