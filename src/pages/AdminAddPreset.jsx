@@ -714,7 +714,7 @@ export default function AdminAddPreset() {
   }
 
   const historyPanel = (
-    <div>
+    <div style={{ padding: '0 20px' }}>
       {history.length === 0 ? (
         <div className="empty-state">Belum ada riwayat upload.</div>
       ) : (
@@ -787,7 +787,7 @@ export default function AdminAddPreset() {
   )
 
     const pendingLinkPanel = (
-    <div>
+    <div style={{ padding: '0 20px' }}>
       {loadingPendingLinks && <div className="empty-state">Memuat...</div>}
       {!loadingPendingLinks && pendingLinkPresets.length === 0 && (
         <div className="empty-state">Semua preset udah punya link XML. 🎉</div>
@@ -825,7 +825,7 @@ export default function AdminAddPreset() {
   )
 
   const missingCoverPanel = (
-    <div>
+    <div style={{ padding: '0 20px' }}>
       {loadingMissingCovers && <div className="empty-state">Memuat...</div>}
       {!loadingMissingCovers && missingCoverPresets.length === 0 && (
         <div className="empty-state">Semua preset udah punya cover. 🎉</div>
