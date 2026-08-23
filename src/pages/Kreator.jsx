@@ -155,7 +155,7 @@ export default function Kreator({ hideHeader = false }) {
         </div>
       )}
 
-      <div className="song-list" style={{ padding: '0 18px' }}>
+      <div className="song-list kreator-creator-list" style={{ padding: '0 18px' }}>
         {loadingList && <div className="empty-state">Memuat...</div>}
 
         {!loadingList && (
