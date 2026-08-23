@@ -338,6 +338,22 @@ button:focus, a:focus {
   cursor: pointer;
 }
 .song-menu-btn:active { background: var(--surface); }
+
+/* List kreator - lebih pendek + PP bulat */
+.kreator-creator-list .song-row {
+  padding: 8px 6px;
+  gap: 11px;
+}
+.kreator-creator-list .song-thumb {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  font-size: 16px;
+}
+.kreator-creator-list .song-text h4 {
+  font-size: 13.5px;
+  margin-bottom: 1px;
+}
  
 /* ===== BOTTOM NAV (mobile default) ===== */
 .bottom-nav {
