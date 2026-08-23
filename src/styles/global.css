@@ -123,28 +123,13 @@ button:focus, a:focus {
   outline: none;
 }
 
-/* Scrollbar tema gelap, berlaku di semua elemen scroll di seluruh app */
+/* Scrollbar disembunyiin di semua elemen scroll di seluruh app */
 * {
-  scrollbar-width: thin;
-  scrollbar-color: var(--surface-2) transparent;
+  scrollbar-width: none;
 }
 
 *::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-*::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-*::-webkit-scrollbar-thumb {
-  background: var(--surface-2);
-  border-radius: 99px;
-}
-
-*::-webkit-scrollbar-thumb:hover {
-  background: var(--line);
+  display: none;
 }
  
 /* ===== LOGIN ===== */
