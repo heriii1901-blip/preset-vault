@@ -1205,7 +1205,7 @@ select.finput-real { cursor: pointer; }
 .feed-item {
   position: relative;
   width: 100%;
-  height: 100%;
+  height: var(--feed-item-h, 100dvh);
   display: flex;
   align-items: center;
   justify-content: center;
