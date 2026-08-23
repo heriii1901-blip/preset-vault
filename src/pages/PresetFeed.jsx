@@ -95,6 +95,21 @@ export default function PresetFeed() {
     return () => window.removeEventListener('resize', measure)
   }, [])
 
+  // Kalo ukuran layar berubah signifikan (app di-kecilin / keluar mode fullscreen sistem),
+  // otomatis balik ke grid - ngga manggil Supabase, jadi ngga ada resiko egress
+  useEffect(() => {
+    const initialWidth = window.innerWidth
+    const initialHeight = window.innerHeight
+    function handleWindowResize() {
+      const widthChanged = Math.abs(window.innerWidth - initialWidth) > 60
+      const heightChanged = Math.abs(window.innerHeight - initialHeight) > 60
+      if (widthChanged || heightChanged) navigate(-1)
+    }
+    window.addEventListener('resize', handleWindowResize)
+    return () => window.removeEventListener('resize', handleWindowResize)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Posisi awal begitu data kelar dimuat — cari index preset yang diklik dari list
   useEffect(() => {
     if (loading || presets.length === 0 || hasScrolledRef.current) return
