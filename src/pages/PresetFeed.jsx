@@ -434,7 +434,7 @@ export default function PresetFeed() {
               videoUrlsRef.current[preset.id] = preset.preview_video_url
 
               return (
-                <div key={preset.id} className="feed-item" data-preset-id={preset.id}>
+                  <div key={preset.id} className={`feed-item${isFromTerbaru ? ' feed-item--with-nav' : ''}`} data-preset-id={preset.id}>
                   {preset.preview_video_url ? (
                     <video
                       ref={(el) => { videoRefs.current[preset.id] = el }}
