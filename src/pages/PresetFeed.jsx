@@ -87,15 +87,18 @@ export default function PresetFeed() {
     setFeedReady(false)
   }, [presetId, user, isFromTerbaru, isFromKreator, filterCreatorUsername, isFromFavorit])
   // Ukur tinggi container sekali & tiap resize (dipake buat hitung transform px)
+    
   useEffect(() => {
     function measure() {
-      containerHeightRef.current = containerRef.current?.clientHeight || window.innerHeight
+      const h = containerRef.current?.clientHeight || window.innerHeight
+      containerHeightRef.current = h
+      if (containerRef.current) containerRef.current.style.setProperty('--feed-item-h', `${h}px`)
     }
     measure()
     window.addEventListener('resize', measure)
     return () => window.removeEventListener('resize', measure)
   }, [])
-
+  
   // Kalo ukuran layar berubah signifikan (app di-kecilin / keluar mode fullscreen sistem),
   // otomatis balik ke grid - ngga manggil Supabase, jadi ngga ada resiko egress
   useEffect(() => {
