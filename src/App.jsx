@@ -36,7 +36,7 @@ export default function App() {
       <PresetCacheProvider>
       <UploadQueueProvider>
         <div className="phone-wrap">
-          <div className="phone">
+          <div className={`phone${isFullscreenFromTerbaru ? ' phone--nav-overlay' : ''}`}>
             <div className="page-transition" key={location.pathname}>
               <Routes>
                 <Route path="/login" element={<Login />} />
