@@ -434,7 +434,7 @@ export default function PresetFeed() {
               videoUrlsRef.current[preset.id] = preset.preview_video_url
 
               return (
-                  <div key={preset.id} className={`feed-item${isFromTerbaru ? ' feed-item--with-nav' : ''}`} data-preset-id={preset.id}>
+                  <div key={preset.id} className={`feed-item${isFromTerbaru ? ' feed-item--with-nav' : ''}${isPaused ? ' is-paused' : ''}`} data-preset-id={preset.id}>
                   {preset.preview_video_url ? (
                     <video
                       ref={(el) => { videoRefs.current[preset.id] = el }}
@@ -550,7 +550,7 @@ export default function PresetFeed() {
                     </button>
                   </div>
 
-                  <div className={`feed-progress-container${isPaused ? ' is-paused' : ''}`}>
+                   <div className="feed-progress-container">
                     <div className="feed-time-text">
                       {formatTime(currentSec)} / {formatTime(durationSec)}
                     </div>
