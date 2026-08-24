@@ -1426,18 +1426,25 @@ select.finput-real { cursor: pointer; }
   justify-content: flex-end;
   background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
   cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.feed-progress-container.is-paused,
+.feed-progress-container:active {
+  opacity: 1;
 }
 
 /* Pas fullscreen dari Terbaru (ada bottom nav), naikin dikit tombol/teks
    biar ngga mepet pas di garis batas video - kasih jarak nafas kayak TikTok */
 .feed-item--with-nav .feed-progress-container {
-  bottom: 16px;
+  bottom: 70px;
 }
 .feed-item--with-nav .feed-side-actions {
-  bottom: 116px;
+  bottom: 170px;
 }
 .feed-item--with-nav .feed-overlay {
-  padding-bottom: 36px;
+  padding-bottom: 90px;
 }
 
 .feed-time-text {
@@ -1453,7 +1460,7 @@ select.finput-real { cursor: pointer; }
   transition: opacity 0.2s, transform 0.2s;
 }
 
-.feed-progress-container:hover .feed-time-text,
+.feed-progress-container.is-paused .feed-time-text,
 .feed-progress-container:active .feed-time-text {
   opacity: 1;
   transform: translateY(0);
@@ -1471,7 +1478,7 @@ select.finput-real { cursor: pointer; }
   transition: height 0.2s;
 }
 
-.feed-progress-container:hover .feed-progress-bar,
+.feed-progress-container.is-paused .feed-progress-bar,
 .feed-progress-container:active .feed-progress-bar {
   height: 5px;
 }
@@ -1489,7 +1496,7 @@ select.finput-real { cursor: pointer; }
   transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.feed-progress-container:hover .feed-progress-bar::-webkit-slider-thumb,
+.feed-progress-container.is-paused .feed-progress-bar::-webkit-slider-thumb,
 .feed-progress-container:active .feed-progress-bar::-webkit-slider-thumb {
   transform: scale(1);
 }
@@ -1506,7 +1513,7 @@ select.finput-real { cursor: pointer; }
   transition: transform 0.15s;
 }
 
-.feed-progress-container:hover .feed-progress-bar::-moz-range-thumb,
+.feed-progress-container.is-paused .feed-progress-bar::-moz-range-thumb,
 .feed-progress-container:active .feed-progress-bar::-moz-range-thumb {
   transform: scale(1);
 }
