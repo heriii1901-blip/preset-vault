@@ -1438,13 +1438,13 @@ select.finput-real { cursor: pointer; }
 /* Pas fullscreen dari Terbaru (ada bottom nav), naikin dikit tombol/teks
    biar ngga mepet pas di garis batas video - kasih jarak nafas kayak TikTok */
 .feed-item--with-nav .feed-progress-container {
-  bottom: 70px;
+  bottom: 59px;
 }
 .feed-item--with-nav .feed-side-actions {
-  bottom: 170px;
+  bottom: 159px;
 }
 .feed-item--with-nav .feed-overlay {
-  padding-bottom: 90px;
+  padding-bottom: 79px;
 }
 
 .feed-time-text {
