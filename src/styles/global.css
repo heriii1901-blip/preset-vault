@@ -1283,6 +1283,17 @@ select.finput-real { cursor: pointer; }
   background: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent);
   z-index: 4;
 }
+
+/* Pas video di-pause: caption, tombol link, ikon trio ilang - nyisa progress bar doang (kek TikTok) */
+.feed-overlay,
+.feed-side-actions {
+  transition: opacity 0.2s ease;
+}
+.feed-item.is-paused .feed-overlay,
+.feed-item.is-paused .feed-side-actions {
+  opacity: 0;
+  pointer-events: none;
+}
  
 .feed-overlay h4 {
   font-family: var(--font-sans);
@@ -1430,7 +1441,7 @@ select.finput-real { cursor: pointer; }
   transition: opacity 0.2s;
 }
 
-.feed-progress-container.is-paused,
+.feed-item.is-paused .feed-progress-container,
 .feed-progress-container:active {
   opacity: 1;
 }
@@ -1460,7 +1471,7 @@ select.finput-real { cursor: pointer; }
   transition: opacity 0.2s, transform 0.2s;
 }
 
-.feed-progress-container.is-paused .feed-time-text,
+.feed-item.is-paused .feed-time-text,
 .feed-progress-container:active .feed-time-text {
   opacity: 1;
   transform: translateY(0);
@@ -1478,7 +1489,7 @@ select.finput-real { cursor: pointer; }
   transition: height 0.2s;
 }
 
-.feed-progress-container.is-paused .feed-progress-bar,
+.feed-item.is-paused .feed-progress-bar,
 .feed-progress-container:active .feed-progress-bar {
   height: 5px;
 }
@@ -1496,7 +1507,7 @@ select.finput-real { cursor: pointer; }
   transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.feed-progress-container.is-paused .feed-progress-bar::-webkit-slider-thumb,
+.feed-item.is-paused .feed-progress-bar::-webkit-slider-thumb,
 .feed-progress-container:active .feed-progress-bar::-webkit-slider-thumb {
   transform: scale(1);
 }
