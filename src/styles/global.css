@@ -417,6 +417,24 @@ button:focus, a:focus {
     min-width: 0;
   }
 
+/* Mode fullscreen dari Terbaru: nav ngambang DI ATAS video (kayak TikTok).
+   Video tetep mentok penuh atas-bawah layar, nav ngga makan jatah tinggi video lagi. */
+@media (max-width: 767px) {
+  .phone--nav-overlay {
+    display: block;
+  }
+  .phone--nav-overlay > .page-transition {
+    height: 100%;
+  }
+  .phone--nav-overlay > .bottom-nav {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+  }
+}
+  
   .bottom-nav {
     order: -1;
     flex-direction: column;
