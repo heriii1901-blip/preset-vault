@@ -1284,15 +1284,10 @@ select.finput-real { cursor: pointer; }
   z-index: 4;
 }
 
-/* Pas video di-pause: caption, tombol link, ikon trio ilang - nyisa progress bar doang (kek TikTok) */
+/* Pas video di-pause: caption, tombol link, ikon trio TETEP muncul (ga ilang lagi) */
 .feed-overlay,
 .feed-side-actions {
   transition: opacity 0.2s ease;
-}
-.feed-item.is-paused .feed-overlay,
-.feed-item.is-paused .feed-side-actions {
-  opacity: 0;
-  pointer-events: none;
 }
  
 .feed-overlay h4 {
@@ -1310,7 +1305,7 @@ select.finput-real { cursor: pointer; }
 .feed-actions {
   display: flex;
   gap: 8px;
-  margin-bottom: 34px;
+  margin-bottom: 20px;
 }
 
 .feed-actions .feed-btn {
