@@ -550,7 +550,7 @@ export default function PresetFeed() {
                     </button>
                   </div>
 
-                  <div className="feed-progress-container">
+                  <div className={`feed-progress-container${isPaused ? ' is-paused' : ''}`}>
                     <div className="feed-time-text">
                       {formatTime(currentSec)} / {formatTime(durationSec)}
                     </div>
