@@ -1305,7 +1305,7 @@ select.finput-real { cursor: pointer; }
 .feed-actions {
   display: flex;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .feed-actions .feed-btn {
