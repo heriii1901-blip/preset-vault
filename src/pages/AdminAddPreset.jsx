@@ -5,6 +5,7 @@ import { compressVideoIfNeeded } from '../utils/compressVideo'
 import { uploadToR2 } from '../utils/uploadToR2'
 import { generateCoverFromVideo } from '../utils/generateCoverFromVideo'
 import { useUploadQueue } from '../context/UploadQueueContext'
+import { useSwipePages } from '../hooks/useSwipePages'
 
 const THUMB_COLORS = [
   'linear-gradient(135deg,#7C5CFF,#4A32C9)',
@@ -22,8 +23,7 @@ export default function AdminAddPreset() {
   const fromPending = searchParams.get('from') === 'pending'
   const { enqueuePresetUpload, history, cancelJob, resubmitQueueItem, deleteHistoryItem, getQueueItemForEdit } = useUploadQueue()
   const [editingQueueId, setEditingQueueId] = useState(null)
-  const [activePanel, setActivePanel] = useState(0)
-  const scrollerRef = useRef(null)
+  const { activeIndex: activePanel, scrollerRef, goTo: goToPanelRaw, touchHandlers } = useSwipePages(4)
   const [pendingLinkPresets, setPendingLinkPresets] = useState([])
   const [loadingPendingLinks, setLoadingPendingLinks] = useState(true)
 
@@ -219,17 +219,7 @@ export default function AdminAddPreset() {
     setNewSongName('')
   }
 
-  function goToPanel(index) {
-    setActivePanel(index)
-    const el = scrollerRef.current
-    if (el) el.scrollTo({ left: el.clientWidth * index, behavior: 'smooth' })
-  }
-
-  function handlePanelScroll(e) {
-    const el = e.currentTarget
-    const index = Math.round(el.scrollLeft / el.clientWidth)
-    if (index !== activePanel) setActivePanel(index)
-  }
+  const goToPanel = goToPanelRaw
 
   const handleSave = (e) => {
     e.preventDefault()
@@ -912,7 +902,7 @@ export default function AdminAddPreset() {
               </button>
             </div>
 
-            <div className="kreator-hub-scroller" ref={scrollerRef} onScroll={handlePanelScroll}>
+            <div className="kreator-hub-scroller" ref={scrollerRef} {...touchHandlers}>
               <div className="kreator-hub-page">{formPanel}</div>
               <div className="kreator-hub-page">{historyPanel}</div>
               <div className="kreator-hub-page">{pendingLinkPanel}</div>
