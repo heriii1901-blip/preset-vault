@@ -322,7 +322,7 @@ export default function Profile() {
                   className={`profile-tab${activeTab === 2 ? ' is-active' : ''}`}
                   onClick={() => goToTab(2)}
                 >
-                  Efek Saya
+                  Efek
                 </button>
               )}
             </div>
