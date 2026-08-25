@@ -50,14 +50,14 @@ export default function EfekGrid() {
       <div className="list-content">
         <div className="list-header">
           <div className="eyebrow">EFEK</div>
-          <h1 className="home-tagline">Efek Alight Motion siap pake</h1>
+          <h1 className="home-tagline">Efek Alight Motion siap pakai</h1>
         </div>
 
         <div className="song-list">
           {loading && <div className="empty-state">Memuat...</div>}
 
           {!loading && effects.length === 0 && (
-            <div className="empty-state">Belum ada efek. Yuk upload pertama!</div>
+            <div className="empty-state">Belum ada efek yang di tambahkan</div>
           )}
 
           {effects.map((effect) => (
