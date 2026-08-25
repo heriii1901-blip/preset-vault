@@ -1196,6 +1196,30 @@ select.finput-real { cursor: pointer; }
   cursor: pointer;
 }
 
+.efek-grid-page {
+  position: relative;
+}
+
+.efek-fab {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, var(--violet), #4A32C9);
+  color: #fff;
+  font-size: 26px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  z-index: 5;
+}
 /* Grid preset khusus di halaman Profile: full-bleed nempel tepi layar kek TikTok, no gap/bingkai */
 .profile-scroll .empty-state,
 .profile-tab-page .empty-state {
