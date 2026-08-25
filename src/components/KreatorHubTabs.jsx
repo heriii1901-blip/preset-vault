@@ -1,21 +1,8 @@
-import { useRef, useState } from 'react'
 import Kreator from '../pages/Kreator'
+import { useSwipePages } from '../hooks/useSwipePages'
 
 export default function KreatorHubTabs({ creatorUsername, ownPresets, loadingOwn, navigate }) {
-  const [activePage, setActivePage] = useState(0)
-  const scrollerRef = useRef(null)
-
-  function goToPage(index) {
-    setActivePage(index)
-    const el = scrollerRef.current
-    if (el) el.scrollTo({ left: el.clientWidth * index, behavior: 'smooth' })
-  }
-
-  function handleScroll(e) {
-    const el = e.currentTarget
-    const index = Math.round(el.scrollLeft / el.clientWidth)
-    if (index !== activePage) setActivePage(index)
-  }
+  const { activeIndex: activePage, scrollerRef, goTo: goToPage, touchHandlers } = useSwipePages(2)
 
   return (
     <div className="kreator-hub">
@@ -40,7 +27,7 @@ export default function KreatorHubTabs({ creatorUsername, ownPresets, loadingOwn
         </button>
       </div>
 
-      <div className="kreator-hub-scroller" ref={scrollerRef} onScroll={handleScroll}>
+      <div className="kreator-hub-scroller" ref={scrollerRef} {...touchHandlers}>
         <div className="kreator-hub-page">
           <Kreator hideHeader />
         </div>
