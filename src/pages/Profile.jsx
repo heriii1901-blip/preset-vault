@@ -45,6 +45,14 @@ export default function Profile() {
   const [ownPresets, setOwnPresets] = useState(cachedOwn?.data || [])
   const [loadingOwn, setLoadingOwn] = useState(false)
 
+  // Efek yang diupload sendiri (admin/kreator doang)
+  const uploaderKey = creatorUsername || (isAdmin ? 'admin' : null)
+  const canUploadEfek = isAdmin || isCreator
+  const ownEfekCacheKey = uploaderKey ? `own-efek:${uploaderKey}` : null
+  const cachedOwnEfek = ownEfekCacheKey ? getCache(ownEfekCacheKey) : null
+  const [ownEffects, setOwnEffects] = useState(cachedOwnEfek?.data || [])
+  const [loadingOwnEfek, setLoadingOwnEfek] = useState(false)
+
   function resetToCover(video) {
     if (!video) return
     video.pause()
@@ -136,9 +144,35 @@ export default function Profile() {
         setLoadingOwn(false)
       }
     }
+    
     loadOwnPresets()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCreator, creatorUsername])
+
+  // Load efek yang di-upload sendiri (khusus admin/kreator)
+  useEffect(() => {
+    if (!canUploadEfek || !uploaderKey) return
+    if (getCache(`own-efek:${uploaderKey}`)) return
+    async function loadOwnEffects() {
+      setLoadingOwnEfek(true)
+      try {
+        const { data, error } = await supabase
+          .from('effects')
+          .select('*')
+          .eq('uploaded_by', uploaderKey)
+          .order('created_at', { ascending: false })
+        if (error) throw error
+        setOwnEffects(data || [])
+        setCache(`own-efek:${uploaderKey}`, data || [])
+      } catch (err) {
+        console.error('Gagal ambil efek kamu:', err)
+      } finally {
+        setLoadingOwnEfek(false)
+      }
+    }
+    loadOwnEffects()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canUploadEfek, uploaderKey])
 
   const handleLogout = async () => {
     await logout()
@@ -282,6 +316,15 @@ export default function Profile() {
               >
                 Favorit
               </button>
+              {canUploadEfek && (
+                <button
+                  type="button"
+                  className={`profile-tab${activeTab === 2 ? ' is-active' : ''}`}
+                  onClick={() => goToTab(2)}
+                >
+                  Efek Saya
+                </button>
+              )}
             </div>
 
             <div className="profile-tabs-scroller" ref={scrollerRef} onScroll={handleTabScroll}>
@@ -303,6 +346,34 @@ export default function Profile() {
                 )}
                 {!loadingFavs && favorites.length > 0 && renderGrid(favorites, { source: 'favorit' })}
               </div>
+
+              {canUploadEfek && (
+                <div className="profile-tab-page">
+                  {loadingOwnEfek && <div className="empty-state">Memuat...</div>}
+                  {!loadingOwnEfek && ownEffects.length === 0 && (
+                    <div className="empty-state">Kamu belum upload efek apapun.</div>
+                  )}
+                  {!loadingOwnEfek && ownEffects.length > 0 && (
+                    <div className="preset-grid" style={{ flex: 'none' }}>
+                      {ownEffects.map((effect) => (
+                        <div
+                          key={effect.id}
+                          className="grid-cell"
+                          onClick={() => navigate(`/efek/${effect.id}`)}
+                          onContextMenu={(e) => e.preventDefault()}
+                        >
+                          {effect.preview_video_url ? (
+                            <video src={effect.preview_video_url} muted loop preload="metadata" playsInline draggable={false} poster={effect.cover_url} />
+                          ) : (
+                            <div className="grid-fallback">🎬</div>
+                          )}
+                          <div className="grid-cell-overlay">{effect.title}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </>
         ) : (
