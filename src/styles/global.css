@@ -1067,9 +1067,11 @@ select.finput-real { cursor: pointer; }
 .profile-tabs-scroller::-webkit-scrollbar { display: none; }
 .profile-tab-page {
   min-width: 100%;
+  max-width: 100%;
   flex-shrink: 0;
   scroll-snap-align: start;
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
 }
  
@@ -2109,9 +2111,11 @@ select.finput-real { cursor: pointer; }
 
 .kreator-hub-page {
   min-width: 100%;
+  max-width: 100%;
   flex-shrink: 0;
   scroll-snap-align: start;
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   padding: 0 0 16px;
