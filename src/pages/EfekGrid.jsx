@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { usePresetCache } from '../context/PresetCacheContext'
+import { useAuth } from '../context/AuthContext'
 
 const CACHE_KEY = 'efek-grid'
 
@@ -16,6 +17,7 @@ const CATEGORY_LABEL = {
 
 export default function EfekGrid() {
   const navigate = useNavigate()
+  const { isAdmin } = useAuth()
   const { getCache, setCache } = usePresetCache()
   const cached = getCache(CACHE_KEY)
   const [effects, setEffects] = useState(cached?.data || [])
@@ -76,14 +78,16 @@ export default function EfekGrid() {
         </div>
       </div>
 
-      <button
-        type="button"
-        className="efek-fab"
-        onClick={() => navigate('/efek/tambah')}
-        aria-label="Tambah Efek"
-      >
-        +
-      </button>
+      {isAdmin && (
+        <button
+          type="button"
+          className="efek-fab"
+          onClick={() => navigate('/efek/tambah')}
+          aria-label="Tambah Efek"
+        >
+          +
+        </button>
+      )}
     </div>
   )
 }
