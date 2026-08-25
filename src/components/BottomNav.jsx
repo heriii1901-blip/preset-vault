@@ -9,6 +9,7 @@ export function BottomNav() {
   const { isAdmin, logout } = useAuth()
 
   const isLaguActive = location.pathname.startsWith('/lagu')
+  const isEfekActive = location.pathname.startsWith('/efek')
   const isKreatorActive = location.pathname.startsWith('/kreator')
   const isAkunActive = location.pathname === '/akun'
 
@@ -44,18 +45,18 @@ export function BottomNav() {
         <span>Terbaru</span>
       </NavLink>
 
-      <NavLink to="/cari" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+      <NavLink to="/efek" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
         <span className="nav-icon">
           <svg className="icon-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            <path d="M12 2l1.6 5.3L19 9l-5.4 1.7L12 16l-1.6-5.3L5 9l5.4-1.7L12 2z" />
+            <path d="M19 15l.8 2.6L22.4 18.4l-2.6.8L19 21.8l-.8-2.6-2.6-.8 2.6-.8L19 15z" />
           </svg>
           <svg className="icon-fill" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            <path d="M12 2l1.6 5.3L19 9l-5.4 1.7L12 16l-1.6-5.3L5 9l5.4-1.7L12 2z" />
+            <path d="M19 15l.8 2.6L22.4 18.4l-2.6.8L19 21.8l-.8-2.6-2.6-.8 2.6-.8L19 15z" />
           </svg>
         </span>
-        <span>Cari</span>
+        <span>Efek</span>
       </NavLink>
 
       <NavLink to="/lagu" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
