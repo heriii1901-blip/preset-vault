@@ -13,7 +13,10 @@ import AdminManagePresets from './pages/AdminManagePresets'
 import Profile from './pages/Profile'
 import SongPresets from './pages/SongPresets'
 import Terbaru from './pages/Terbaru'
-import CariKreator from './pages/CariKreator'
+import EfekGrid from './pages/EfekGrid'
+import EfekFeed from './pages/EfekFeed'
+import EfekTambah from './pages/EfekTambah'
+import DownloadEfek from './pages/DownloadEfek'
 import PresetFeed from './pages/PresetFeed'
 import KreatorHome from './pages/KreatorHome'
 import DaftarKreator from './pages/DaftarKreator'
@@ -27,7 +30,7 @@ import EditProfile from './pages/EditProfile'
 export default function App() {
   const location = useLocation()
 
-  const showNavRoutes = ['/', '/lagu', '/cari', '/kreator', '/akun']
+  const showNavRoutes = ['/', '/lagu', '/efek', '/kreator', '/akun']
   const isFullscreenFromTerbaru = location.pathname.startsWith('/preset/') && location.state?.source === 'terbaru'
   const shouldShowNav = showNavRoutes.includes(location.pathname) || isFullscreenFromTerbaru
   
@@ -128,10 +131,34 @@ export default function App() {
                   }
                 />
                 <Route
-                  path="/cari"
+                  path="/efek"
                   element={
                     <ProtectedRoute>
-                      <CariKreator />
+                      <EfekGrid />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/efek/tambah"
+                  element={
+                    <ProtectedRoute>
+                      <EfekTambah />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/efek/:effectId"
+                  element={
+                    <ProtectedRoute>
+                      <EfekFeed />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/efek-download/:effectId"
+                  element={
+                    <ProtectedRoute>
+                      <DownloadEfek />
                     </ProtectedRoute>
                   }
                 />
