@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabase'
 import { usePresetCache } from '../context/PresetCacheContext'
 import { creatorNameStyle } from '../utils/creatorFont'
+import { useSwipePages } from '../hooks/useSwipePages'
 
 const COVER_TIME = 2
 
@@ -35,11 +36,7 @@ export default function Profile() {
   const [aboutOpen, setAboutOpen] = useState(false)
   const isApk = isRunningAsApk()
   const activeVideoRef = useRef(null)
-
-  // Tab Postingan/Favorit (cuma kreator yang punya postingan sendiri)
-  const [activeTab, setActiveTab] = useState(0)
-  const scrollerRef = useRef(null)
-
+  
   const ownCacheKey = isCreator && creatorUsername ? `own-presets:${creatorUsername}` : null
   const cachedOwn = ownCacheKey ? getCache(ownCacheKey) : null
   const [ownPresets, setOwnPresets] = useState(cachedOwn?.data || [])
@@ -52,6 +49,9 @@ export default function Profile() {
   const cachedOwnEfek = ownEfekCacheKey ? getCache(ownEfekCacheKey) : null
   const [ownEffects, setOwnEffects] = useState(cachedOwnEfek?.data || [])
   const [loadingOwnEfek, setLoadingOwnEfek] = useState(false)
+
+  // Tab Postingan/Favorit (cuma kreator yang punya postingan sendiri)
+  const { activeIndex: activeTab, scrollerRef, goTo: goToTabRaw, touchHandlers } = useSwipePages(canUploadEfek ? 3 : 2)
 
   function resetToCover(video) {
     if (!video) return
@@ -179,17 +179,7 @@ export default function Profile() {
     navigate('/login', { replace: true })
   }
 
-  function goToTab(index) {
-    setActiveTab(index)
-    const el = scrollerRef.current
-    if (el) el.scrollTo({ left: el.clientWidth * index, behavior: 'smooth' })
-  }
-
-  function handleTabScroll(e) {
-    const el = e.currentTarget
-    const index = Math.round(el.scrollLeft / el.clientWidth)
-    if (index !== activeTab) setActiveTab(index)
-  }
+  const goToTab = goToTabRaw
 
   const displayName = isCreator
     ? (profile?.account_name || (creatorUsername ? `@${creatorUsername}` : fallbackName))
@@ -327,7 +317,7 @@ export default function Profile() {
               )}
             </div>
 
-            <div className="profile-tabs-scroller" ref={scrollerRef} onScroll={handleTabScroll}>
+            <div className="profile-tabs-scroller" ref={scrollerRef} {...touchHandlers}>
               <div className="profile-tab-page">
                 {loadingOwn && <div className="empty-state">Memuat...</div>}
                 {!loadingOwn && ownPresets.length === 0 && (
