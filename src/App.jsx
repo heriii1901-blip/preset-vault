@@ -141,7 +141,7 @@ export default function App() {
                 <Route
                   path="/efek/tambah"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requireAdmin>
                       <EfekTambah />
                     </ProtectedRoute>
                   }
