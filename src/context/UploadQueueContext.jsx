@@ -45,6 +45,9 @@ function toDbRecord(item) {
     creatorUsername: item.creatorUsername,
     userId: item.userId,
     directSongCreate: item.directSongCreate || false,
+    type: item.type || 'preset',
+    title: item.title,
+    category: item.category,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
     finishedAt: item.finishedAt || null,
@@ -98,7 +101,7 @@ export function UploadQueueProvider({ children }) {
 
         updateItem(job.id, { status: 'uploading', stage: 'Ngupload...', progress: 55 })
 
-        previewVideoUrl = await uploadToR2(compressed, 'presets', (p) => {
+        previewVideoUrl = await uploadToR2(compressed, job.type === 'effect' ? 'effects' : 'presets', (p) => {
           if (cancelState.cancelled) return
           updateItem(job.id, { progress: Math.min(55 + Math.floor(p * 30), 85) })
         })
@@ -107,17 +110,36 @@ export function UploadQueueProvider({ children }) {
         updateItem(job.id, { status: 'uploading', stage: 'Bikin cover...', progress: 87 })
         try {
           const coverFile = await generateCoverFromVideo(compressed)
-          coverUrl = await uploadToR2(coverFile, 'covers')
+          coverUrl = await uploadToR2(coverFile, job.type === 'effect' ? 'effects-covers' : 'covers')
         } catch (err) {
           console.error('Gagal bikin cover:', err)
         }
       }
 
       if (cancelState.cancelled) return
+
+      // Jalur efek: ngga ada tabel songs, ngga ada limit MB (skipCompress selalu true dari enqueueEfekUpload)
+      if (job.type === 'effect') {
+        updateItem(job.id, { status: 'saving', stage: 'Nyimpen efek...', progress: 90 })
+        const { error: efekErr } = await supabase.from('effects').insert({
+          title: job.title,
+          category: job.category || 'lainnya',
+          xml_link: job.xmlLink?.trim() || null,
+          mb_link: job.mbLink,
+          preview_video_url: previewVideoUrl,
+          cover_url: coverUrl,
+          uploaded_by: job.creatorUsername || null,
+          link_pending: !job.xmlLink?.trim(),
+        })
+        if (efekErr) throw efekErr
+        updateItem(job.id, { status: 'done', stage: 'Beres!', progress: 100, finishedAt: Date.now() })
+        return
+      }
+
       updateItem(job.id, { status: 'saving', stage: 'Nyimpen preset...', progress: 85 })
 
       let songId = job.selectedSongId
-
+      
       if (job.songMode === 'new') {
         if (job.directSongCreate) {
           // Admin: lagu baru langsung dibuat, gak lewat antrian approval
@@ -234,6 +256,30 @@ export function UploadQueueProvider({ children }) {
     return id
   }, [processQueue])
 
+  // Video efek ngga dikompres sama sekali (skipCompress: true) - ngga ada limit MB
+  // karena file efek biasanya gede (overlay/glitch/transisi kualitas tinggi).
+  const enqueueEfekUpload = useCallback((payload) => {
+    const id = `job-${Date.now()}-${jobCounter++}`
+    const now = Date.now()
+    const item = {
+      id,
+      status: 'queued',
+      stage: 'Nunggu antrian...',
+      progress: 0,
+      errorMessage: null,
+      createdAt: now,
+      updatedAt: now,
+      type: 'effect',
+      skipCompress: true,
+      ...payload,
+    }
+    setItems((prev) => [...prev, item])
+    queueRef.current.push(item)
+    saveQueueItem(toDbRecord(item))
+    processQueue()
+    return id
+  }, [processQueue])
+
   // Batalin job. Kalau lagi jalan (compress/upload), fetch-nya di-abort dan antrian
   // langsung lanjut ke bawahnya. Kalau masih nunggu giliran, cukup dicoret dari antrian.
   // Item-nya TETEP ada di riwayat dengan status 'cancelled' biar bisa diedit & diupload ulang.
@@ -343,7 +389,7 @@ export function UploadQueueProvider({ children }) {
 
   return (
     <UploadQueueContext.Provider
-      value={{ history, enqueuePresetUpload, cancelJob, resubmitQueueItem, deleteHistoryItem, getQueueItemForEdit }}
+      value={{ history, enqueuePresetUpload, enqueueEfekUpload, cancelJob, resubmitQueueItem, deleteHistoryItem, getQueueItemForEdit }}
     >
       {children}
     </UploadQueueContext.Provider>
