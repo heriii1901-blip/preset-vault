@@ -454,7 +454,7 @@ export default function AdminAddPreset() {
   }
 
   const formPanel = (
-    <>
+    <div style={{ padding: '0 20px' }}>
       <form onSubmit={handleSave}>
         <div className="form-field">
           <label>Link XML (satu link per baris kalau lebih dari satu)</label>
@@ -692,7 +692,7 @@ export default function AdminAddPreset() {
           </div>
         </div>
       )}
-    </>
+    </div>
   )
 
   const openEditFromHistory = (id) => {
