@@ -145,12 +145,29 @@ export default function Kreator({ hideHeader = false }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const [searchTerm, setSearchTerm] = useState('')
+
   const adminKey = adminProfile?.creator_username || null
-  const otherCreators = adminKey
+  const otherCreatorsAll = adminKey
     ? creatorList.filter((c) => c.creator_username !== adminKey)
     : creatorList
   const adminDisplayName = adminProfile?.account_name || adminKey || adminProfile?.username || 'Admin'
   const adminAvatar = adminProfile?.avatar_url || null
+
+  const keyword = searchTerm.trim().toLowerCase()
+  const otherCreators = keyword
+    ? otherCreatorsAll.filter((c) => {
+        const registered = registeredMap[c.creator_username]
+        const displayName = registered?.account_name || c.creator_username
+        return (
+          c.creator_username.toLowerCase().includes(keyword) ||
+          displayName.toLowerCase().includes(keyword)
+        )
+      })
+    : otherCreatorsAll
+  const adminMatches = keyword
+    ? adminKey && (adminKey.toLowerCase().includes(keyword) || adminDisplayName.toLowerCase().includes(keyword))
+    : true
 
   return (
     <div className="screen">
@@ -160,13 +177,28 @@ export default function Kreator({ hideHeader = false }) {
         </div>
       )}
 
+      <div className="search-input-wrap" style={{ padding: '0 20px', marginBottom: 10 }}>
+        <input
+          type="search"
+          className="search-input"
+          placeholder="Cari kreator..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="none"
+          spellCheck="false"
+          data-lpignore="true"
+        />
+      </div>
+
       <div className="song-list kreator-creator-list" style={{ padding: '0 20px' }}>
         {loadingList && <div className="empty-state">Memuat...</div>}
 
         {!loadingList && (
           <>
             {/* Akun admin selalu di-pin di paling atas, buat semua viewer */}
-            {adminKey && (
+            {adminKey && adminMatches && (
               <div
                 className="song-row"
                 onClick={() => navigate(`/kreator/${adminKey}`)}
@@ -182,9 +214,11 @@ export default function Kreator({ hideHeader = false }) {
               </div>
             )}
 
-            {otherCreators.length === 0 && (
+            {otherCreators.length === 0 && !(keyword && adminMatches) && (
               <div className="empty-state">
-                {isAdmin ? 'Belum ada kreator lain.' : 'Belum ada kreator terdaftar.'}
+                {keyword
+                  ? `Kreator "${searchTerm.trim()}" ngga ketemu.`
+                  : (isAdmin ? 'Belum ada kreator lain.' : 'Belum ada kreator terdaftar.')}
               </div>
             )}
             {otherCreators.map((c) => {
