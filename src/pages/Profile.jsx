@@ -50,9 +50,9 @@ export default function Profile() {
   const [ownEffects, setOwnEffects] = useState(cachedOwnEfek?.data || [])
   const [loadingOwnEfek, setLoadingOwnEfek] = useState(false)
 
-  // Tab Postingan/Favorit (cuma kreator yang punya postingan sendiri)
-  const { activeIndex: activeTab, scrollerRef, goTo: goToTabRaw, touchHandlers } = useSwipePages(canUploadEfek ? 3 : 2)
-
+  // Tab Postingan/Favorit (cuma kreator yang punya postingan sendiri)  
+  const { activeIndex: activeTab, containerRef, trackStyle, goTo: goToTabRaw, touchHandlers } = useSwipePages(canUploadEfek ? 3 : 2)
+  
   function resetToCover(video) {
     if (!video) return
     video.pause()
@@ -317,53 +317,55 @@ export default function Profile() {
               )}
             </div>
 
-            <div className="profile-tabs-scroller" ref={scrollerRef} {...touchHandlers}>
-              <div className="profile-tab-page">
-                {loadingOwn && <div className="empty-state">Memuat...</div>}
-                {!loadingOwn && ownPresets.length === 0 && (
-                  <div className="empty-state">Kamu belum upload preset apapun.</div>
-                )}
-                {!loadingOwn && ownPresets.length > 0 &&
-                  renderGrid(ownPresets, { source: 'kreator', creatorUsername })}
-              </div>
-
-              <div className="profile-tab-page">
-                {loadingFavs && <div className="empty-state">Memuat...</div>}
-                {!loadingFavs && favorites.length === 0 && (
-                  <div className="empty-state">
-                    Belum ada preset yang di-favoritin. Pencet ikon ♡ di halaman video buat nyimpen.
-                  </div>
-                )}
-                {!loadingFavs && favorites.length > 0 && renderGrid(favorites, { source: 'favorit' })}
-              </div>
-
-              {canUploadEfek && (
+            <div className="profile-tabs-scroller" ref={containerRef}>
+              <div className="profile-tabs-track" style={trackStyle} {...touchHandlers}>
                 <div className="profile-tab-page">
-                  {loadingOwnEfek && <div className="empty-state">Memuat...</div>}
-                  {!loadingOwnEfek && ownEffects.length === 0 && (
-                    <div className="empty-state">Kamu belum upload efek apapun.</div>
+                  {loadingOwn && <div className="empty-state">Memuat...</div>}
+                  {!loadingOwn && ownPresets.length === 0 && (
+                    <div className="empty-state">Kamu belum upload preset apapun.</div>
                   )}
-                  {!loadingOwnEfek && ownEffects.length > 0 && (
-                    <div className="preset-grid" style={{ flex: 'none' }}>
-                      {ownEffects.map((effect) => (
-                        <div
-                          key={effect.id}
-                          className="grid-cell"
-                          onClick={() => navigate(`/efek/${effect.id}`)}
-                          onContextMenu={(e) => e.preventDefault()}
-                        >
-                          {effect.preview_video_url ? (
-                            <video src={effect.preview_video_url} muted loop preload="metadata" playsInline draggable={false} poster={effect.cover_url} />
-                          ) : (
-                            <div className="grid-fallback">🎬</div>
-                          )}
-                          <div className="grid-cell-overlay">{effect.title}</div>
-                        </div>
-                      ))}
+                  {!loadingOwn && ownPresets.length > 0 &&
+                    renderGrid(ownPresets, { source: 'kreator', creatorUsername })}
+                </div>
+
+                <div className="profile-tab-page">
+                  {loadingFavs && <div className="empty-state">Memuat...</div>}
+                  {!loadingFavs && favorites.length === 0 && (
+                    <div className="empty-state">
+                      Belum ada preset yang di-favoritin. Pencet ikon ♡ di halaman video buat nyimpen.
                     </div>
                   )}
+                  {!loadingFavs && favorites.length > 0 && renderGrid(favorites, { source: 'favorit' })}
                 </div>
-              )}
+
+                {canUploadEfek && (
+                  <div className="profile-tab-page">
+                    {loadingOwnEfek && <div className="empty-state">Memuat...</div>}
+                    {!loadingOwnEfek && ownEffects.length === 0 && (
+                      <div className="empty-state">Kamu belum upload efek apapun.</div>
+                    )}
+                    {!loadingOwnEfek && ownEffects.length > 0 && (
+                      <div className="preset-grid" style={{ flex: 'none' }}>
+                        {ownEffects.map((effect) => (
+                          <div
+                            key={effect.id}
+                            className="grid-cell"
+                            onClick={() => navigate(`/efek/${effect.id}`)}
+                            onContextMenu={(e) => e.preventDefault()}
+                          >
+                            {effect.preview_video_url ? (
+                              <video src={effect.preview_video_url} muted loop preload="metadata" playsInline draggable={false} poster={effect.cover_url} />
+                            ) : (
+                              <div className="grid-fallback">🎬</div>
+                            )}
+                            <div className="grid-cell-overlay">{effect.title}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </>
         ) : (
