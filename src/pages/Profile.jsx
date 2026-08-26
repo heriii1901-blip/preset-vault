@@ -6,6 +6,7 @@ import { supabase } from '../supabase'
 import { usePresetCache } from '../context/PresetCacheContext'
 import { creatorNameStyle } from '../utils/creatorFont'
 import { useSwipePages } from '../hooks/useSwipePages'
+import { useTabIndicator } from '../hooks/useTabIndicator'
 
 const COVER_TIME = 2
 
@@ -51,7 +52,8 @@ export default function Profile() {
   const [loadingOwnEfek, setLoadingOwnEfek] = useState(false)
 
   // Tab Postingan/Favorit (cuma kreator yang punya postingan sendiri)  
-  const { activeIndex: activeTab, containerRef, trackStyle, goTo: goToTabRaw, touchHandlers } = useSwipePages(canUploadEfek ? 3 : 2)
+  const { activeIndex: activeTab, progress: tabProgress, scrollerRef, goTo: goToTabRaw, touchHandlers } = useSwipePages(canUploadEfek ? 3 : 2)
+  const { containerRef: tabsRef, tabRefs, indicatorStyle, getTabColor } = useTabIndicator(tabProgress, canUploadEfek ? 3 : 2)
   
   function resetToCover(video) {
     if (!video) return
@@ -291,25 +293,32 @@ export default function Profile() {
 
         {isCreator ? (
           <>
-            <div className="profile-tabs">
+            <div className="profile-tabs" ref={tabsRef}>
+              <div className="tab-indicator" style={indicatorStyle} />
               <button
+                ref={(el) => (tabRefs.current[0] = el)}
                 type="button"
                 className={`profile-tab${activeTab === 0 ? ' is-active' : ''}`}
+                style={{ color: getTabColor(0) }}
                 onClick={() => goToTab(0)}
               >
                 Postingan
               </button>
               <button
+                ref={(el) => (tabRefs.current[1] = el)}
                 type="button"
                 className={`profile-tab${activeTab === 1 ? ' is-active' : ''}`}
+                style={{ color: getTabColor(1) }}
                 onClick={() => goToTab(1)}
               >
                 Favorit
               </button>
               {canUploadEfek && (
                 <button
+                  ref={(el) => (tabRefs.current[2] = el)}
                   type="button"
                   className={`profile-tab${activeTab === 2 ? ' is-active' : ''}`}
+                  style={{ color: getTabColor(2) }}
                   onClick={() => goToTab(2)}
                 >
                   Efek
