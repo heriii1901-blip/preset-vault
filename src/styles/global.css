@@ -354,8 +354,8 @@ button:focus, a:focus {
   position: absolute;
   top: 0;
   left: 0;
-  border-radius: 14px;
-  background: var(--surface-2);
+  border-radius: 999px;
+  background: rgba(212, 255, 61, 0.16);
   opacity: 0;
   pointer-events: none;
   z-index: 0;
