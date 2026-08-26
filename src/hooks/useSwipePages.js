@@ -6,51 +6,73 @@ const SWIPE_THRESHOLD_RATIO = 0.18
 
 export function useSwipePages(pageCount, initialIndex = 0) {
   const [activeIndex, setActiveIndex] = useState(initialIndex)
-  const scrollerRef = useRef(null)
-  const dragRef = useRef({ startX: 0, dragging: false, startScrollLeft: 0 })
+  const [dragX, setDragX] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const containerRef = useRef(null)
+  const dragRef = useRef({ startX: 0, startY: 0, dragging: false, locked: null })
 
   const goTo = useCallback((index) => {
     const clamped = Math.max(0, Math.min(pageCount - 1, index))
     setActiveIndex(clamped)
-    const el = scrollerRef.current
-    if (el) el.scrollTo({ left: el.clientWidth * clamped, behavior: 'smooth' })
+    setDragX(0)
   }, [pageCount])
 
   function handleTouchStart(e) {
-    const el = scrollerRef.current
-    if (!el) return
     dragRef.current = {
       startX: e.touches[0].clientX,
+      startY: e.touches[0].clientY,
       dragging: true,
-      startScrollLeft: el.scrollLeft,
+      locked: null, // 'x' | 'y', ditentuin sekali di awal drag
     }
+    setIsDragging(true)
   }
 
   function handleTouchMove(e) {
-    const el = scrollerRef.current
-    if (!el || !dragRef.current.dragging) return
+    if (!dragRef.current.dragging) return
     const dx = e.touches[0].clientX - dragRef.current.startX
-    el.scrollLeft = dragRef.current.startScrollLeft - dx
+    const dy = e.touches[0].clientY - dragRef.current.startY
+
+    // Kunci arah gesture sekali doang di awal. Ini yang nyegah "kedip2":
+    // sebelumnya arah horizontal & scroll vertikal isi tab bisa rebutan terus.
+    if (dragRef.current.locked === null) {
+      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return
+      dragRef.current.locked = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
+    }
+
+    if (dragRef.current.locked === 'y') return // biarin scroll vertikal jalan normal, jangan diganggu
+
+    e.preventDefault() // matiin scroll native pas geser horizontal, biar gak dobel gerak sama transform kita
+    setDragX(dx)
   }
 
   function handleTouchEnd() {
-    const el = scrollerRef.current
-    if (!el || !dragRef.current.dragging) return
+    if (!dragRef.current.dragging) return
     dragRef.current.dragging = false
-    const width = el.clientWidth || 1
-    const delta = el.scrollLeft - dragRef.current.startScrollLeft
+    setIsDragging(false)
 
-    // Dijamin maksimal pindah 1 tab per swipe, gak peduli sekenceng apa geraknya
+    if (dragRef.current.locked !== 'x') {
+      setDragX(0)
+      return
+    }
+
+    const width = containerRef.current?.clientWidth || 1
     let target = activeIndex
-    if (delta > width * SWIPE_THRESHOLD_RATIO) target = activeIndex + 1
-    else if (delta < -width * SWIPE_THRESHOLD_RATIO) target = activeIndex - 1
+    if (dragX > width * SWIPE_THRESHOLD_RATIO) target = activeIndex - 1
+    else if (dragX < -width * SWIPE_THRESHOLD_RATIO) target = activeIndex + 1
     goTo(target)
+  }
+
+  const width = containerRef.current?.clientWidth || 0
+  const trackStyle = {
+    transform: `translateX(${-activeIndex * width + dragX}px)`,
+    transition: isDragging ? 'none' : 'transform 0.25s ease',
   }
 
   return {
     activeIndex,
-    scrollerRef,
     goTo,
+    containerRef,
+    trackStyle,
     touchHandlers: {
       onTouchStart: handleTouchStart,
       onTouchMove: handleTouchMove,
