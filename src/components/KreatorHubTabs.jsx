@@ -3,7 +3,7 @@ import { useSwipePages } from '../hooks/useSwipePages'
 import { useTabIndicator } from '../hooks/useTabIndicator'
 
 export default function KreatorHubTabs({ creatorUsername, ownPresets, loadingOwn, navigate }) {
-  const { activeIndex: activePage, progress, scrollerRef, goTo: goToPage, touchHandlers } = useSwipePages(2)
+  const { activeIndex: activePage, progress, trackStyle, scrollerRef, goTo: goToPage, touchHandlers } = useSwipePages(2)
   const { containerRef, tabRefs, indicatorStyle, getTabColor } = useTabIndicator(progress, 2)
 
   return (
@@ -34,7 +34,8 @@ export default function KreatorHubTabs({ creatorUsername, ownPresets, loadingOwn
         </button>
       </div>
 
-      <div className="kreator-hub-scroller" ref={scrollerRef} {...touchHandlers}>
+      <div className="kreator-hub-scroller" ref={scrollerRef}>
+        <div className="kreator-hub-track" style={trackStyle} {...touchHandlers}>
         <div className="kreator-hub-page">
           <Kreator hideHeader />
         </div>
@@ -82,6 +83,7 @@ export default function KreatorHubTabs({ creatorUsername, ownPresets, loadingOwn
               </div>
             )}
           </div>
+        </div>
         </div>
       </div>
     </div>
