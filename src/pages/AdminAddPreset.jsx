@@ -913,13 +913,11 @@ export default function AdminAddPreset() {
               </button>
             </div>
 
-            <div className="kreator-hub-scroller" ref={containerRef}>
-              <div className="kreator-hub-track" style={trackStyle} {...touchHandlers}>
-                <div className="kreator-hub-page">{formPanel}</div>
-                <div className="kreator-hub-page">{historyPanel}</div>
-                <div className="kreator-hub-page">{pendingLinkPanel}</div>
-                <div className="kreator-hub-page">{missingCoverPanel}</div>
-              </div>
+            <div className="kreator-hub-scroller" ref={scrollerRef} {...touchHandlers}>
+              <div className="kreator-hub-page">{formPanel}</div>
+              <div className="kreator-hub-page">{historyPanel}</div>
+              <div className="kreator-hub-page">{pendingLinkPanel}</div>
+              <div className="kreator-hub-page">{missingCoverPanel}</div>
             </div>
           </div>
         )}
