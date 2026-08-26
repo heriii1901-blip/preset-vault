@@ -6,6 +6,7 @@ import { uploadToR2 } from '../utils/uploadToR2'
 import { generateCoverFromVideo } from '../utils/generateCoverFromVideo'
 import { useUploadQueue } from '../context/UploadQueueContext'
 import { useSwipePages } from '../hooks/useSwipePages'
+import { useTabIndicator } from '../hooks/useTabIndicator'
 
 const THUMB_COLORS = [
   'linear-gradient(135deg,#7C5CFF,#4A32C9)',
@@ -23,7 +24,8 @@ export default function AdminAddPreset() {
   const fromPending = searchParams.get('from') === 'pending'
   const { enqueuePresetUpload, history, cancelJob, resubmitQueueItem, deleteHistoryItem, getQueueItemForEdit } = useUploadQueue()
   const [editingQueueId, setEditingQueueId] = useState(null)
-  const { activeIndex: activePanel, containerRef, trackStyle, goTo: goToPanelRaw, touchHandlers } = useSwipePages(4)
+  const { activeIndex: activePanel, progress: panelProgress, scrollerRef, goTo: goToPanelRaw, touchHandlers } = useSwipePages(4)
+  const { containerRef: tabsRef, tabRefs, indicatorStyle, getTabColor } = useTabIndicator(panelProgress, 4)
   const [pendingLinkPresets, setPendingLinkPresets] = useState([])
   const [loadingPendingLinks, setLoadingPendingLinks] = useState(true)
 
@@ -871,31 +873,40 @@ export default function AdminAddPreset() {
           <div style={{ padding: '0 14px 14px' }}>{formPanel}</div>
         ) : (
           <div className="kreator-hub" style={{ padding: 0 }}>
-            <div className="kreator-hub-tabs">
+            <div className="kreator-hub-tabs" ref={tabsRef}>
+              <div className="tab-indicator" style={indicatorStyle} />
               <button
+                ref={(el) => (tabRefs.current[0] = el)}
                 type="button"
                 className={`kreator-hub-tab${activePanel === 0 ? ' is-active' : ''}`}
+                style={{ color: getTabColor(0) }}
                 onClick={() => goToPanel(0)}
               >
                 {editingQueueId ? 'Edit Upload' : 'Tambah Preset'}
               </button>
-                            <button
+              <button
+                ref={(el) => (tabRefs.current[1] = el)}
                 type="button"
                 className={`kreator-hub-tab${activePanel === 1 ? ' is-active' : ''}`}
+                style={{ color: getTabColor(1) }}
                 onClick={() => goToPanel(1)}
               >
                 Riwayat Upload{history.length > 0 ? ` (${history.length})` : ''}
               </button>
               <button
+                ref={(el) => (tabRefs.current[2] = el)}
                 type="button"
                 className={`kreator-hub-tab${activePanel === 2 ? ' is-active' : ''}`}
+                style={{ color: getTabColor(2) }}
                 onClick={() => goToPanel(2)}
               >
                 🔗 Link Kosong{pendingLinkPresets.length > 0 ? ` (${pendingLinkPresets.length})` : ''}
               </button>
               <button
+                ref={(el) => (tabRefs.current[3] = el)}
                 type="button"
                 className={`kreator-hub-tab${activePanel === 3 ? ' is-active' : ''}`}
+                style={{ color: getTabColor(3) }}
                 onClick={() => goToPanel(3)}
               >
                 🖼️ Cover Lama{missingCoverPresets.length > 0 ? ` (${missingCoverPresets.length})` : ''}
