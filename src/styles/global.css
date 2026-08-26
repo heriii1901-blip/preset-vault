@@ -342,6 +342,7 @@ button:focus, a:focus {
  
 /* ===== BOTTOM NAV (mobile default) ===== */
 .bottom-nav {
+  position: relative;
   display: flex;
   flex-shrink: 0;
   border-top: 1px solid var(--line);
@@ -349,7 +350,21 @@ button:focus, a:focus {
   padding: 7px 0 10px;
 }
 
+.nav-pill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 14px;
+  background: var(--surface-2);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+  transition: transform .35s cubic-bezier(0.22, 1, 0.36, 1), opacity .2s ease;
+}
+
 .nav-item {
+  position: relative;
+  z-index: 1;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -409,6 +424,10 @@ button:focus, a:focus {
 
 /* ===== BOTTOM NAV -> SIDEBAR (desktop override, HARUS di bawah biar menang) ===== */
 @media (min-width: 768px) {
+  .nav-pill {
+    display: none;
+  }
+
   .phone:has(> .bottom-nav) {
     flex-direction: row;
   }
