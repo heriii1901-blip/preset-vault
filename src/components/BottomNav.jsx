@@ -45,13 +45,14 @@ export function BottomNav() {
 
       const elRect = el.getBoundingClientRect()
       const containerRect = container.getBoundingClientRect()
-      const size = 42
+      const pillWidth = 56
+      const pillHeight = 32
 
       setPillStyle({
         opacity: 1,
-        width: size,
-        height: size,
-        transform: `translate(${elRect.left - containerRect.left + elRect.width / 2 - size / 2}px, ${elRect.top - containerRect.top + elRect.height / 2 - size / 2}px)`,
+        width: pillWidth,
+        height: pillHeight,
+        transform: `translate(${elRect.left - containerRect.left + elRect.width / 2 - pillWidth / 2}px, ${elRect.top - containerRect.top + elRect.height / 2 - pillHeight / 2}px)`,
       })
     }
 
