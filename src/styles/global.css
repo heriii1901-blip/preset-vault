@@ -1072,7 +1072,7 @@ select.finput-real { cursor: pointer; }
   cursor: pointer;
   border-bottom: 2px solid transparent;
 }
-.profile-tab.is-active { color: var(--text); border-bottom-color: var(--pink); }
+.profile-tab.is-active { color: var(--text); }
 
 .profile-tabs-scroller {
   flex: 1;
@@ -2114,7 +2114,6 @@ select.finput-real { cursor: pointer; }
 }
 .kreator-hub-tab.is-active {
   color: var(--text);
-  border-bottom-color: var(--pink);
 }
 
 .kreator-hub-scroller {
@@ -2370,3 +2369,20 @@ select.finput-real { cursor: pointer; }
 }
 .row-menu-item:active { background: var(--surface); }
 .row-menu-danger { color: #FF5C5C; }
+
+/* Underline yang geser real-time ngikutin swipe (ala Mihon PrimaryTabRow) */
+.profile-tabs,
+.kreator-hub-tabs {
+  position: relative;
+}
+
+.tab-indicator {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--pink);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 1;
+}
