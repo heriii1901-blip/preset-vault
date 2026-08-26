@@ -52,7 +52,7 @@ export default function Profile() {
   const [loadingOwnEfek, setLoadingOwnEfek] = useState(false)
 
   // Tab Postingan/Favorit (cuma kreator yang punya postingan sendiri)  
-  const { activeIndex: activeTab, progress: tabProgress, scrollerRef, goTo: goToTabRaw, touchHandlers } = useSwipePages(canUploadEfek ? 3 : 2)
+  const { activeIndex: activeTab, progress: tabProgress, trackStyle, scrollerRef, goTo: goToTabRaw, touchHandlers } = useSwipePages(canUploadEfek ? 3 : 2)
   const { containerRef: tabsRef, tabRefs, indicatorStyle, getTabColor } = useTabIndicator(tabProgress, canUploadEfek ? 3 : 2)
   
   function resetToCover(video) {
@@ -326,7 +326,8 @@ export default function Profile() {
               )}
             </div>
 
-              <div className="profile-tabs-scroller" ref={scrollerRef} {...touchHandlers}>
+              <div className="profile-tabs-scroller" ref={scrollerRef}>
+                <div className="profile-tabs-track" style={trackStyle} {...touchHandlers}>
                 <div className="profile-tab-page">
                   {loadingOwn && <div className="empty-state">Memuat...</div>}
                   {!loadingOwn && ownPresets.length === 0 && (
@@ -373,6 +374,7 @@ export default function Profile() {
                     )}
                   </div>
                 )}
+              </div>
             </div>
           </>
         ) : (
