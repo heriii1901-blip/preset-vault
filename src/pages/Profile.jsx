@@ -326,8 +326,7 @@ export default function Profile() {
               )}
             </div>
 
-            <div className="profile-tabs-scroller" ref={containerRef}>
-              <div className="profile-tabs-track" style={trackStyle} {...touchHandlers}>
+              <div className="profile-tabs-scroller" ref={scrollerRef} {...touchHandlers}>
                 <div className="profile-tab-page">
                   {loadingOwn && <div className="empty-state">Memuat...</div>}
                   {!loadingOwn && ownPresets.length === 0 && (
@@ -374,7 +373,6 @@ export default function Profile() {
                     )}
                   </div>
                 )}
-              </div>
             </div>
           </>
         ) : (
