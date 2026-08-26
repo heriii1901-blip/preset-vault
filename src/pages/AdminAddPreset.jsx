@@ -24,7 +24,7 @@ export default function AdminAddPreset() {
   const fromPending = searchParams.get('from') === 'pending'
   const { enqueuePresetUpload, history, cancelJob, resubmitQueueItem, deleteHistoryItem, getQueueItemForEdit } = useUploadQueue()
   const [editingQueueId, setEditingQueueId] = useState(null)
-  const { activeIndex: activePanel, progress: panelProgress, scrollerRef, goTo: goToPanelRaw, touchHandlers } = useSwipePages(4)
+  const { activeIndex: activePanel, progress: panelProgress, trackStyle, scrollerRef, goTo: goToPanelRaw, touchHandlers } = useSwipePages(4)
   const { containerRef: tabsRef, tabRefs, indicatorStyle, getTabColor } = useTabIndicator(panelProgress, 4)
   const [pendingLinkPresets, setPendingLinkPresets] = useState([])
   const [loadingPendingLinks, setLoadingPendingLinks] = useState(true)
@@ -913,11 +913,13 @@ export default function AdminAddPreset() {
               </button>
             </div>
 
-            <div className="kreator-hub-scroller" ref={scrollerRef} {...touchHandlers}>
-              <div className="kreator-hub-page">{formPanel}</div>
-              <div className="kreator-hub-page">{historyPanel}</div>
-              <div className="kreator-hub-page">{pendingLinkPanel}</div>
-              <div className="kreator-hub-page">{missingCoverPanel}</div>
+            <div className="kreator-hub-scroller" ref={scrollerRef}>
+              <div className="kreator-hub-track" style={trackStyle} {...touchHandlers}>
+                <div className="kreator-hub-page">{formPanel}</div>
+                <div className="kreator-hub-page">{historyPanel}</div>
+                <div className="kreator-hub-page">{pendingLinkPanel}</div>
+                <div className="kreator-hub-page">{missingCoverPanel}</div>
+              </div>
             </div>
           </div>
         )}
