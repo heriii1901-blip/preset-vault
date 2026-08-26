@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 // Geser dianggap "pindah tab" kalau jarak drag > 18% lebar layar.
 // Di bawah itu, balik lagi ke tab semula.
@@ -6,73 +6,81 @@ const SWIPE_THRESHOLD_RATIO = 0.18
 
 export function useSwipePages(pageCount, initialIndex = 0) {
   const [activeIndex, setActiveIndex] = useState(initialIndex)
-  const [dragX, setDragX] = useState(0)
-  const [isDragging, setIsDragging] = useState(false)
-  const containerRef = useRef(null)
-  const dragRef = useRef({ startX: 0, startY: 0, dragging: false, locked: null })
+  // progress = posisi kontinu (misal 1.35 = lagi di antara tab 1 & 2),
+  // dipakai buat animasi underline & warna tab yang ngikutin swipe real-time.
+  const [progress, setProgress] = useState(initialIndex)
+  const scrollerRef = useRef(null)
+  const dragRef = useRef({ startX: 0, dragging: false, startScrollLeft: 0 })
+  const rafRef = useRef(null)
 
   const goTo = useCallback((index) => {
     const clamped = Math.max(0, Math.min(pageCount - 1, index))
     setActiveIndex(clamped)
-    setDragX(0)
+    const el = scrollerRef.current
+    if (el) el.scrollTo({ left: el.clientWidth * clamped, behavior: 'smooth' })
+  }, [pageCount])
+
+  // Scroll listener nangkep posisi real-time, baik pas di-drag manual
+  // maupun pas smooth-scroll otomatis dari tombol tab.
+  useEffect(() => {
+    const el = scrollerRef.current
+    if (!el) return
+
+    const updateProgress = () => {
+      rafRef.current = null
+      const width = el.clientWidth || 1
+      const raw = el.scrollLeft / width
+      setProgress(Math.max(0, Math.min(pageCount - 1, raw)))
+    }
+
+    const handleScroll = () => {
+      if (rafRef.current) return
+      rafRef.current = requestAnimationFrame(updateProgress)
+    }
+
+    el.addEventListener('scroll', handleScroll, { passive: true })
+    return () => {
+      el.removeEventListener('scroll', handleScroll)
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    }
   }, [pageCount])
 
   function handleTouchStart(e) {
+    const el = scrollerRef.current
+    if (!el) return
     dragRef.current = {
       startX: e.touches[0].clientX,
-      startY: e.touches[0].clientY,
       dragging: true,
-      locked: null, // 'x' | 'y', ditentuin sekali di awal drag
+      startScrollLeft: el.scrollLeft,
     }
-    setIsDragging(true)
   }
 
   function handleTouchMove(e) {
-    if (!dragRef.current.dragging) return
+    const el = scrollerRef.current
+    if (!el || !dragRef.current.dragging) return
     const dx = e.touches[0].clientX - dragRef.current.startX
-    const dy = e.touches[0].clientY - dragRef.current.startY
-
-    // Kunci arah gesture sekali doang di awal. Ini yang nyegah "kedip2":
-    // sebelumnya arah horizontal & scroll vertikal isi tab bisa rebutan terus.
-    if (dragRef.current.locked === null) {
-      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return
-      dragRef.current.locked = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
-    }
-
-    if (dragRef.current.locked === 'y') return // biarin scroll vertikal jalan normal, jangan diganggu
-
-    e.preventDefault() // matiin scroll native pas geser horizontal, biar gak dobel gerak sama transform kita
-    setDragX(dx)
+    el.scrollLeft = dragRef.current.startScrollLeft - dx
   }
 
   function handleTouchEnd() {
-    if (!dragRef.current.dragging) return
+    const el = scrollerRef.current
+    if (!el || !dragRef.current.dragging) return
     dragRef.current.dragging = false
-    setIsDragging(false)
+    const width = el.clientWidth || 1
+    const delta = el.scrollLeft - dragRef.current.startScrollLeft
 
-    if (dragRef.current.locked !== 'x') {
-      setDragX(0)
-      return
-    }
-
-    const width = containerRef.current?.clientWidth || 1
+    // Dijamin maksimal pindah 1 tab per swipe, gak peduli sekenceng apa geraknya
     let target = activeIndex
-    if (dragX > width * SWIPE_THRESHOLD_RATIO) target = activeIndex - 1
-    else if (dragX < -width * SWIPE_THRESHOLD_RATIO) target = activeIndex + 1
+    if (delta > width * SWIPE_THRESHOLD_RATIO) target = activeIndex + 1
+    else if (delta < -width * SWIPE_THRESHOLD_RATIO) target = activeIndex - 1
     goTo(target)
-  }
-
-  const width = containerRef.current?.clientWidth || 0
-  const trackStyle = {
-    transform: `translateX(${-activeIndex * width + dragX}px)`,
-    transition: isDragging ? 'none' : 'transform 0.25s ease',
   }
 
   return {
     activeIndex,
+    progress,
+    scrollerRef,
     goTo,
-    containerRef,
-    trackStyle,
     touchHandlers: {
       onTouchStart: handleTouchStart,
       onTouchMove: handleTouchMove,
