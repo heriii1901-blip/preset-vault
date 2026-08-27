@@ -216,7 +216,7 @@ export default function DaftarKreator() {
           <>
             <div className="admin-header">
               <span className="admin-tag">KREATOR</span>
-              <h2>Program Kreator PAM</h2>
+              <h2>Daftar Kreator PAM</h2>
             </div>
 
             {application?.status === 'pending' && (
