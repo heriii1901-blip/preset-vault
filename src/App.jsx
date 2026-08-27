@@ -26,6 +26,7 @@ import DownloadPage from './pages/DownloadPage'
 import KreatorAddPreset from './pages/KreatorAddPreset'
 import AdminSongRequests from './pages/AdminSongRequests'
 import EditProfile from './pages/EditProfile'
+import TentangAplikasi from './pages/TentangAplikasi'
 
 export default function App() {
   const location = useLocation()
@@ -89,11 +90,18 @@ export default function App() {
                   }
                 />
 
-                <Route
-                  path="/edit-profil"
                   element={
                     <ProtectedRoute>
                       <EditProfile />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/tentang-aplikasi"
+                  element={
+                    <ProtectedRoute>
+                      <TentangAplikasi />
                     </ProtectedRoute>
                   }
                 />
