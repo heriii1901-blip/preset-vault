@@ -34,7 +34,6 @@ export default function Profile() {
   const [favorites, setFavorites] = useState([])
   const [loadingFavs, setLoadingFavs] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [aboutOpen, setAboutOpen] = useState(false)
   const isApk = isRunningAsApk()
   const activeVideoRef = useRef(null)
   
@@ -51,9 +50,17 @@ export default function Profile() {
   const [ownEffects, setOwnEffects] = useState(cachedOwnEfek?.data || [])
   const [loadingOwnEfek, setLoadingOwnEfek] = useState(false)
 
-  // Tab Postingan/Favorit (cuma kreator yang punya postingan sendiri)  
-  const { activeIndex: activeTab, progress: tabProgress, trackStyle, scrollerRef, goTo: goToTabRaw, touchHandlers } = useSwipePages(canUploadEfek ? 3 : 2)
-  const { containerRef: tabsRef, tabRefs, indicatorStyle, getTabColor } = useTabIndicator(tabProgress, canUploadEfek ? 3 : 2)
+  // Tab bar dipake semua akun (bukan cuma kreator) biar konsisten, dan biar
+  // siap kalo nanti Favorit Efek juga ditambahin buat user biasa.
+  // Postingan cuma buat kreator (yang punya preset sendiri).
+  const tabKeys = [
+    ...(isCreator ? ['postingan'] : []),
+    'favorit',
+    ...(canUploadEfek ? ['efek'] : []),
+  ]
+  const tabCount = tabKeys.length
+  const { activeIndex: activeTab, progress: tabProgress, trackStyle, scrollerRef, goTo: goToTabRaw, touchHandlers } = useSwipePages(tabCount)
+  const { containerRef: tabsRef, tabRefs, indicatorStyle, getTabColor } = useTabIndicator(tabProgress, tabCount)
   
   function resetToCover(video) {
     if (!video) return
@@ -278,7 +285,7 @@ export default function Profile() {
             )}
             {profile?.bio && <p className="profile-bio">{profile.bio}</p>}
             {isCreator && profile?.contact_link && (
-              <a
+              
                 href={profile.contact_link}
                 target="_blank"
                 rel="noreferrer"
@@ -291,67 +298,56 @@ export default function Profile() {
           </div>
         </div>
 
-        {isCreator ? (
-          <>
-            <div className="profile-tabs" ref={tabsRef}>
-              <div className="tab-indicator" style={indicatorStyle} />
+        {tabCount > 1 && (
+          <div className="profile-tabs" ref={tabsRef}>
+            <div className="tab-indicator" style={indicatorStyle} />
+            {tabKeys.map((key, i) => (
               <button
-                ref={(el) => (tabRefs.current[0] = el)}
+                key={key}
+                ref={(el) => (tabRefs.current[i] = el)}
                 type="button"
-                className={`profile-tab${activeTab === 0 ? ' is-active' : ''}`}
-                style={{ color: getTabColor(0) }}
-                onClick={() => goToTab(0)}
+                className={`profile-tab${activeTab === i ? ' is-active' : ''}`}
+                style={{ color: getTabColor(i) }}
+                onClick={() => goToTab(i)}
               >
-                Postingan
+                {key === 'postingan' ? 'Postingan' : key === 'favorit' ? 'Favorit' : 'Efek'}
               </button>
-              <button
-                ref={(el) => (tabRefs.current[1] = el)}
-                type="button"
-                className={`profile-tab${activeTab === 1 ? ' is-active' : ''}`}
-                style={{ color: getTabColor(1) }}
-                onClick={() => goToTab(1)}
-              >
-                Favorit
-              </button>
-              {canUploadEfek && (
-                <button
-                  ref={(el) => (tabRefs.current[2] = el)}
-                  type="button"
-                  className={`profile-tab${activeTab === 2 ? ' is-active' : ''}`}
-                  style={{ color: getTabColor(2) }}
-                  onClick={() => goToTab(2)}
-                >
-                  Efek
-                </button>
-              )}
-            </div>
+            ))}
+          </div>
+        )}
 
-              <div className="profile-tabs-scroller" ref={scrollerRef}>
-                <div className="profile-tabs-track" style={trackStyle} {...touchHandlers}>
-                <div className="profile-tab-page">
-                  {loadingOwn && <div className="empty-state">Memuat...</div>}
-                  {!loadingOwn && ownPresets.length === 0 && (
-                    <div className="empty-state">Kamu belum upload preset apapun.</div>
-                  )}
-                  {!loadingOwn && ownPresets.length > 0 &&
-                    renderGrid(ownPresets, { source: 'kreator', creatorUsername })}
-                </div>
+        <div className="profile-tabs-scroller" ref={scrollerRef} style={tabCount === 1 ? { marginTop: 20 } : undefined}>
+          <div className="profile-tabs-track" style={trackStyle} {...touchHandlers}>
+            {tabKeys.map((key) => (
+              <div className="profile-tab-page" key={key}>
+                {key === 'postingan' && (
+                  <>
+                    {loadingOwn && <div className="empty-state">Memuat...</div>}
+                    {!loadingOwn && ownPresets.length === 0 && (
+                      <div className="empty-state">Kamu belum upload preset apapun.</div>
+                    )}
+                    {!loadingOwn && ownPresets.length > 0 &&
+                      renderGrid(ownPresets, { source: 'kreator', creatorUsername })}
+                  </>
+                )}
 
-                <div className="profile-tab-page">
-                  {loadingFavs && <div className="empty-state">Memuat...</div>}
-                  {!loadingFavs && favorites.length === 0 && (
-                    <div className="empty-state">
-                      Belum ada preset yang di-favoritin. Pencet ikon ♡ di halaman video buat nyimpen.
-                    </div>
-                  )}
-                  {!loadingFavs && favorites.length > 0 && renderGrid(favorites, { source: 'favorit' })}
-                </div>
+                {key === 'favorit' && (
+                  <>
+                    {loadingFavs && <div className="empty-state">Memuat...</div>}
+                    {!loadingFavs && favorites.length === 0 && (
+                      <div className="empty-state">
+                        Belum ada preset yang di-favoritin. Pencet ikon ♡ di halaman video buat nyimpen.
+                      </div>
+                    )}
+                    {!loadingFavs && favorites.length > 0 && renderGrid(favorites, { source: 'favorit' })}
+                  </>
+                )}
 
-                {canUploadEfek && (
-                  <div className="profile-tab-page">
+                {key === 'efek' && (
+                  <>
                     {loadingOwnEfek && <div className="empty-state">Memuat...</div>}
                     {!loadingOwnEfek && ownEffects.length === 0 && (
-                      <div className="empty-state">Kamu belum menambahkan efek apapun.</div>
+                      <div className="empty-state">Kamu belum upload efek apapun.</div>
                     )}
                     {!loadingOwnEfek && ownEffects.length > 0 && (
                       <div className="preset-grid" style={{ flex: 'none' }}>
@@ -372,29 +368,12 @@ export default function Profile() {
                         ))}
                       </div>
                     )}
-                  </div>
+                  </>
                 )}
               </div>
-            </div>
-          </>
-        ) : (
-          <div className="profile-scroll">
-            <div className="section-label">
-              <span className="eyebrow" style={{ color: 'var(--lime)' }}>TERSIMPAN</span>
-              <h4>Preset Favorit</h4>
-            </div>
-
-            {loadingFavs && <div className="empty-state">Memuat...</div>}
-
-            {!loadingFavs && favorites.length === 0 && (
-              <div className="empty-state">
-                Belum ada preset yang di-favoritin. Pencet ikon ♡ di halaman video buat nyimpen.
-              </div>
-            )}
-
-            {!loadingFavs && favorites.length > 0 && renderGrid(favorites)}
+            ))}
           </div>
-        )}
+        </div>
       </div>
 
       <div className={`profile-menu-backdrop${menuOpen ? ' is-open' : ''}`} onClick={() => setMenuOpen(false)}>
@@ -432,7 +411,7 @@ export default function Profile() {
             <svg className="profile-menu-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 6 15 12 9 18" /></svg>
           </button>
 
-          <button type="button" className="profile-menu-item" onClick={() => { setMenuOpen(false); setAboutOpen(true) }}>
+          <button type="button" className="profile-menu-item" onClick={() => { setMenuOpen(false); navigate('/tentang-aplikasi') }}>
             <svg className="profile-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="16" x2="12" y2="12" />
@@ -447,7 +426,7 @@ export default function Profile() {
               <svg className="profile-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
-              <span className="profile-menu-label">Daftar Kreator</span>
+              <span className="profile-menu-label">Jadi Kreator</span>
               <svg className="profile-menu-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 6 15 12 9 18" /></svg>
             </button>
           )}
@@ -483,22 +462,6 @@ export default function Profile() {
         </div>
       </div>
 
-      {aboutOpen && (
-        <div className="link-modal-backdrop" onClick={() => setAboutOpen(false)}>
-          <div className="link-modal-box" onClick={(e) => e.stopPropagation()}>
-            <div className="link-modal-header">
-              <span>Tentang Aplikasi</span>
-              <button type="button" className="link-modal-close" onClick={() => setAboutOpen(false)}>×</button>
-            </div>
-            <div style={{ textAlign: 'center', padding: '10px 0 18px' }}>
-              <h3 style={{ fontSize: 20, marginBottom: 4 }}>PAM</h3>
-              <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>Preset Alight Motion</p>
-              <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 4 }}>Versi 1.0.0</p>
-              <p style={{ fontSize: 11.5, color: 'var(--muted)' }}>kalo masih suka bug login ulang aja</p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
