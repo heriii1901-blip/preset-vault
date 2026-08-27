@@ -1,4 +1,3 @@
-import { CREATOR_FONT_OPTIONS, creatorNameStyle } from '../utils/creatorFont'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -23,8 +22,6 @@ export default function DaftarKreator() {
   const [tiktokUsername, setTiktokUsername] = useState('')
   const [tiktokLink, setTiktokLink] = useState('')
   const [amVersion, setAmVersion] = useState('')
-  const [accountFont, setAccountFont] = useState('default')
-  const [accountBold, setAccountBold] = useState(false)
   const [sampleLink, setSampleLink] = useState('')
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -80,8 +77,8 @@ export default function DaftarKreator() {
         .insert({
           user_id: user.id,
           account_name: accountName.trim(),
-          account_font: accountFont,
-          account_bold: accountBold,
+          account_font: 'default',
+          account_bold: false,
           tiktok_username: tiktokUsername.trim(),
           tiktok_link: tiktokLink.trim(),
           am_version: amVersion,
@@ -124,29 +121,6 @@ export default function DaftarKreator() {
               onChange={(e) => setTiktokUsername(e.target.value)}
             />
           </div>
-        </div>
-        <div className="form-field">
-          <label>Gaya Font Nama Akun</label>
-          <div className="input-wrap">
-            <select
-              className="finput-real"
-              value={accountFont}
-              onChange={(e) => setAccountFont(e.target.value)}
-            >
-              {CREATOR_FONT_OPTIONS.map((f) => (
-                <option key={f.value} value={f.value}>{f.label}</option>
-              ))}
-            </select>
-          </div>
-          <label
-            style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, fontSize: 13, cursor: 'pointer' }}
-          >
-            <input type="checkbox" checked={accountBold} onChange={(e) => setAccountBold(e.target.checked)} />
-            Tebal (bold)
-          </label>
-          <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6, ...creatorNameStyle(accountFont, accountBold) }}>
-            Preview: {accountName || 'Nama Akun Kamu'}
-          </p>
         </div>
         <div className="form-field">
           <label>Email PAM</label>
