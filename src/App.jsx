@@ -90,6 +90,8 @@ export default function App() {
                   }
                 />
 
+                <Route
+                  path="/edit-profil"
                   element={
                     <ProtectedRoute>
                       <EditProfile />
