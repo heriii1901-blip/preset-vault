@@ -6,7 +6,8 @@ import { supabase } from '../supabase'
 export default function EditProfile() {
   const { user, isCreator, creatorUsername } = useAuth()
   const MAX_AVATAR_BYTES = 2 * 1024 * 1024
-  const ALLOWED_AVATAR_TYPES = ['image/png', 'image/gif', 'image/jpeg']
+  const ALLOWED_AVATAR_TYPES = ['image/png', 'image/gif', 'image/jpeg', 'image/jpg']
+  const ALLOWED_AVATAR_EXT = /\.(png|gif|jpe?g)$/i
   const navigate = useNavigate()
 
   const [loadingProfile, setLoadingProfile] = useState(true)
@@ -47,7 +48,8 @@ export default function EditProfile() {
   function handleAvatarPick(e) {
     const file = e.target.files?.[0]
     if (!file) return
-    if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+    const typeOk = ALLOWED_AVATAR_TYPES.includes(file.type) || (!file.type && ALLOWED_AVATAR_EXT.test(file.name))
+    if (!typeOk) {
       setStatusMsg('❌ PP cuma boleh PNG, JPG, atau GIF.')
       e.target.value = ''
       return
