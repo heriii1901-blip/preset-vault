@@ -1,5 +1,8 @@
 // Ambil 1 frame dari video (default detik ke-2, atau setengah durasi kalau videonya
 // lebih pendek dari itu) terus dijadiin file JPEG buat cover/thumbnail preset.
+const MAX_SEEK_RETRY = 6
+const SEEK_RETRY_DELAY = 300
+
 export function generateCoverFromVideo(videoFile, seekTime = 2) {
   return new Promise((resolve, reject) => {
     const video = document.createElement('video')
@@ -10,7 +13,12 @@ export function generateCoverFromVideo(videoFile, seekTime = 2) {
     const objectUrl = URL.createObjectURL(videoFile)
     video.src = objectUrl
 
+    let retryCount = 0
+    let retryTimer = null
+    let target = seekTime
+
     const cleanup = () => {
+      clearTimeout(retryTimer)
       URL.revokeObjectURL(objectUrl)
       video.remove()
     }
@@ -20,12 +28,27 @@ export function generateCoverFromVideo(videoFile, seekTime = 2) {
       reject(new Error('Timeout ambil frame video'))
     }, 15000)
 
-    video.onloadedmetadata = () => {
-      const target = Math.min(seekTime, Math.max(video.duration - 0.1, 0.1))
+    function doSeek() {
+      retryCount += 1
       video.currentTime = target
+      retryTimer = setTimeout(() => {
+        // browser kadang nembak 'seeked' padahal frame-nya belum bener2 pindah
+        // (misal belum sempet ke-buffer) - kalo posisinya masih meleset jauh, ulang
+        if (video.currentTime < target - 0.15 && retryCount < MAX_SEEK_RETRY) {
+          doSeek()
+        }
+      }, SEEK_RETRY_DELAY)
+    }
+
+    video.onloadedmetadata = () => {
+      target = Math.min(seekTime, Math.max(video.duration - 0.1, 0.1))
+      doSeek()
     }
 
     video.onseeked = () => {
+      // masih jauh dari target & retry belum abis -> jangan capture dulu, tunggu retry
+      if (video.currentTime < target - 0.15 && retryCount < MAX_SEEK_RETRY) return
+      clearTimeout(retryTimer)
       try {
         const canvas = document.createElement('canvas')
         canvas.width = video.videoWidth
