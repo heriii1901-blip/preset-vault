@@ -108,6 +108,21 @@ async function loadFFmpegCore(ffmpeg, urls, ms, label, onDownloadProgress, exter
   }
 }
 
+// Matiin worker ffmpeg yang lagi jalan & reset instance-nya. Dipanggil pas user cancel
+// job yang lagi dikompres - exec() gak nerima AbortSignal, jadi ini satu2nya cara
+// beneran ngehentiin proses yang stuck. Instance baru otomatis ke-load ulang pas
+// getFFmpeg() dipanggil lagi buat job berikutnya.
+export function terminateFFmpeg() {
+  if (ffmpegInstance) {
+    try {
+      ffmpegInstance.terminate()
+    } catch (err) {
+      console.warn('Gagal terminate ffmpeg instance:', err)
+    }
+    ffmpegInstance = null
+  }
+}
+
 export async function getFFmpeg(onProgress, onDownloadProgress, externalSignal) {
   if (ffmpegInstance) {
     if (onProgress) {
