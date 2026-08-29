@@ -1,6 +1,6 @@
 import { createContext, useContext, useRef, useState, useCallback, useEffect, useMemo } from 'react'
 import { supabase } from '../supabase'
-import { compressVideoIfNeeded } from '../utils/compressVideo'
+import { compressVideoIfNeeded, terminateFFmpeg } from '../utils/compressVideo'
 import { uploadToR2 } from '../utils/uploadToR2'
 import { generateCoverFromVideo } from '../utils/generateCoverFromVideo'
 import {
@@ -288,6 +288,9 @@ export function UploadQueueProvider({ children }) {
     if (cancelState) {
       cancelState.cancelled = true
       cancelState.controller.abort()
+      // worker ffmpeg gak beneran berhenti cuma dari abort() di atas - matiin
+      // paksa biar job berikutnya (termasuk resubmit) ga ikut ngantri stuck
+      terminateFFmpeg()
       if (cancelState.resolveCancel) cancelState.resolveCancel()
     } else {
       queueRef.current = queueRef.current.filter((j) => j.id !== id)
