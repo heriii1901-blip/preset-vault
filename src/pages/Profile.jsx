@@ -7,6 +7,7 @@ import { usePresetCache } from '../context/PresetCacheContext'
 import { creatorNameStyle } from '../utils/creatorFont'
 import { useSwipePages } from '../hooks/useSwipePages'
 import { useTabIndicator } from '../hooks/useTabIndicator'
+import PresetVideoCell from '../components/PresetVideoCell'
 
 const COVER_TIME = 2
 
@@ -208,43 +209,21 @@ export default function Profile() {
   function renderGrid(list, navState) {
     return (
       <div className="preset-grid" style={{ flex: 'none' }}>
-        {list.map((preset) => (
-          <div
-            key={preset.id}
-            className="grid-cell"
-            onClick={() => navigate(`/preset/${preset.id}`, navState ? { state: navState } : undefined)}
-            onContextMenu={(e) => e.preventDefault()}
-            onPointerDown={(e) => handleStartPlay(e.currentTarget.querySelector('video'))}
-            onMouseEnter={(e) => handleStartPlay(e.currentTarget.querySelector('video'))}
-            onMouseLeave={(e) => {
-              resetToCover(e.currentTarget.querySelector('video'))
-              if (activeVideoRef.current === e.currentTarget.querySelector('video')) {
-                activeVideoRef.current = null
-              }
-            }}
-          >
-            {preset.preview_video_url ? (
-              <video
-                src={preset.preview_video_url}
-                muted
-                loop
-                preload="metadata"
-                playsInline
-                disablePictureInPicture
-                controlsList="nodownload"
-                draggable={false}
-                poster={getCache(`thumb:${preset.id}`)?.data || preset.cover_url}
-                onLoadedMetadata={(e) => {
-                  const video = e.currentTarget
-                  if (video.currentTime === 0) video.currentTime = COVER_TIME
-                }}
-                onSeeked={(e) => captureThumb(e.currentTarget, preset.id, setCache)}
-              />
-            ) : preset.cover_url ? (
-              <img src={preset.cover_url} alt="" className="grid-fallback-thumb" draggable={false} />
-            ) : (
-              <div className="grid-fallback">🎬</div>
-            )}
+        {list.map((preset, i) => (
+          <div key={preset.id} style={{ position: 'relative' }}>
+            <PresetVideoCell
+              preset={preset}
+              index={i}
+              getCache={getCache}
+              setCache={setCache}
+              onNavigate={(p) => navigate(`/preset/${p.id}`, navState ? { state: navState } : undefined)}
+              onHoverStart={handleStartPlay}
+              onHoverEnd={(video) => {
+                resetToCover(video)
+                if (activeVideoRef.current === video) activeVideoRef.current = null
+              }}
+              showOverlay={false}
+            />
             {preset.songs && (
               <div className="grid-cell-overlay">
                 {preset.songs?.name || 'Unknown Song'} · @{preset.creator_username}
