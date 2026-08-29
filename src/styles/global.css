@@ -1943,7 +1943,7 @@ select.finput-real { cursor: pointer; }
   left: 20px;
   width: calc(50% - 20px);
   height: 2.5px;
-  background: var(--violet);
+  background: var(--lime);
   border-radius: 2px;
   transition: transform 0.25s ease;
 }
@@ -2394,9 +2394,9 @@ select.finput-real { cursor: pointer; }
   left: 0;
   bottom: -1px;
   height: 3px;
-  background: linear-gradient(90deg, var(--pink), color-mix(in srgb, var(--pink) 65%, white));
+  background: linear-gradient(90deg, var(--lime), color-mix(in srgb, var(--lime) 65%, white));
   border-radius: 100px 100px 0 0;
-  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--pink) 55%, transparent);
+  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--lime) 55%, transparent);
   pointer-events: none;
   z-index: 1;
   transition: box-shadow .2s ease;
