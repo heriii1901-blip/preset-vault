@@ -1,4 +1,4 @@
-const CACHE_NAME = "pam-cache-v5"
+const CACHE_NAME = "pam-cache-v6"
 const APP_SHELL = "/index.html"
 
 self.addEventListener("install", (event) => {
@@ -47,16 +47,20 @@ self.addEventListener("fetch", (event) => {
   // gak pernah kebekukan di versi build lama. Kalo GAGAL (offline/APK baru
   // dibuka jaringan belum siap), baru jatuh ke cache yang paling baru ke-update.
   if (event.request.mode === "navigate") {
+    const tryFetch = () =>
+      fetch(event.request).then((response) => {
+        const clone = response.clone()
+        caches.open(CACHE_NAME).then((cache) => cache.put(APP_SHELL, clone)).catch(() => {})
+        return response
+      })
+
     event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          const clone = response.clone()
-          caches.open(CACHE_NAME).then((cache) => cache.put(APP_SHELL, clone)).catch(() => {})
-          return response
-        })
-        .catch(() =>
-          caches.match(APP_SHELL).then((cached) => cached || Response.error())
-        )
+      tryFetch()
+        // Gagal pertama kali (misal hp baru bangun dari sleep, radio belum
+        // connect) jangan langsung nyerah ke cache lama. Kasih jeda dikit
+        // terus coba sekali lagi dulu.
+        .catch(() => new Promise((r) => setTimeout(r, 800)).then(tryFetch))
+        .catch(() => caches.match(APP_SHELL).then((cached) => cached || Response.error()))
     )
     return
   }
