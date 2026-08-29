@@ -51,6 +51,8 @@ export default function KreatorHome() {
         ownPresets={ownPresets}
         loadingOwn={loadingOwn}
         navigate={navigate}
+        getCache={getCache}
+        setCache={setCache}
       />
     </div>
   )
