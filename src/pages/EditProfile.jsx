@@ -6,7 +6,7 @@ import { supabase } from '../supabase'
 export default function EditProfile() {
   const { user, isCreator, creatorUsername } = useAuth()
   const MAX_AVATAR_BYTES = 2 * 1024 * 1024
-  const ALLOWED_AVATAR_TYPES = ['image/png', 'image/gif']
+  const ALLOWED_AVATAR_TYPES = ['image/png', 'image/gif', 'image/jpeg']
   const navigate = useNavigate()
 
   const [loadingProfile, setLoadingProfile] = useState(true)
@@ -48,7 +48,7 @@ export default function EditProfile() {
     const file = e.target.files?.[0]
     if (!file) return
     if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
-      setStatusMsg('❌ PP cuma boleh PNG atau GIF.')
+      setStatusMsg('❌ PP cuma boleh PNG, JPG, atau GIF.')
       e.target.value = ''
       return
     }
@@ -166,7 +166,7 @@ export default function EditProfile() {
                   {avatarFile ? `✅ ${avatarFile.name}` : '⬆ Ganti Foto'}
                   <input
                     type="file"
-                    accept="image/png,image/gif"
+                    accept="image/png,image/gif,image/jpeg"
                     style={{ display: 'none' }}
                     onChange={handleAvatarPick}
                   />
