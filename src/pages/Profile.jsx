@@ -233,13 +233,15 @@ export default function Profile() {
                 disablePictureInPicture
                 controlsList="nodownload"
                 draggable={false}
-                poster={getCache(`thumb:${preset.id}`)?.data}
+                poster={getCache(`thumb:${preset.id}`)?.data || preset.cover_url}
                 onLoadedMetadata={(e) => {
                   const video = e.currentTarget
                   if (video.currentTime === 0) video.currentTime = COVER_TIME
                 }}
                 onSeeked={(e) => captureThumb(e.currentTarget, preset.id, setCache)}
               />
+            ) : preset.cover_url ? (
+              <img src={preset.cover_url} alt="" className="grid-fallback-thumb" draggable={false} />
             ) : (
               <div className="grid-fallback">🎬</div>
             )}
