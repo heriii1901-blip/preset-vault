@@ -208,8 +208,32 @@ function buildScaleFilter(maxDim) {
   return `if(gt(iw\\,ih)\\,min(iw\\,${maxDim})\\,-2):if(gt(iw\\,ih)\\,-2\\,min(ih\\,${maxDim}))`
 }
 
+async function remuxFaststart(file, onStage, signal) {
+  try {
+    onStage?.('Nyiapin video...')
+    const ffmpeg = await getFFmpeg(null, (dlP) => {
+      onStage?.(`Download compressor (${Math.round(dlP * 100)}%)...`)
+    }, signal)
+    const inputName = 'input' + (file.name.match(/\.\w+$/)?.[0] || '.mp4')
+    const outputName = 'output.mp4'
+    await ffmpeg.writeFile(inputName, await fetchFile(file))
+    onStage?.('Nyiapin video buat streaming...')
+    await ffmpeg.exec(['-i', inputName, '-c', 'copy', '-movflags', '+faststart', outputName])
+    const data = await ffmpeg.readFile(outputName)
+    const remuxed = new Blob([data.buffer], { type: 'video/mp4' })
+    await ffmpeg.deleteFile(inputName).catch(() => {})
+    await ffmpeg.deleteFile(outputName).catch(() => {})
+    if (!remuxed.size) return file
+    return new File([remuxed], file.name.replace(/\.\w+$/, '.mp4'), { type: 'video/mp4' })
+  } catch (err) {
+    console.error('Gagal remux faststart, pake file asli:', err)
+    return file
+  }
+}
+
 export async function compressVideoIfNeeded(file, onProgress, onStage, signal) {
-  if (!file || file.size <= SKIP_COMPRESS_BYTES) return file
+  if (!file) return file
+  if (file.size <= SKIP_COMPRESS_BYTES) return remuxFaststart(file, onStage, signal)
   try {
     onStage?.('Nyiapin video...')
     const duration = await getVideoDuration(file)
