@@ -347,7 +347,7 @@ button:focus, a:focus {
   flex-shrink: 0;
   border-top: 1px solid var(--line);
   background: var(--surface);
-  padding: 7px 0 10px;
+  padding: 7px 0 calc(10px + env(safe-area-inset-bottom, 0px));
 }
 
 .nav-pill {
