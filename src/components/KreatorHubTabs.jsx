@@ -1,8 +1,9 @@
 import Kreator from '../pages/Kreator'
 import { useSwipePages } from '../hooks/useSwipePages'
 import { useTabIndicator } from '../hooks/useTabIndicator'
+import PresetVideoCell from './PresetVideoCell'
 
-export default function KreatorHubTabs({ creatorUsername, ownPresets, loadingOwn, navigate }) {
+export default function KreatorHubTabs({ creatorUsername, ownPresets, loadingOwn, navigate, getCache, setCache }) {
   const { activeIndex: activePage, progress, trackStyle, scrollerRef, goTo: goToPage, touchHandlers } = useSwipePages(2)
   const { containerRef, tabRefs, indicatorStyle, getTabColor } = useTabIndicator(progress, 2)
 
@@ -57,28 +58,18 @@ export default function KreatorHubTabs({ creatorUsername, ownPresets, loadingOwn
             {!loadingOwn && ownPresets.length === 0 && (
               <div className="empty-state" style={{ paddingLeft: 18, paddingRight: 18 }}>Kamu belum punya preset. Yuk upload pertamamu!</div>
             )}
-            {!loadingOwn && ownPresets.length > 0 && (
+             {!loadingOwn && ownPresets.length > 0 && (
               <div className="preset-grid" style={{ padding: 0 }}>
-                {ownPresets.map((p) => (
-                  <div
+                {ownPresets.map((p, i) => (
+                  <PresetVideoCell
                     key={p.id}
-                    className="grid-cell"
-                    onClick={() => navigate(`/preset/${p.id}`, { state: { source: 'kreator', creatorUsername } })}
-                    onContextMenu={(e) => e.preventDefault()}
-                  >
-                    {p.preview_video_url ? (
-                      <video
-                        src={p.preview_video_url}
-                        muted
-                        loop
-                        playsInline
-                        preload="metadata"
-                        draggable={false}
-                      />
-                    ) : (
-                      <div className="grid-fallback">🎬</div>
-                    )}
-                  </div>
+                    preset={p}
+                    index={i}
+                    getCache={getCache}
+                    setCache={setCache}
+                    onNavigate={(preset) => navigate(`/preset/${preset.id}`, { state: { source: 'kreator', creatorUsername } })}
+                    showOverlay={false}
+                  />
                 ))}
               </div>
             )}
