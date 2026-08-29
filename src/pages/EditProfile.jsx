@@ -137,7 +137,7 @@ export default function EditProfile() {
   return (
     <div className="screen">
       <div className="admin-content">
-        <button className="back-btn ghost-static" style={{ marginBottom: 14, width: 'fit-content' }} onClick={() => navigate(-1)}>
+        <button className="back-btn ghost-static" style={{ marginBottom: 14, marginLeft: 14, width: 'fit-content' }} onClick={() => navigate(-1)}>
           ← Balik
         </button>
 
@@ -146,7 +146,7 @@ export default function EditProfile() {
           <h2>Edit Profil</h2>
         </div>
 
-        <form onSubmit={handleSave}>
+        <form onSubmit={handleSave} style={{ padding: '0 14px 14px' }}>
           {(
             <div className="form-field">
               <label>Foto Profil</label>
