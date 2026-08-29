@@ -254,6 +254,7 @@ export default function AdminAddPreset() {
       tiktokLink: tiktokLink.trim(),
       creatorUsername: creatorUsername.trim(),
       directSongCreate: true,
+      skipCompress,
     }
 
     if (editingQueueId) {
