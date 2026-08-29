@@ -21,26 +21,25 @@ export default function TentangAplikasi() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, fontSize: 14, lineHeight: 1.65, color: 'var(--text)' }}>
           <p>
-            PAM lahir dari hal simpel yang sering bikin capek: nyari preset Alight Motion buat lagu tertentu itu ribet banget.
-            Biasanya harus scroll TikTok satu-satu, semoga-semoga ketemu kreator yang preview videonya kepake, terus masih harus
-            nebak-nebak link download-nya valid apa nggak. PAM dibuat biar proses itu nggak perlu ada lagi.
+            Nyari preset Alight Motion buat lagu tertentu sering ribet — harus scroll TikTok satu-satu, belum tentu
+            ketemu, dan link download-nya kadang nggak jelas asalnya. PAM dibuat buat nyelesain itu.
           </p>
 
           <p>
-            Di sini semua preset dikumpulin berdasarkan lagu, jadi tinggal cari nama lagunya dan langsung ketemu preset-preset
-            yang cocok, lengkap sama preview video biar nggak salah pilih sebelum download. Link presetnya juga udah dicek
-            dan langsung ke sumbernya, jadi nggak perlu muter-muter lewat shortlink yang suka mencurigakan.
+            Semua preset dikumpulin berdasarkan lagu. Tinggal cari nama lagunya, langsung ketemu preset yang cocok
+            lengkap sama preview video, jadi nggak salah pilih sebelum download. Semua link presetnya juga udah
+            dicek dan langsung ke sumber aslinya.
           </p>
 
           <p>
-            Ada juga sistem Kreator, buat kalian yang emang bikin preset sendiri dan mau preset-nya dipajang rapi di satu
-            tempat, lengkap sama nama akun dan link TikTok kalian, bukan cuma numpang lewat di FYP orang. Selain preset, PAM
-            juga mulai nampung Efek, buat yang nyari-nyari efek AM di luar preset lagu.
+            Ada sistem Kreator buat yang emang bikin preset sendiri — preset-nya dipajang rapi di satu tempat,
+            lengkap dengan nama akun dan link TikTok. Selain preset, PAM juga nampung Efek, buat yang butuh efek AM
+            di luar preset lagu.
           </p>
 
           <p>
-            PAM masih terus dikembangin sedikit-sedikit, dikerjain sendirian di sela-sela waktu luang. Kalau nemu bug atau ada
-            ide fitur, kasih tau aja lewat kreator yang terdaftar atau admin PAM ya.
+            PAM masih terus dikembangin, dikerjain sendirian di sela waktu luang. Kalau nemu bug atau ada ide fitur,
+            kasih tau lewat kreator terdaftar atau admin PAM.
           </p>
 
           <div style={{ marginTop: 8, paddingTop: 16, borderTop: '1px solid var(--surface-2, rgba(255,255,255,0.08))', textAlign: 'center' }}>
