@@ -7,7 +7,7 @@ export const config = {
 };
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024; // 2MB
-const ALLOWED_TYPES = ["image/png", "image/gif", "image/jpeg"];
+const ALLOWED_TYPES = ["image/png", "image/gif", "image/jpeg", "image/jpg"];
 
 const s3 = new S3Client({
   region: "auto",
