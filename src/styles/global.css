@@ -8,14 +8,14 @@
   --font-creator-caveat: 'Caveat', cursive;
   --font-creator-righteous: 'Righteous', var(--font-sans);
   --bg: #1B1B1F;
-  --surface: #1E1E1E;
-  --surface-2: #2A2A2A;
+  --surface: #211F26;
+  --surface-2: #292730;
   --violet: #7C5CFF;
   --pink: #FF3D7F;
   --lime: #D4FF3D;
   --text: #F2F1F5;
   --muted: #8A8A96;
-  --line: rgba(242, 241, 245, 0.08);
+  --line: #44464F;
 }
 
 * {
