@@ -8,7 +8,9 @@ export function BottomNav() {
   const navigate = useNavigate()
   const { isAdmin, logout } = useAuth()
 
-  const isTerbaruActive = location.pathname === '/'
+  const isTerbaruActive =
+    location.pathname === '/' ||
+    (location.pathname.startsWith('/preset/') && location.state?.source === 'terbaru')
   const isLaguActive = location.pathname.startsWith('/lagu')
   const isEfekActive = location.pathname.startsWith('/efek')
   const isKreatorActive = location.pathname.startsWith('/kreator')
