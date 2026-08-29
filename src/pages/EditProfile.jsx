@@ -1,13 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabase'
 
+const CROP_SIZE = 260 // ukuran kotak crop di layar (px)
+const OUTPUT_SIZE = 480 // ukuran akhir avatar yang di-generate (px)
+
+function clamp(val, min, max) {
+  return Math.min(Math.max(val, min), max)
+}
+
 export default function EditProfile() {
   const { user, isCreator, creatorUsername } = useAuth()
-  const MAX_AVATAR_BYTES = 2 * 1024 * 1024
-  const ALLOWED_AVATAR_TYPES = ['image/png', 'image/gif', 'image/jpeg', 'image/jpg']
-  const ALLOWED_AVATAR_EXT = /\.(png|gif|jpe?g)$/i
+  const MAX_RAW_AVATAR_BYTES = 15 * 1024 * 1024 // batas file MENTAH sebelum di-crop (hasil akhir selalu kecil, jadi ini cuma jaga2 biar ga nge-hang browser)
+  const ALLOWED_AVATAR_TYPES = ['image/png', 'image/gif', 'image/jpeg', 'image/jpg', 'image/webp']
+  const ALLOWED_AVATAR_EXT = /\.(png|gif|jpe?g|webp)$/i
   const navigate = useNavigate()
 
   const [loadingProfile, setLoadingProfile] = useState(true)
@@ -21,6 +28,19 @@ export default function EditProfile() {
 
   const [saving, setSaving] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
+
+  // --- state buat modal crop foto ---
+  const [cropSrc, setCropSrc] = useState(null)
+  const [zoom, setZoom] = useState(1)
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
+  const [naturalSize, setNaturalSize] = useState({ w: 0, h: 0 })
+  const dragRef = useRef(null)
+  const cropImgRef = useRef(null)
+
+  const baseScale = naturalSize.w && naturalSize.h ? Math.max(CROP_SIZE / naturalSize.w, CROP_SIZE / naturalSize.h) : 1
+  const displayScale = baseScale * zoom
+  const displayedW = naturalSize.w * displayScale
+  const displayedH = naturalSize.h * displayScale
 
   useEffect(() => {
     async function loadProfile() {
@@ -48,20 +68,103 @@ export default function EditProfile() {
   function handleAvatarPick(e) {
     const file = e.target.files?.[0]
     if (!file) return
+
     const typeOk = ALLOWED_AVATAR_TYPES.includes(file.type) || (!file.type && ALLOWED_AVATAR_EXT.test(file.name))
     if (!typeOk) {
-      setStatusMsg('❌ PP cuma boleh PNG, JPG, atau GIF.')
+      setStatusMsg('❌ PP cuma boleh PNG, JPG, WEBP, atau GIF.')
       e.target.value = ''
       return
     }
-    if (file.size > MAX_AVATAR_BYTES) {
-      setStatusMsg('❌ PP kegedean, maksimal 2MB.')
+    if (file.size > MAX_RAW_AVATAR_BYTES) {
+      setStatusMsg('❌ Foto kegedean, maksimal 15MB (sebelum di-crop).')
       e.target.value = ''
       return
     }
+
     setStatusMsg('')
-    setAvatarFile(file)
-    setAvatarPreview(URL.createObjectURL(file))
+    setCropSrc(URL.createObjectURL(file))
+    e.target.value = '' // biar bisa pilih file yang sama lagi kalo mau ulang
+  }
+
+  function handleCropImgLoad(e) {
+    const img = e.currentTarget
+    const w = img.naturalWidth
+    const h = img.naturalHeight
+    setNaturalSize({ w, h })
+    const scale = Math.max(CROP_SIZE / w, CROP_SIZE / h)
+    const dW = w * scale
+    const dH = h * scale
+    setOffset({ x: (CROP_SIZE - dW) / 2, y: (CROP_SIZE - dH) / 2 })
+    setZoom(1)
+  }
+
+  function clampOffset(x, y, dW, dH) {
+    const minX = CROP_SIZE - dW
+    const minY = CROP_SIZE - dH
+    return { x: clamp(x, minX, 0), y: clamp(y, minY, 0) }
+  }
+
+  function handlePointerDown(e) {
+    e.currentTarget.setPointerCapture(e.pointerId)
+    dragRef.current = { startX: e.clientX, startY: e.clientY, startOffset: offset }
+  }
+
+  function handlePointerMove(e) {
+    if (!dragRef.current) return
+    const dx = e.clientX - dragRef.current.startX
+    const dy = e.clientY - dragRef.current.startY
+    const next = clampOffset(
+      dragRef.current.startOffset.x + dx,
+      dragRef.current.startOffset.y + dy,
+      displayedW,
+      displayedH
+    )
+    setOffset(next)
+  }
+
+  function handlePointerUp() {
+    dragRef.current = null
+  }
+
+  function handleZoomChange(e) {
+    const newZoom = parseFloat(e.target.value)
+    const newScale = baseScale * newZoom
+    const dW = naturalSize.w * newScale
+    const dH = naturalSize.h * newScale
+    setZoom(newZoom)
+    setOffset((prev) => clampOffset(prev.x, prev.y, dW, dH))
+  }
+
+  function closeCropper() {
+    if (cropSrc) URL.revokeObjectURL(cropSrc)
+    setCropSrc(null)
+    setZoom(1)
+    setOffset({ x: 0, y: 0 })
+    setNaturalSize({ w: 0, h: 0 })
+  }
+
+  function confirmCrop() {
+    const img = cropImgRef.current
+    if (!img) return
+    const canvas = document.createElement('canvas')
+    canvas.width = OUTPUT_SIZE
+    canvas.height = OUTPUT_SIZE
+    const ctx = canvas.getContext('2d')
+    const sx = -offset.x / displayScale
+    const sy = -offset.y / displayScale
+    const sSize = CROP_SIZE / displayScale
+    ctx.drawImage(img, sx, sy, sSize, sSize, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE)
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) return
+        const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' })
+        setAvatarFile(file)
+        setAvatarPreview(URL.createObjectURL(blob))
+        closeCropper()
+      },
+      'image/jpeg',
+      0.9
+    )
   }
 
   const handleSave = async (e) => {
@@ -101,7 +204,7 @@ export default function EditProfile() {
       } else {
         updates.username = nameInput.trim()
       }
-      
+
       const { error } = await supabase.from('profiles').update(updates).eq('id', user.id)
       if (error) throw error
 
@@ -149,33 +252,31 @@ export default function EditProfile() {
         </div>
 
         <form onSubmit={handleSave} style={{ padding: '0 14px 14px' }}>
-          {(
-            <div className="form-field">
-              <label>Foto Profil</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                {currentPhoto ? (
-                  <img
-                    src={currentPhoto}
-                    alt="Preview avatar"
-                    style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
-                  />
-                ) : (
-                  <div className="avatar" style={{ width: 64, height: 64, flexShrink: 0 }}>
-                    {(nameInput || '?').charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <label className="upload-box" style={{ flex: 1, cursor: 'pointer', margin: 0 }}>
-                  {avatarFile ? `✅ ${avatarFile.name}` : '⬆ Ganti Foto'}
-                  <input
-                    type="file"
-                    accept="image/png,image/gif,image/jpeg"
-                    style={{ display: 'none' }}
-                    onChange={handleAvatarPick}
-                  />
-                </label>
-              </div>
+          <div className="form-field">
+            <label>Foto Profil</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              {currentPhoto ? (
+                <img
+                  src={currentPhoto}
+                  alt="Preview avatar"
+                  style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                />
+              ) : (
+                <div className="avatar" style={{ width: 64, height: 64, flexShrink: 0 }}>
+                  {(nameInput || '?').charAt(0).toUpperCase()}
+                </div>
+              )}
+              <label className="upload-box" style={{ flex: 1, cursor: 'pointer', margin: 0 }}>
+                {avatarFile ? `✅ ${avatarFile.name}` : '⬆ Ganti Foto'}
+                <input
+                  type="file"
+                  accept="image/png,image/gif,image/jpeg,image/webp"
+                  style={{ display: 'none' }}
+                  onChange={handleAvatarPick}
+                />
+              </label>
             </div>
-          )}
+          </div>
 
           <div className="form-field">
             <label>{isCreator ? 'Nama Kreator' : 'Nama Tampilan'}</label>
@@ -244,6 +345,79 @@ export default function EditProfile() {
           </button>
         </form>
       </div>
+
+      {cropSrc && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.88)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: 20,
+            gap: 18,
+          }}
+        >
+          <p style={{ fontSize: 13, color: 'var(--muted)', margin: 0 }}>Geser buat posisi, slider buat zoom</p>
+
+          <div
+            style={{
+              width: CROP_SIZE,
+              height: CROP_SIZE,
+              borderRadius: '50%',
+              overflow: 'hidden',
+              position: 'relative',
+              touchAction: 'none',
+              background: '#000',
+              cursor: 'grab',
+            }}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+          >
+            <img
+              ref={cropImgRef}
+              src={cropSrc}
+              alt=""
+              onLoad={handleCropImgLoad}
+              draggable={false}
+              style={{
+                position: 'absolute',
+                left: offset.x,
+                top: offset.y,
+                width: displayedW || 'auto',
+                height: displayedH || 'auto',
+                maxWidth: 'none',
+                userSelect: 'none',
+                pointerEvents: 'none',
+              }}
+            />
+          </div>
+
+          <input
+            type="range"
+            min="1"
+            max="3"
+            step="0.01"
+            value={zoom}
+            onChange={handleZoomChange}
+            style={{ width: CROP_SIZE }}
+          />
+
+          <div style={{ display: 'flex', gap: 10, width: CROP_SIZE }}>
+            <button type="button" className="back-btn ghost-static" style={{ flex: 1, justifyContent: 'center' }} onClick={closeCropper}>
+              Batal
+            </button>
+            <button type="button" className="save-btn" style={{ flex: 1 }} onClick={confirmCrop}>
+              Pakai Foto Ini
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
