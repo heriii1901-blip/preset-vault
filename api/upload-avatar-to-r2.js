@@ -7,7 +7,7 @@ export const config = {
 };
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024; // 2MB
-const ALLOWED_TYPES = ["image/png", "image/gif"];
+const ALLOWED_TYPES = ["image/png", "image/gif", "image/jpeg"];
 
 const s3 = new S3Client({
   region: "auto",
@@ -42,9 +42,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Missing x-file-name header" });
     }
     if (!ALLOWED_TYPES.includes(fileType)) {
-      return res.status(400).json({ error: "Format PP cuma boleh PNG atau GIF" });
+      return res.status(400).json({ error: "Format PP cuma boleh PNG, JPG, atau GIF" });
     }
-
     const key = `avatars/${Date.now()}-${fileName}`;
 
     await s3.send(
