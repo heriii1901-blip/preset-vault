@@ -210,7 +210,7 @@ export default function Profile() {
     return (
       <div className="preset-grid" style={{ flex: 'none' }}>
         {list.map((preset, i) => (
-          <div key={preset.id} style={{ position: 'relative' }}>
+          <div key={preset.id} style={{ position: 'relative', minWidth: 0, overflow: 'hidden' }}>
             <PresetVideoCell
               preset={preset}
               index={i}
