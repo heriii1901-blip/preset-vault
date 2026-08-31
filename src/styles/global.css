@@ -1073,6 +1073,7 @@ select.finput-real { cursor: pointer; }
   padding: 12px 4px 14px;
   cursor: pointer;
   transition: color .2s ease, background-color .2s ease, transform .12s ease;
+  min-height: 44px;
 }
 .profile-tab.is-active { color: var(--text); font-weight: 800; }
 .profile-tab:active { transform: scale(0.96); background: rgba(255, 255, 255, 0.05); }
