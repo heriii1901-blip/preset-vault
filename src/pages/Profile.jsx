@@ -38,14 +38,14 @@ export default function Profile() {
   const isApk = isRunningAsApk()
   const activeVideoRef = useRef(null)
   
-  const ownCacheKey = isCreator && creatorUsername ? `own-presets:${creatorUsername}` : null
+  const ownCacheKey = user?.id ? `own-presets:${user.id}` : null
   const cachedOwn = ownCacheKey ? getCache(ownCacheKey) : null
   const [ownPresets, setOwnPresets] = useState(cachedOwn?.data || [])
   const [loadingOwn, setLoadingOwn] = useState(false)
 
   // Efek yang diupload sendiri (admin/kreator doang)
-  const uploaderKey = creatorUsername || (isAdmin ? 'admin' : null)
-  const canUploadEfek = isAdmin || isCreator
+  const uploaderKey = user?.id || null
+  const canUploadEfek = true
   const ownEfekCacheKey = uploaderKey ? `own-efek:${uploaderKey}` : null
   const cachedOwnEfek = ownEfekCacheKey ? getCache(ownEfekCacheKey) : null
   const [ownEffects, setOwnEffects] = useState(cachedOwnEfek?.data || [])
@@ -55,10 +55,10 @@ export default function Profile() {
   // siap kalo nanti Favorit Efek juga ditambahin buat user biasa.
   // Postingan cuma buat kreator (yang punya preset sendiri).
   const tabKeys = [
-    ...(isCreator ? ['postingan'] : []),
-    'favorit',
-    ...(canUploadEfek ? ['efek'] : []),
-  ]
+  'postingan',
+  'favorit',
+  'efek',
+]
   const tabCount = tabKeys.length
   const { activeIndex: activeTab, progress: tabProgress, trackStyle, scrollerRef, goTo: goToTabRaw, touchHandlers } = useSwipePages(tabCount)
   const { containerRef: tabsRef, tabRefs, indicatorStyle, getTabColor } = useTabIndicator(tabProgress, tabCount)
