@@ -43,13 +43,9 @@ export default function Profile() {
   const [ownPresets, setOwnPresets] = useState(cachedOwn?.data || [])
   const [loadingOwn, setLoadingOwn] = useState(false)
 
-  // Efek yang diupload sendiri (admin/kreator doang)
-  const uploaderKey = user?.id || null
-  const canUploadEfek = true
-  const ownEfekCacheKey = uploaderKey ? `own-efek:${uploaderKey}` : null
-  const cachedOwnEfek = ownEfekCacheKey ? getCache(ownEfekCacheKey) : null
-  const [ownEffects, setOwnEffects] = useState(cachedOwnEfek?.data || [])
-  const [loadingOwnEfek, setLoadingOwnEfek] = useState(false)
+    // Efek yang di-love (sama kayak sistem Favorit preset)
+  const [favoriteEffects, setFavoriteEffects] = useState([])
+  const [loadingFavEfek, setLoadingFavEfek] = useState(true)
 
   // Tab bar dipake semua akun (bukan cuma kreator) biar konsisten, dan biar
   // siap kalo nanti Favorit Efek juga ditambahin buat user biasa.
@@ -159,30 +155,51 @@ export default function Profile() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCreator, creatorUsername])
 
-  // Load efek yang di-upload sendiri (khusus admin/kreator)
+  // Load Efek yang di-love (favorit), query 2 tahap (gak pake embed ':'
+  // soalnya kolom effect_id di tabel favorites belum ada FK ke effects)
   useEffect(() => {
-    if (!canUploadEfek || !uploaderKey) return
-    if (getCache(`own-efek:${uploaderKey}`)) return
-    async function loadOwnEffects() {
-      setLoadingOwnEfek(true)
+    async function loadFavoriteEffects() {
+      if (!user) return
+      setLoadingFavEfek(true)
       try {
-        const { data, error } = await supabase
-          .from('effects')
-          .select('*')
-          .eq('uploaded_by', uploaderKey)
+        const { data: favRows, error: favError } = await supabase
+          .from('favorites')
+          .select('effect_id, created_at')
+          .eq('user_id', user.id)
+          .not('effect_id', 'is', null)
           .order('created_at', { ascending: false })
-        if (error) throw error
-        setOwnEffects(data || [])
-        setCache(`own-efek:${uploaderKey}`, data || [])
+
+        if (favError) throw favError
+
+        const effectIds = (favRows || []).map((f) => f.effect_id)
+
+        if (effectIds.length === 0) {
+          setFavoriteEffects([])
+          return
+        }
+
+        const { data: effectsData, error: effectsError } = await supabase
+          .from('effects')
+          .select('id, title, preview_video_url, cover_url')
+          .in('id', effectIds)
+
+        if (effectsError) throw effectsError
+
+        const effectsById = new Map((effectsData || []).map((e) => [e.id, e]))
+        const orderedEffects = effectIds
+          .map((id) => effectsById.get(id))
+          .filter((e) => e !== undefined)
+
+        setFavoriteEffects(orderedEffects)
       } catch (err) {
-        console.error('Gagal ambil efek kamu:', err)
+        console.error('Gagal ambil efek favorit:', err)
       } finally {
-        setLoadingOwnEfek(false)
+        setLoadingFavEfek(false)
       }
     }
-    loadOwnEffects()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canUploadEfek, uploaderKey])
+
+    loadFavoriteEffects()
+  }, [user])
 
   const handleLogout = async () => {
     await logout()
@@ -326,13 +343,15 @@ export default function Profile() {
 
                 {key === 'efek' && (
                   <>
-                    {loadingOwnEfek && <div className="empty-state">Memuat...</div>}
-                    {!loadingOwnEfek && ownEffects.length === 0 && (
-                      <div className="empty-state">Kamu belum upload efek apapun.</div>
+                    {loadingFavEfek && <div className="empty-state">Memuat...</div>}
+                    {!loadingFavEfek && favoriteEffects.length === 0 && (
+                      <div className="empty-state">
+                        Belum ada efek yang di-favoritin. Pencet ikon ♡ di halaman efek buat nyimpen.
+                      </div>
                     )}
-                    {!loadingOwnEfek && ownEffects.length > 0 && (
+                    {!loadingFavEfek && favoriteEffects.length > 0 && (
                       <div className="preset-grid" style={{ flex: 'none' }}>
-                        {ownEffects.map((effect) => (
+                        {favoriteEffects.map((effect) => (
                           <div
                             key={effect.id}
                             className="grid-cell"
