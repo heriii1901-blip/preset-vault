@@ -2466,6 +2466,32 @@ select.finput-real { cursor: pointer; }
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
+.terbaru-grid-fade {
+  grid-column: 1 / -1;
+  position: sticky;
+  top: 0;
+  height: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.terbaru-grid-fade::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  background: linear-gradient(
+    to bottom,
+    var(--bg) 0%,
+    color-mix(in srgb, var(--bg) 55%, transparent) 55%,
+    transparent 100%
+  );
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
 .terbaru-search-bar input {
   flex: 1;
   background: transparent;
