@@ -6,7 +6,13 @@ import PresetVideoCell from '../components/PresetVideoCell'
 import { resolveTiktokVideoId } from '../utils/tiktokLink'
 
 const CACHE_KEY = 'terbaru'
-const COLLAPSE_DISTANCE = 120 // px scroll sampe banner+search bar collapse penuh
+const SEARCH_COLLAPSE_DISTANCE = 70 // px scroll sampe search bar ilang penuh
+const BANNER_COVER_DISTANCE = 170 // px scroll sampe banner ketutup penuh
+const LERP_FACTOR = 0.18 // smoothing, makin kecil makin "lembek"/gak kaku
+
+function easeOutCubic(x) {
+  return 1 - Math.pow(1 - x, 3)
+}
 
 export default function Terbaru() {
   const navigate = useNavigate()
@@ -15,9 +21,14 @@ export default function Terbaru() {
   const [presets, setPresets] = useState(cached?.data || [])
   const [loading, setLoading] = useState(!cached)
   const activeVideoRef = useRef(null)
-  const collapseRef = useRef(null)
-  const collapseMaxHeightRef = useRef(0)
-  const rafRef = useRef(null)
+
+  const bannerRef = useRef(null)
+  const searchRef = useRef(null)
+  const coverRef = useRef(null)
+  const scrollTargetRef = useRef(0)
+  const searchCurrentRef = useRef(0)
+  const coverCurrentRef = useRef(0)
+  const animFrameRef = useRef(null)
 
   const [linkQuery, setLinkQuery] = useState('')
   const [searching, setSearching] = useState(false)
@@ -48,9 +59,10 @@ export default function Terbaru() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Bersihin rAF loop pas komponen unmount biar gak nyangkut jalan di background.
   useEffect(() => {
-    if (collapseRef.current) {
-      collapseMaxHeightRef.current = collapseRef.current.offsetHeight
+    return () => {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
     }
   }, [])
 
@@ -81,24 +93,58 @@ export default function Terbaru() {
     if (activeVideoRef.current === video) activeVideoRef.current = null
   }
 
-  // Banner + search bar collapse ngikutin scroll grid di bawahnya.
-  // Ditulis langsung ke DOM lewat ref (bukan setState) biar gak trigger
-  // re-render tiap tick scroll - dibungkus requestAnimationFrame biar smooth.
-  function handleGridScroll(e) {
-    if (rafRef.current) return
-    const scrollTop = e.currentTarget.scrollTop
-    rafRef.current = requestAnimationFrame(() => {
-      rafRef.current = null
-      const el = collapseRef.current
-      if (!el) return
-      const maxHeight = collapseMaxHeightRef.current || 1
-      const ratio = Math.min(scrollTop / COLLAPSE_DISTANCE, 1)
-      el.style.height = `${maxHeight * (1 - ratio)}px`
-      el.style.opacity = `${1 - ratio}`
-    })
+  // Loop animasi: tiap frame, nilai "current" dikejar pelan-pelan ke nilai "target"
+  // (lerp) - bukan langsung nempel ke posisi scroll mentah. Ini yang bikin transisi
+  // kerasa mulus/ada inertia, bukan patah-patah kayak sebelumnya.
+  // Banner sendiri gak di-resize sama sekali, cuma ketutup panel transparan (transform
+  // scaleY) + fade tipis. Search bar yang ngecil + fade lewat transform & opacity,
+  // bukan height, jadi gak ada reflow tiap frame (GPU-composited, ringan).
+  function tick() {
+    const scrollTop = scrollTargetRef.current
+    const searchTarget = easeOutCubic(Math.min(scrollTop / SEARCH_COLLAPSE_DISTANCE, 1))
+    const coverTarget = easeOutCubic(Math.min(scrollTop / BANNER_COVER_DISTANCE, 1))
+
+    searchCurrentRef.current += (searchTarget - searchCurrentRef.current) * LERP_FACTOR
+    coverCurrentRef.current += (coverTarget - coverCurrentRef.current) * LERP_FACTOR
+
+    const sVal = searchCurrentRef.current
+    const cVal = coverCurrentRef.current
+
+    const sEl = searchRef.current
+    if (sEl) {
+      sEl.style.transform = `scale(${1 - sVal * 0.3}) translateY(${-sVal * 12}px)`
+      sEl.style.opacity = `${1 - sVal}`
+      sEl.style.pointerEvents = sVal > 0.85 ? 'none' : 'auto'
+    }
+
+    const cEl = coverRef.current
+    if (cEl) {
+      cEl.style.transform = `scaleY(${cVal})`
+    }
+
+    const bEl = bannerRef.current
+    if (bEl) {
+      bEl.style.opacity = `${1 - cVal * 0.4}`
+    }
+
+    const stillMoving =
+      Math.abs(searchTarget - sVal) > 0.001 || Math.abs(coverTarget - cVal) > 0.001
+
+    if (stillMoving) {
+      animFrameRef.current = requestAnimationFrame(tick)
+    } else {
+      animFrameRef.current = null
+    }
   }
 
-     async function handleSearchByLink() {
+  function handleGridScroll(e) {
+    scrollTargetRef.current = e.currentTarget.scrollTop
+    if (!animFrameRef.current) {
+      animFrameRef.current = requestAnimationFrame(tick)
+    }
+  }
+
+  async function handleSearchByLink() {
     const raw = linkQuery.trim()
     if (!raw) {
       setSearchStatus({ type: 'error', text: 'Tempel link TikTok dulu ya.' })
@@ -137,8 +183,8 @@ export default function Terbaru() {
   return (
     <div className="screen">
       <div className="grid-page">
-        <div className="terbaru-collapse" ref={collapseRef}>
-          <div className="terbaru-banner">
+        <div className="terbaru-collapse">
+          <div className="terbaru-banner" ref={bannerRef}>
             <img
               src="/terbaru-banner.jpg"
               alt=""
@@ -148,7 +194,8 @@ export default function Terbaru() {
             <div className="terbaru-banner-gradient" />
             <h3 className="terbaru-banner-title">Terbaru</h3>
           </div>
-          <div className="terbaru-search-wrap">
+          <div className="terbaru-cover" ref={coverRef} />
+          <div className="terbaru-search-wrap" ref={searchRef}>
             <div className="terbaru-search-bar">
               <input
                 type="text"
