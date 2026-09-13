@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
+import { resolveTiktokVideoId } from '../utils/tiktokLink'
 
 export default function AdminManagePresets() {
   const navigate = useNavigate()
@@ -9,7 +10,9 @@ export default function AdminManagePresets() {
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState(null)
   const [selectedSong, setSelectedSong] = useState(null) // null = lagi liat list lagu
-
+  const [backfilling, setBackfilling] = useState(false)
+  const [backfillStatus, setBackfillStatus] = useState('')
+  
   useEffect(() => {
     loadData()
   }, [])
@@ -31,6 +34,41 @@ export default function AdminManagePresets() {
     } finally {
       setLoading(false)
     }
+  }
+
+    async function handleBackfillTiktokIds() {
+    const targets = presets.filter((p) => p.tiktok_link && !p.tiktok_video_id)
+    if (targets.length === 0) {
+      setBackfillStatus('Semua preset udah punya ID TikTok.')
+      return
+    }
+    setBackfilling(true)
+    let done = 0
+    let failed = 0
+    for (const preset of targets) {
+      setBackfillStatus(`Proses ${done + failed + 1}/${targets.length}...`)
+      try {
+        const videoId = await resolveTiktokVideoId(preset.tiktok_link)
+        if (videoId) {
+          const { error } = await supabase
+            .from('presets')
+            .update({ tiktok_video_id: videoId })
+            .eq('id', preset.id)
+          if (error) throw error
+          setPresets((prev) =>
+            prev.map((p) => (p.id === preset.id ? { ...p, tiktok_video_id: videoId } : p))
+          )
+          done += 1
+        } else {
+          failed += 1
+        }
+      } catch (err) {
+        console.error('Gagal backfill tiktok_video_id buat preset', preset.id, err)
+        failed += 1
+      }
+    }
+    setBackfilling(false)
+    setBackfillStatus(`Selesai. Berhasil: ${done}, gagal: ${failed}.`)
   }
 
   async function handleDelete(preset) {
@@ -94,13 +132,30 @@ export default function AdminManagePresets() {
           ← Balik
         </button>
 
-        <div className="admin-header">
+                <div className="admin-header">
           <span className="admin-tag">PANEL ADMIN</span>
           <h2>{selectedSong ? selectedSong.name : 'Kelola Preset'}</h2>
         </div>
 
-        {loading && <div className="empty-state">Memuat...</div>}
+        {!loading && !selectedSong && (
+          <div style={{ marginBottom: 16 }}>
+            <button
+              type="button"
+              className="back-btn ghost-static"
+              style={{ width: 'fit-content' }}
+              onClick={handleBackfillTiktokIds}
+              disabled={backfilling}
+            >
+              {backfilling ? 'Lagi proses...' : 'Benerin ID TikTok preset lama'}
+            </button>
+            {backfillStatus && (
+              <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>{backfillStatus}</p>
+            )}
+          </div>
+        )}
 
+        {loading && <div className="empty-state">Memuat...</div>}
+        
         {/* LEVEL 1: LIST LAGU */}
         {!loading && !selectedSong && (
           songs.length === 0 ? (
