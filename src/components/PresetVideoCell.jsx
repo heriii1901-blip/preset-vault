@@ -51,6 +51,7 @@ export default function PresetVideoCell({
   onHoverEnd,
   showOverlay = true,
   className = 'grid-cell',
+  overlayLabel,
 }) {
   const cellRef = useRef(null)
   const seekRetryRef = useRef(0)
@@ -173,7 +174,9 @@ export default function PresetVideoCell({
         }
         return <div className="grid-fallback">🎬</div>
       })()}
-      {showOverlay && <div className="grid-cell-overlay">@{preset.creator_username}</div>}
+      {showOverlay && (
+        <div className="grid-cell-overlay">{overlayLabel ?? `@${preset.creator_username}`}</div>
+      )}
     </div>
   )
 }
