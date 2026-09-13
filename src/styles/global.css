@@ -2423,7 +2423,6 @@ select.finput-real { cursor: pointer; }
   width: 100%;
   aspect-ratio: 16 / 9;
   background: var(--surface-2);
-  overflow: hidden;
   will-change: opacity;
 }
 
@@ -2498,9 +2497,9 @@ select.finput-real { cursor: pointer; }
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;
-  height: 55%;
-  background: linear-gradient(to bottom, transparent 0%, var(--bg) 100%);
+  bottom: -60px;
+  height: calc(55% + 60px);
+  background: linear-gradient(to bottom, transparent 0%, var(--bg) 65%, var(--bg) 100%);
   pointer-events: none;
 }
 
