@@ -239,8 +239,9 @@ export default function Terbaru() {
           <div className="empty-state" style={{ padding: 30 }}>Belum ada preset terbaru.</div>
         )}
 
-        {!loading && presets.length > 0 && (
+       {!loading && presets.length > 0 && (
           <div className="preset-grid" onScroll={handleGridScroll}>
+            <div className="terbaru-grid-fade" />
             {presets.map((preset, i) => (
               <PresetVideoCell
                 key={preset.id}
