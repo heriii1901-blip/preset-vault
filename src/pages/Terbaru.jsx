@@ -6,9 +6,9 @@ import PresetVideoCell from '../components/PresetVideoCell'
 import { resolveTiktokVideoId } from '../utils/tiktokLink'
 
 const CACHE_KEY = 'terbaru'
-const SEARCH_COLLAPSE_DISTANCE = 70 // px scroll sampe search bar ilang penuh
-const BANNER_COVER_DISTANCE = 170 // px scroll sampe banner ketutup penuh
-const LERP_FACTOR = 0.18 // smoothing, makin kecil makin "lembek"/gak kaku
+const SEARCH_COLLAPSE_DISTANCE = 70
+const BANNER_COVER_DISTANCE = 170
+const LERP_FACTOR = 0.18
 
 function easeOutCubic(x) {
   return 1 - Math.pow(1 - x, 3)
@@ -34,8 +34,6 @@ export default function Terbaru() {
   const [searching, setSearching] = useState(false)
   const [searchStatus, setSearchStatus] = useState(null)
 
-  // Query ini cuma jalan sekali pas mount (deps kosong), limit 20 tetep dipertahanin,
-  // gak ada resiko query berulang/loop.
   useEffect(() => {
     async function loadLatestPresets() {
       if (!getCache(CACHE_KEY)) setLoading(true)
@@ -59,7 +57,6 @@ export default function Terbaru() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Bersihin rAF loop pas komponen unmount biar gak nyangkut jalan di background.
   useEffect(() => {
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
@@ -93,12 +90,6 @@ export default function Terbaru() {
     if (activeVideoRef.current === video) activeVideoRef.current = null
   }
 
-  // Loop animasi: tiap frame, nilai "current" dikejar pelan-pelan ke nilai "target"
-  // (lerp) - bukan langsung nempel ke posisi scroll mentah. Ini yang bikin transisi
-  // kerasa mulus/ada inertia, bukan patah-patah kayak sebelumnya.
-  // Banner sendiri gak di-resize sama sekali, cuma ketutup panel transparan (transform
-  // scaleY) + fade tipis. Search bar yang ngecil + fade lewat transform & opacity,
-  // bukan height, jadi gak ada reflow tiap frame (GPU-composited, ringan).
   function tick() {
     const scrollTop = scrollTargetRef.current
     const searchTarget = easeOutCubic(Math.min(scrollTop / SEARCH_COLLAPSE_DISTANCE, 1))
@@ -239,9 +230,8 @@ export default function Terbaru() {
           <div className="empty-state" style={{ padding: 30 }}>Belum ada preset terbaru.</div>
         )}
 
-       {!loading && presets.length > 0 && (
+        {!loading && presets.length > 0 && (
           <div className="preset-grid" onScroll={handleGridScroll}>
-            <div className="terbaru-grid-fade" />
             {presets.map((preset, i) => (
               <PresetVideoCell
                 key={preset.id}
