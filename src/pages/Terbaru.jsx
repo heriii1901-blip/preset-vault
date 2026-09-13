@@ -97,6 +97,27 @@ export default function Terbaru() {
     })
   }
 
+    async function resolveVideoId(rawLink) {
+    // Coba cocokin langsung dulu (link panjang udah ada ID-nya di teks)
+    const localMatch = rawLink.match(/(\d{15,20})/)
+    if (localMatch) return localMatch[1]
+
+    // Kalo gak ketemu, kemungkinan ini short link (vt.tiktok.com/xxx) -
+    // minta server buat "ngebuka" redirect-nya biar dapet URL panjang asli
+    try {
+      const res = await fetch('/api/resolve-tiktok-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: rawLink }),
+      })
+      if (!res.ok) return null
+      const data = await res.json()
+      return data.videoId || null
+    } catch {
+      return null
+    }
+  }
+
   async function handleSearchByLink() {
     const raw = linkQuery.trim()
     if (!raw) {
@@ -106,10 +127,12 @@ export default function Terbaru() {
     setSearching(true)
     setSearchStatus({ type: 'loading', text: 'Nyari preset dari link...' })
     try {
-      // Ambil ID video panjang dari link kalo ada, biar toleran ke variasi
-      // link (share link, query param, dll) - bukan cuma exact match string.
-      const idMatch = raw.match(/(\d{15,20})/)
-      const term = idMatch ? idMatch[1] : raw
+      const term = await resolveVideoId(raw)
+      if (!term) {
+        setSearchStatus({ type: 'empty', text: 'Link gak valid atau gak bisa dibuka.' })
+        setSearching(false)
+        return
+      }
       const { data, error } = await supabase
         .from('presets')
         .select('id')
