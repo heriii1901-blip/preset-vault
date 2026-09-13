@@ -14,6 +14,7 @@ import Profile from './pages/Profile'
 import SongPresets from './pages/SongPresets'
 import Terbaru from './pages/Terbaru'
 import EfekGrid from './pages/EfekGrid'
+import EfekKategori from './pages/EfekKategori'
 import EfekFeed from './pages/EfekFeed'
 import EfekTambah from './pages/EfekTambah'
 import DownloadEfek from './pages/DownloadEfek'
@@ -145,6 +146,14 @@ export default function App() {
                   element={
                     <ProtectedRoute>
                       <EfekGrid />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/efek/kategori/:category"
+                  element={
+                    <ProtectedRoute>
+                      <EfekKategori />
                     </ProtectedRoute>
                   }
                 />
