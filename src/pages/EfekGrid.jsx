@@ -6,6 +6,8 @@ import { useAuth } from '../context/AuthContext'
 
 const CACHE_KEY = 'efek-grid'
 
+const CATEGORY_ORDER = ['overlay', 'glitch', 'cc', 'jj', 'transisi', 'lainnya']
+
 const CATEGORY_LABEL = {
   overlay: 'Overlay',
   glitch: 'Glitch',
@@ -20,28 +22,45 @@ export default function EfekGrid() {
   const { isAdmin } = useAuth()
   const { getCache, setCache } = usePresetCache()
   const cached = getCache(CACHE_KEY)
-  const [effects, setEffects] = useState(cached?.data || [])
+  const [categories, setCategories] = useState(cached?.data || [])
   const [loading, setLoading] = useState(!cached)
 
   useEffect(() => {
-    async function loadEffects() {
+    async function loadCategories() {
       if (!getCache(CACHE_KEY)) setLoading(true)
       try {
         const { data, error } = await supabase
           .from('effects')
-          .select('*')
+          .select('category, cover_url')
           .eq('link_pending', false)
-          .order('created_at', { ascending: false })
         if (error) throw error
-        setEffects(data || [])
-        setCache(CACHE_KEY, data || [])
+
+        const grouped = {}
+        ;(data || []).forEach((effect) => {
+          const key = effect.category || 'lainnya'
+          if (!grouped[key]) grouped[key] = { count: 0, cover_url: null }
+          grouped[key].count += 1
+          if (!grouped[key].cover_url && effect.cover_url) {
+            grouped[key].cover_url = effect.cover_url
+          }
+        })
+
+        const list = CATEGORY_ORDER.filter((key) => grouped[key]).map((key) => ({
+          key,
+          label: CATEGORY_LABEL[key] || key,
+          count: grouped[key].count,
+          cover_url: grouped[key].cover_url,
+        }))
+
+        setCategories(list)
+        setCache(CACHE_KEY, list)
       } catch (err) {
-        console.error('Gagal ambil daftar efek:', err)
+        console.error('Gagal ambil kategori efek:', err)
       } finally {
         setLoading(false)
       }
     }
-    loadEffects()
+    loadCategories()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -56,22 +75,22 @@ export default function EfekGrid() {
         <div className="song-list">
           {loading && <div className="empty-state">Memuat...</div>}
 
-          {!loading && effects.length === 0 && (
+          {!loading && categories.length === 0 && (
             <div className="empty-state">Belum ada efek yang di tambahkan</div>
           )}
 
-          {effects.map((effect) => (
+          {categories.map((cat) => (
             <div
               className="song-row"
-              key={effect.id}
-              onClick={() => navigate(`/efek/${effect.id}`)}
+              key={cat.key}
+              onClick={() => navigate(`/efek/kategori/${cat.key}`)}
             >
               <div className="song-thumb">
-                {effect.cover_url ? <img src={effect.cover_url} alt="" draggable={false} /> : '✨'}
+                {cat.cover_url ? <img src={cat.cover_url} alt="" draggable={false} /> : '✨'}
               </div>
               <div className="song-text">
-                <h4>{effect.title}</h4>
-                <div className="song-meta-row">{CATEGORY_LABEL[effect.category] || effect.category}</div>
+                <h4>{cat.label}</h4>
+                <div className="song-meta-row">{cat.count} efek</div>
               </div>
             </div>
           ))}
