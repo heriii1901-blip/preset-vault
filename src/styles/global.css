@@ -2423,6 +2423,7 @@ select.finput-real { cursor: pointer; }
   width: 100%;
   aspect-ratio: 16 / 9;
   background: var(--surface-2);
+  overflow: hidden;
   will-change: opacity;
 }
 
@@ -2442,7 +2443,20 @@ select.finput-real { cursor: pointer; }
   will-change: transform, opacity;
 }
 
+.terbaru-search-glow {
+  position: absolute;
+  left: -12px;
+  right: -12px;
+  top: -36px;
+  bottom: -36px;
+  background: radial-gradient(ellipse 90% 100% at center, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.25) 45%, transparent 75%);
+  pointer-events: none;
+  z-index: 0;
+}
+
 .terbaru-search-bar {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   background: var(--surface-2);
@@ -2497,9 +2511,9 @@ select.finput-real { cursor: pointer; }
   position: absolute;
   left: 0;
   right: 0;
-  bottom: -60px;
-  height: calc(55% + 60px);
-  background: linear-gradient(to bottom, transparent 0%, var(--bg) 65%, var(--bg) 100%);
+  bottom: 0;
+  height: 55%;
+  background: linear-gradient(to bottom, transparent 0%, var(--bg) 100%);
   pointer-events: none;
 }
 
