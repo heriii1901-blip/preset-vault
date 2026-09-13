@@ -142,6 +142,8 @@ export default function Terbaru() {
               draggable={false}
               onError={(e) => { e.currentTarget.style.display = 'none' }}
             />
+            <div className="terbaru-banner-gradient" />
+            <h3 className="terbaru-banner-title">Terbaru</h3>
           </div>
           <div className="terbaru-search-wrap">
             <div className="terbaru-search-bar">
@@ -175,12 +177,6 @@ export default function Terbaru() {
                 {searchStatus.text}
               </p>
             )}
-          </div>
-        </div>
-
-        <div className="grid-header">
-          <div>
-            <h3 className="grid-header-title-lg">Terbaru</h3>
           </div>
         </div>
 
