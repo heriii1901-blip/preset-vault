@@ -1,5 +1,6 @@
 import { createContext, useContext, useRef, useState, useCallback, useEffect, useMemo } from 'react'
 import { supabase } from '../supabase'
+import { resolveTiktokVideoId } from '../utils/tiktokLink'
 import { compressVideoIfNeeded, terminateFFmpeg } from '../utils/compressVideo'
 import { uploadToR2 } from '../utils/uploadToR2'
 import { generateCoverFromVideo } from '../utils/generateCoverFromVideo'
@@ -185,12 +186,15 @@ export function UploadQueueProvider({ children }) {
 
       if (cancelState.cancelled) return
 
-            const { error: presetErr } = await supabase.from('presets').insert({
+      const tiktokVideoId = await resolveTiktokVideoId(job.tiktokLink)
+
+      const { error: presetErr } = await supabase.from('presets').insert({
         song_id: songId,
         xml_link: job.xmlLink?.trim() || null,
         mb_link: job.mbLink,
         creator_username: job.creatorUsername,
         tiktok_link: job.tiktokLink,
+        tiktok_video_id: tiktokVideoId,
         preview_video_url: previewVideoUrl,
         cover_url: coverUrl,
         link_pending: !job.xmlLink?.trim(),
