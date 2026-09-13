@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { usePresetCache } from '../context/PresetCacheContext'
 import PresetVideoCell from '../components/PresetVideoCell'
+import { resolveTiktokVideoId } from '../utils/tiktokLink'
 
 const CACHE_KEY = 'terbaru'
 const COLLAPSE_DISTANCE = 120 // px scroll sampe banner+search bar collapse penuh
@@ -97,28 +98,7 @@ export default function Terbaru() {
     })
   }
 
-    async function resolveVideoId(rawLink) {
-    // Coba cocokin langsung dulu (link panjang udah ada ID-nya di teks)
-    const localMatch = rawLink.match(/(\d{15,20})/)
-    if (localMatch) return localMatch[1]
-
-    // Kalo gak ketemu, kemungkinan ini short link (vt.tiktok.com/xxx) -
-    // minta server buat "ngebuka" redirect-nya biar dapet URL panjang asli
-    try {
-      const res = await fetch('/api/resolve-tiktok-link', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: rawLink }),
-      })
-      if (!res.ok) return null
-      const data = await res.json()
-      return data.videoId || null
-    } catch {
-      return null
-    }
-  }
-
-  async function handleSearchByLink() {
+     async function handleSearchByLink() {
     const raw = linkQuery.trim()
     if (!raw) {
       setSearchStatus({ type: 'error', text: 'Tempel link TikTok dulu ya.' })
@@ -127,7 +107,7 @@ export default function Terbaru() {
     setSearching(true)
     setSearchStatus({ type: 'loading', text: 'Nyari preset dari link...' })
     try {
-      const term = await resolveVideoId(raw)
+      const term = await resolveTiktokVideoId(raw)
       if (!term) {
         setSearchStatus({ type: 'empty', text: 'Link gak valid atau gak bisa dibuka.' })
         setSearching(false)
@@ -136,7 +116,7 @@ export default function Terbaru() {
       const { data, error } = await supabase
         .from('presets')
         .select('id')
-        .ilike('tiktok_link', `%${term}%`)
+        .eq('tiktok_video_id', term)
         .limit(1)
         .maybeSingle()
       if (error) throw error
