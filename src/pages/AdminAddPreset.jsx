@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../supabase'
+import { resolveTiktokVideoId } from '../utils/tiktokLink'
 import { compressVideoIfNeeded } from '../utils/compressVideo'
 import { uploadToR2 } from '../utils/uploadToR2'
 import { generateCoverFromVideo } from '../utils/generateCoverFromVideo'
@@ -339,6 +340,8 @@ export default function AdminAddPreset() {
         setSaveProgress(80)
       }
 
+      const tiktokVideoId = await resolveTiktokVideoId(tiktokLink.trim())
+
       if (isEditMode) {
         setSaveStage('Update preset...')
         const { error: updateErr } = await supabase
@@ -349,13 +352,14 @@ export default function AdminAddPreset() {
             mb_link: mbLink.trim(),
             creator_username: creatorUsername.trim(),
             tiktok_link: tiktokLink.trim(),
+            tiktok_video_id: tiktokVideoId,
             preview_video_url: previewVideoUrl,
             link_pending: !xmlLink.trim(),
             ...(coverUrl ? { cover_url: coverUrl } : {}),
           })
           .eq('id', presetId)
         if (updateErr) throw updateErr
-
+        
         // Kalau lagu-nya diganti, betulin preset_count lagu lama & lagu baru
         if (originalSongIdRef.current && originalSongIdRef.current !== songId) {
           const { data: oldSongRow } = await supabase
@@ -394,10 +398,12 @@ export default function AdminAddPreset() {
           mb_link: mbLink.trim(),
           creator_username: creatorUsername.trim(),
           tiktok_link: tiktokLink.trim(),
+          tiktok_video_id: tiktokVideoId,
           preview_video_url: previewVideoUrl,
           cover_url: coverUrl,
           link_pending: !xmlLink.trim(),
         })
+        
         if (presetErr) throw presetErr
         setSaveProgress(92)
 
