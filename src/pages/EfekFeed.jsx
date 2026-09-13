@@ -507,7 +507,7 @@ export default function EfekFeed() {
               <span>{linkModal.label}</span>
               <button type="button" className="link-modal-close" onClick={closeLinkModal}>×</button>
             </div>
-            <div className={linkModal.label === 'Link XML' ? 'link-modal-input
+            <div className={linkModal.label === 'Link XML' ? 'link-modal-input link-modal-textarea' : 'link-modal-input'}>
               {linkModal.link}
             </div>
             <button type="button" className="link-modal-copy-btn" onClick={handleCopy}>
