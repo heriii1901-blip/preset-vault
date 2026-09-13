@@ -196,6 +196,7 @@ export default function Terbaru() {
           </div>
           <div className="terbaru-cover" ref={coverRef} />
           <div className="terbaru-search-wrap" ref={searchRef}>
+            <div className="terbaru-search-glow" />
             <div className="terbaru-search-bar">
               <input
                 type="text"
