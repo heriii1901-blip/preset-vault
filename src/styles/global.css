@@ -2404,9 +2404,19 @@ select.finput-real { cursor: pointer; }
 }
 
 .terbaru-collapse {
-  overflow: hidden;
+  position: relative;
   flex-shrink: 0;
-  transition: opacity 0.1s linear;
+}
+
+.terbaru-cover {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--bg);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  pointer-events: none;
+  will-change: transform;
 }
 
 .terbaru-banner {
@@ -2414,6 +2424,7 @@ select.finput-real { cursor: pointer; }
   aspect-ratio: 16 / 9;
   background: var(--surface-2);
   overflow: hidden;
+  will-change: opacity;
 }
 
 .terbaru-banner img {
@@ -2427,7 +2438,9 @@ select.finput-real { cursor: pointer; }
   padding: 0 16px;
   margin-top: -22px;
   position: relative;
-  z-index: 1;
+  z-index: 2;
+  transform-origin: top center;
+  will-change: transform, opacity;
 }
 
 .terbaru-search-bar {
