@@ -60,6 +60,9 @@ export default async function handler(req, res) {
     return res.status(200).json({ url: publicUrl });
   } catch (err) {
     console.error("Avatar upload error:", err);
-    return res.status(500).json({ error: "Upload PP gagal", detail: err.message });
+    return res.status(500).json({
+      error: "Upload PP gagal",
+      detail: `${err.name || 'Error'}: ${err.message} (code: ${err.Code || err.code || '-'})`,
+    });
   }
 }
