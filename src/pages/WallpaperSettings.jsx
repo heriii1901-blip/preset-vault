@@ -75,7 +75,8 @@ export default function WallpaperSettings() {
       })
       if (!uploadRes.ok) {
         const errData = await uploadRes.json().catch(() => ({}))
-        throw new Error(errData.error || 'Upload wallpaper gagal')
+        throw new Error(errData.detail || errData.error || `Upload gagal (status ${uploadRes.status})`)
+      }
       }
       const { url } = await uploadRes.json()
       const oldUrl = profile?.wallpaper_url || null
