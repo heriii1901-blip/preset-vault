@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
+import { useAuth } from '../context/AuthContext'
 import { usePresetCache } from '../context/PresetCacheContext'
 import PresetVideoCell from '../components/PresetVideoCell'
 import { resolveTiktokVideoId } from '../utils/tiktokLink'
@@ -16,7 +17,9 @@ function easeOutCubic(x) {
 
 export default function Terbaru() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const { getCache, setCache } = usePresetCache()
+  const [wallpaperUrl, setWallpaperUrl] = useState(null)
   const cached = getCache(CACHE_KEY)
   const [presets, setPresets] = useState(cached?.data || [])
   const [loading, setLoading] = useState(!cached)
@@ -57,11 +60,34 @@ export default function Terbaru() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+    // Bersihin rAF loop pas komponen unmount biar gak nyangkut jalan di background.
   useEffect(() => {
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
     }
   }, [])
+
+  // Ambil wallpaper custom user (kalau ada). Cuma jalan pas user berubah
+  // (login/ganti akun), sekali per sesi, gak ada resiko query berulang/loop.
+  useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
+    async function loadWallpaper() {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('wallpaper_url')
+          .eq('id', user.id)
+          .single()
+        if (error) throw error
+        if (!cancelled) setWallpaperUrl(data?.wallpaper_url || null)
+      } catch (err) {
+        console.error('Gagal ambil wallpaper:', err)
+      }
+    }
+    loadWallpaper()
+    return () => { cancelled = true }
+  }, [user?.id])
 
   function resetToCover(video) {
     if (!video) return
@@ -177,7 +203,7 @@ export default function Terbaru() {
         <div className="terbaru-collapse">
           <div className="terbaru-banner" ref={bannerRef}>
             <img
-              src="/terbaru-banner.jpg"
+              src={wallpaperUrl || '/terbaru-banner.jpg'}
               alt=""
               draggable={false}
               onError={(e) => { e.currentTarget.style.display = 'none' }}
