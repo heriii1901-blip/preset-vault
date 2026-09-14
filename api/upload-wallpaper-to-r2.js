@@ -44,8 +44,8 @@ export default async function handler(req, res) {
     if (!ALLOWED_TYPES.includes(fileType)) {
       return res.status(400).json({ error: "Format wallpaper cuma boleh PNG, JPG, atau WEBP" });
     }
-    const key = `avatars/wallpaper-${Date.now()}-${fileName}`;
-
+    const safeFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const key = `avatars/wallpaper-${Date.now()}-${safeFileName}`;
     await s3.send(
       new PutObjectCommand({
         Bucket: process.env.R2_AVATAR_BUCKET_NAME,
