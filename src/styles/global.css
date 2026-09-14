@@ -2562,3 +2562,9 @@ select.finput-real { cursor: pointer; }
     transparent 100%
   );
 }
+
+.wallpaper-preview {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
