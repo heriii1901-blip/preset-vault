@@ -28,6 +28,7 @@ import KreatorAddPreset from './pages/KreatorAddPreset'
 import AdminSongRequests from './pages/AdminSongRequests'
 import EditProfile from './pages/EditProfile'
 import TentangAplikasi from './pages/TentangAplikasi'
+import WallpaperSettings from './pages/WallpaperSettings'
 
 export default function App() {
   const location = useLocation()
@@ -105,6 +106,15 @@ export default function App() {
                   element={
                     <ProtectedRoute>
                       <TentangAplikasi />
+                    </ProtectedRoute>
+                  }
+                />
+
+                 <Route
+                  path="/ubah-wallpaper"
+                  element={
+                    <ProtectedRoute>
+                      <WallpaperSettings />
                     </ProtectedRoute>
                   }
                 />
