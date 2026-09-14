@@ -100,7 +100,7 @@ export default function WallpaperSettings() {
       setStatusMsg('✅ Wallpaper berhasil diganti!')
     } catch (err) {
       console.error('Gagal simpen wallpaper:', err)
-      setStatusMsg('❌ Gagal simpen. Cek koneksi, terus coba lagi.')
+      setStatusMsg(`❌ DEBUG: ${err.message}`)
     } finally {
       setSaving(false)
     }
