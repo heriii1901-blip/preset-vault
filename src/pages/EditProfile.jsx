@@ -190,7 +190,7 @@ export default function EditProfile() {
         })
         if (!uploadRes.ok) {
           const errData = await uploadRes.json().catch(() => ({}))
-          throw new Error(errData.error || 'Upload PP gagal')
+          throw new Error(errData.detail || errData.error || `Upload gagal (status ${uploadRes.status})`)
         }
         const uploadData = await uploadRes.json()
         avatarUrl = uploadData.url
@@ -221,7 +221,7 @@ export default function EditProfile() {
       setTimeout(() => navigate('/akun'), 700)
     } catch (err) {
       console.error('Gagal simpen profil:', err)
-      setStatusMsg('❌ Gagal simpen. Cek koneksi, terus coba lagi.')
+      setStatusMsg(`❌ DEBUG: ${err.message}`)
     } finally {
       setSaving(false)
     }
