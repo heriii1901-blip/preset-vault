@@ -2446,14 +2446,7 @@ select.finput-real { cursor: pointer; }
 }
 
 .terbaru-search-glow {
-  position: absolute;
-  left: -12px;
-  right: -12px;
-  top: -36px;
-  bottom: -36px;
-  background: radial-gradient(ellipse 90% 100% at center, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.25) 45%, transparent 75%);
-  pointer-events: none;
-  z-index: 0;
+  display: none;
 }
 
 .terbaru-search-bar {
