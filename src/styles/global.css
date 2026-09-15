@@ -1151,6 +1151,9 @@ select.finput-real { cursor: pointer; }
 }
  
 .preset-grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-auto-rows: min-content;
@@ -2400,11 +2403,20 @@ select.finput-real { cursor: pointer; }
   transition: box-shadow .2s ease;
 }
 
-.terbaru-scroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+.terbaru-collapse {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.terbaru-cover {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--bg);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  pointer-events: none;
+  will-change: transform;
 }
 
 .terbaru-banner {
@@ -2423,12 +2435,12 @@ select.finput-real { cursor: pointer; }
 }
 
 .terbaru-search-wrap {
-  padding: 0 16px 10px;
+  padding: 0 16px;
   margin-top: -35px;
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  background: var(--bg);
+  position: relative;
+  z-index: 2;
+  transform-origin: top center;
+  will-change: transform, opacity;
 }
 
 .terbaru-search-glow {
