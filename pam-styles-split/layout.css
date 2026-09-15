@@ -1,0 +1,442 @@
+/* ===== BOTTOM NAV (mobile default) ===== */
+.bottom-nav {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  padding: 7px 0 calc(10px + env(safe-area-inset-bottom, 0px));
+}
+
+.nav-pill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 999px;
+  background: rgba(212, 255, 61, 0.16);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+  transition: transform .35s cubic-bezier(0.22, 1, 0.36, 1), opacity .2s ease;
+}
+
+.nav-item {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  color: var(--muted);
+  cursor: pointer;
+  text-decoration: none;
+  transition: color .85s ease;
+}
+.nav-item span { font-size: 10.5px; font-weight: 500; }
+.nav-item.active { color: var(--text); }
+
+/* Icon 2 layer: outline abu-abu selalu ada, fill lime di-reveal dari bawah pas aktif */
+.nav-icon {
+  position: relative;
+  width: 25px;
+  height: 25px;
+}
+.nav-icon svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.icon-outline { stroke: currentColor; }
+.icon-fill {
+  stroke: var(--lime);
+  clip-path: inset(100% 0 0 0);
+  transition: clip-path .85s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.nav-item.active .icon-fill {
+  clip-path: inset(0 0 0 0);
+}
+
+/* Pas ditekan: mendem cepat. Pas dilepas: mantul kek per (bounce) */
+.nav-item .nav-icon {
+  transform-origin: center;
+}
+.nav-item:active .nav-icon {
+  transform: scale(0.8);
+  transition: transform .1s ease-out;
+}
+.nav-item:not(:active) .nav-icon {
+  animation: navIconBounce .50s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes navIconBounce {
+  0% { transform: scale(0.8); }
+  55% { transform: scale(1.18); }
+  75% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+.nav-submenu {
+  display: none;
+}
+
+/* ===== BOTTOM NAV -> SIDEBAR (desktop override, HARUS di bawah biar menang) ===== */
+@media (min-width: 768px) {
+  .nav-pill {
+    display: none;
+  }
+
+  .phone:has(> .bottom-nav) {
+    flex-direction: row;
+  }
+
+  .phone:has(> .bottom-nav) > *:not(.bottom-nav) {
+    min-width: 0;
+  }
+  
+  .bottom-nav {
+    order: -1;
+    flex-direction: column;
+    flex-shrink: 0;
+    width: 200px;
+    height: 100%;
+    padding: 20px 10px;
+    gap: 2px;
+    border-top: none;
+    border-right: 1px solid var(--line);
+    justify-content: flex-start;
+  }
+  
+  .nav-item {
+    flex: none;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 14px;
+    padding: 9px 12px;
+    border-radius: 20px;
+    width: 100%;
+  }
+
+  .nav-item .nav-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+  
+  .nav-item.active {
+    background: var(--surface-2);
+  }
+
+  .nav-item:hover {
+    background: var(--surface-2);
+  }
+
+  .nav-item span {
+    font-size: 13px;
+  }
+
+  .profile-content {
+    max-width: 1100px;
+    width: 100%;
+  }
+  
+  .profile-header {
+    justify-content: flex-start;
+  }
+
+  .nav-submenu {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding-left: 32px;
+    margin-bottom: 4px;
+  }
+
+  .nav-subitem {
+    display: block;
+    padding: 7px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    font-family: var(--font-sans);
+  }
+
+  .nav-subitem:hover {
+    background: var(--surface-2);
+    color: var(--text);
+  }
+
+  .nav-subitem.active {
+    color: var(--text);
+    background: var(--surface-2);
+  }
+
+    .nav-subitem-danger {
+    color: var(--pink);
+  }
+}
+
+/* Mode fullscreen dari Terbaru: nav ngambang DI ATAS video (kayak TikTok).
+   Video tetep mentok penuh atas-bawah layar, nav ngga makan jatah tinggi video lagi. */
+@media (max-width: 767px) {
+  .phone--nav-overlay {
+    display: block;
+  }
+  .phone--nav-overlay > .page-transition {
+    height: 100%;
+  }
+  .phone--nav-overlay > .bottom-nav {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+  }
+}
+
+.nav-subitem-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-subitem-badge {
+  background: var(--pink);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+ 
+.admin-shortcut-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-bottom: 14px;
+}
+
+@media (min-width: 768px) {
+  .admin-shortcut-row {
+    display: none;
+  }
+}
+
+.admin-shortcut {
+  flex: 1;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--pink);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 12px;
+  cursor: pointer;
+}
+
+.admin-shortcut-danger {
+  color: #FF5C5C;
+}
+.song-edit-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  padding: 6px;
+  cursor: pointer;
+}
+ 
+
+/* Transisi halaman pas pindah menu */
+.page-transition {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  position: relative; /* anchor buat LoadingScreen, biar ngga nutupin bottom nav */
+}
+
+
+/* Underline yang geser real-time ngikutin swipe (ala Mihon PrimaryTabRow) */
+.profile-tabs,
+.kreator-hub-tabs {
+  position: relative;
+}
+
+.tab-indicator {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--lime), color-mix(in srgb, var(--lime) 65%, white));
+  border-radius: 100px 100px 0 0;
+  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--lime) 55%, transparent);
+  pointer-events: none;
+  z-index: 1;
+  transition: box-shadow .2s ease;
+}
+
+.terbaru-collapse {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.terbaru-cover {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--bg);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.terbaru-banner {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: var(--surface-2);
+  overflow: hidden;
+  will-change: opacity;
+}
+
+.terbaru-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.terbaru-search-wrap {
+  padding: 22px 16px 10px;
+  margin-top: -28px;
+  position: relative;
+  z-index: 2;
+  background: var(--bg);
+  border-radius: 22px 22px 0 0;
+  transform-origin: top center;
+  will-change: transform, opacity;
+}
+
+.terbaru-search-glow {
+  display: none;
+}
+
+.terbaru-search-bar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.terbaru-grid-fade::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  background: linear-gradient(
+    to bottom,
+    var(--bg) 0%,
+    color-mix(in srgb, var(--bg) 55%, transparent) 55%,
+    transparent 100%
+  );
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.terbaru-search-bar input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 14px;
+  padding: 12px 14px;
+  font-family: var(--font-sans);
+}
+
+.terbaru-search-bar input::placeholder { color: var(--muted); }
+
+.terbaru-search-btn {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-left: 1px solid var(--line);
+  background: var(--violet);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.terbaru-search-btn:disabled { opacity: 0.6; cursor: default; }
+
+.terbaru-search-status {
+  font-size: 12px;
+  margin: 6px 4px 0;
+  color: var(--muted);
+}
+
+.terbaru-search-status--error { color: var(--pink); }
+
+.terbaru-banner {
+  position: relative;
+}
+
+.terbaru-banner-gradient {
+  display: none;
+}
+
+.terbaru-banner-title {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+  z-index: 1;
+}
+
+.terbaru-collapse::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 140px;
+  z-index: 5;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    var(--bg) 0%,
+    var(--bg) 30%,
+    transparent 100%
+  );
+}
+
+.wallpaper-preview {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}

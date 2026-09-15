@@ -1,0 +1,87 @@
+/* ===== Modal Link (XML / 5MB) ===== */
+.link-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+
+.link-modal-box {
+  width: 100%;
+  max-width: 320px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.link-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.link-modal-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.link-modal-input {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 12px;
+  margin-bottom: 12px;
+  outline: none;
+}
+
+.link-modal-textarea {
+  min-height: 90px;
+  max-height: 200px;
+  resize: none;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  overflow-y: auto;
+}
+
+.link-modal-copy-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--violet), var(--pink));
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 13.5px;
+  padding: 12px;
+  cursor: pointer;
+}
+
+.link-modal-clickable {
+  display: block;
+  color: var(--lime, #D4FF3D);
+  text-decoration: underline;
+  word-break: break-all;
+  cursor: pointer;
+}
+
+.loading-waves {
+  opacity: 0.7;
+}
+

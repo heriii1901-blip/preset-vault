@@ -1,0 +1,268 @@
+/* ===== Fullscreen Video Feed (TikTok style) ===== */
+.feed-container {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  max-height: 100dvh;
+  overflow: hidden;
+  touch-action: none;
+  background: #000;
+}
+
+.feed-track {
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+}
+
+.feed-item {
+  position: relative;
+  width: 100%;
+  height: var(--feed-item-h, 100dvh);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+
+.feed-item video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+
+.feed-pause-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding-left: 4px;
+}
+ 
+.feed-back-btn {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 5;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.45);
+  color: var(--text);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+ 
+.feed-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 16px 16px 20px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent);
+  z-index: 4;
+}
+
+/* Pas video di-pause: caption, tombol link, ikon trio TETEP muncul (ga ilang lagi) */
+.feed-overlay,
+.feed-side-actions {
+  transition: opacity 0.2s ease;
+}
+ 
+.feed-overlay h4 {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  margin-bottom: 2px;
+}
+ 
+.feed-overlay p {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+ 
+.feed-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.feed-actions .feed-btn {
+  flex: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+ 
+.feed-btn {
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+}
+ 
+.feed-btn.primary {
+  background: var(--violet);
+  border-color: var(--violet);
+}
+ 
+/* ===== Tombol love & share ala sosmed (pojok kanan) ===== */
+.feed-side-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  position: absolute;
+  right: 12px;
+  bottom: 100px;
+  z-index: 5; /* ini yang bikin dia selalu di atas video */
+}
+
+.feed-icon-btn {
+  margin: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent; /* ini yang ilangin kotak putih */
+  border: none;
+  color: var(--text); /* biar icon-nya putih/terang, bukan default hitam browser */
+}
+
+.feed-icon-btn svg {
+  width: 28px;
+  height: 28px;
+}
+
+.feed-icon-btn.love.active svg {
+  fill: var(--pink);
+  stroke: var(--pink);
+}
+ 
+
+/* Container pembungkus progress bar */
+.feed-progress-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.feed-item.is-paused .feed-progress-container,
+.feed-progress-container:active {
+  opacity: 1;
+}
+
+/* Pas fullscreen dari Terbaru (ada bottom nav), naikin dikit tombol/teks
+   biar ngga mepet pas di garis batas video - kasih jarak nafas kayak TikTok */
+.feed-item--with-nav .feed-progress-container {
+  bottom: 59px;
+}
+.feed-item--with-nav .feed-side-actions {
+  bottom: 159px;
+}
+.feed-item--with-nav .feed-overlay {
+  padding-bottom: 79px;
+}
+
+.feed-time-text {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  margin-left: 10px;
+  margin-bottom: 4px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  opacity: 0;
+  transform: translateY(3px);
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.feed-item.is-paused .feed-time-text,
+.feed-progress-container:active .feed-time-text {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.feed-progress-bar {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.25);
+  height: 3px;
+  outline: none;
+  margin: 0;
+  padding: 0;
+  transition: height 0.2s;
+}
+
+.feed-item.is-paused .feed-progress-bar,
+.feed-progress-container:active .feed-progress-bar {
+  height: 5px;
+}
+
+.feed-progress-bar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  transform: scale(0);
+  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.feed-item.is-paused .feed-progress-bar::-webkit-slider-thumb,
+.feed-progress-container:active .feed-progress-bar::-webkit-slider-thumb {
+  transform: scale(1);
+}
+
+.feed-progress-bar::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  transform: scale(0);
+  transition: transform 0.15s;
+}
+
+.feed-progress-container.is-paused .feed-progress-bar::-moz-range-thumb,
+.feed-progress-container:active .feed-progress-bar::-moz-range-thumb {
+  transform: scale(1);
+}
+

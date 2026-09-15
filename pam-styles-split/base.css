@@ -1,0 +1,134 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@700&family=Pacifico&family=Bebas+Neue&family=Caveat:wght@700&family=Righteous&display=swap');
+:root {
+  /* Font tetap (Plus Jakarta Sans), ngga ngikut font bawaan device */
+  --font-sans: 'Plus Jakarta Sans', Arial, sans-serif;
+  --font-creator-poppins: 'Poppins', var(--font-sans);
+  --font-creator-pacifico: 'Pacifico', cursive;
+  --font-creator-bebas: 'Bebas Neue', var(--font-sans);
+  --font-creator-caveat: 'Caveat', cursive;
+  --font-creator-righteous: 'Righteous', var(--font-sans);
+  --bg: #1B1B1F;
+  --surface: #211F26;
+  --surface-2: #292730;
+  --violet: #7C5CFF;
+  --pink: #FF3D7F;
+  --lime: #D4FF3D;
+  --text: #F2F1F5;
+  --muted: #8A8A96;
+  --line: #44464F;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent; /* ini yang hilangin kotak putih pas disentuh */
+}
+
+/* Kecualiin input & textarea biar tetep bisa diketik & disalin (misal link modal) */
+input, textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+html, body {
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: radial-gradient(circle at 20% 10%, rgba(124, 92, 255, 0.15), transparent 40%),
+              radial-gradient(circle at 80% 90%, rgba(255, 61, 127, 0.12), transparent 40%),
+              var(--bg);
+  font-family: var(--font-sans);
+  color: var(--text);
+}
+
+#root {
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+ 
+.phone-wrap {
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+}
+
+.phone {
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  background: var(--surface);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative; /* Pastikan ada ini */
+}
+
+.screen {
+  background: var(--bg);
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+ 
+.loading-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+ 
+.empty-state {
+  padding: 30px 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+ 
+.ghost-static {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 13px;
+}
+ 
+button {
+  transition: 250ms ease;
+}
+button:active:not(:disabled) {
+  transform: scale(0.95);
+  opacity: 0.8;
+  transition: 80ms ease;
+}
+button, a {
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+button:focus, a:focus {
+  outline: none;
+}
+
+/* Scrollbar disembunyiin di semua elemen scroll di seluruh app */
+* {
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+ 
