@@ -7,9 +7,8 @@ import PresetVideoCell from '../components/PresetVideoCell'
 import { resolveTiktokVideoId } from '../utils/tiktokLink'
 
 const CACHE_KEY = 'terbaru'
-const SEARCH_COLLAPSE_DISTANCE = 70
-const BANNER_COVER_DISTANCE = 170
-const LERP_FACTOR = 0.18
+const BANNER_FADE_DISTANCE = 170
+const LERP_FACTOR = 0.18 // laju di ~60fps; dinormalisasi pakai deltaTime di tick()
 
 function easeOutCubic(x) {
   return 1 - Math.pow(1 - x, 3)
@@ -26,12 +25,11 @@ export default function Terbaru() {
   const activeVideoRef = useRef(null)
 
   const bannerRef = useRef(null)
-  const searchRef = useRef(null)
-  const coverRef = useRef(null)
+  const titleRef = useRef(null)
   const scrollTargetRef = useRef(0)
-  const searchCurrentRef = useRef(0)
-  const coverCurrentRef = useRef(0)
+  const fadeCurrentRef = useRef(0)
   const animFrameRef = useRef(null)
+  const lastTimeRef = useRef(0)
 
   const [linkQuery, setLinkQuery] = useState('')
   const [searching, setSearching] = useState(false)
@@ -60,7 +58,7 @@ export default function Terbaru() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-    // Bersihin rAF loop pas komponen unmount biar gak nyangkut jalan di background.
+  // Bersihin rAF loop pas komponen unmount biar gak nyangkut jalan di background.
   useEffect(() => {
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
@@ -116,47 +114,43 @@ export default function Terbaru() {
     if (activeVideoRef.current === video) activeVideoRef.current = null
   }
 
-  function tick() {
+  // Cuma ngurus fade+collapse banner. Search bar udah nempel sendiri
+  // pakai CSS position:sticky, jadi gak butuh JS buat itu lagi.
+  function tick(timestamp) {
+    if (!lastTimeRef.current) lastTimeRef.current = timestamp
+    const dt = timestamp - lastTimeRef.current
+    lastTimeRef.current = timestamp
+
     const scrollTop = scrollTargetRef.current
-    const searchTarget = easeOutCubic(Math.min(scrollTop / SEARCH_COLLAPSE_DISTANCE, 1))
-    const coverTarget = easeOutCubic(Math.min(scrollTop / BANNER_COVER_DISTANCE, 1))
+    const target = easeOutCubic(Math.min(scrollTop / BANNER_FADE_DISTANCE, 1))
 
-    searchCurrentRef.current += (searchTarget - searchCurrentRef.current) * LERP_FACTOR
-    coverCurrentRef.current += (coverTarget - coverCurrentRef.current) * LERP_FACTOR
+    // Lerp dinormalisasi ke deltaTime biar kecepatannya konsisten
+    // di refresh rate berapa pun (60/90/120Hz), gak kesat-kesat lagi.
+    const smoothing = 1 - Math.pow(1 - LERP_FACTOR, dt / 16.67)
+    fadeCurrentRef.current += (target - fadeCurrentRef.current) * smoothing
 
-    const sVal = searchCurrentRef.current
-    const cVal = coverCurrentRef.current
+    const val = fadeCurrentRef.current
 
-    const sEl = searchRef.current
-    if (sEl) {
-      sEl.style.transform = `scale(${1 - sVal * 0.3}) translateY(${-sVal * 12}px)`
-      sEl.style.opacity = `${1 - sVal}`
-      sEl.style.pointerEvents = sVal > 0.85 ? 'none' : 'auto'
+    if (bannerRef.current) {
+      bannerRef.current.style.opacity = `${1 - val}`
+      bannerRef.current.style.transform = `translateY(${-val * 24}px) scale(${1 - val * 0.06})`
+    }
+    if (titleRef.current) {
+      const textVal = Math.min(val * 1.6, 1) // teks "Terbaru" pudar lebih cepat dari gambarnya
+      titleRef.current.style.opacity = `${1 - textVal}`
     }
 
-    const cEl = coverRef.current
-    if (cEl) {
-      cEl.style.transform = `scaleY(${cVal})`
-    }
-
-    const bEl = bannerRef.current
-    if (bEl) {
-      bEl.style.opacity = `${1 - cVal * 0.4}`
-    }
-
-    const stillMoving =
-      Math.abs(searchTarget - sVal) > 0.001 || Math.abs(coverTarget - cVal) > 0.001
-
-    if (stillMoving) {
+    if (Math.abs(target - val) > 0.001) {
       animFrameRef.current = requestAnimationFrame(tick)
     } else {
       animFrameRef.current = null
     }
   }
 
-  function handleGridScroll(e) {
+  function handleScroll(e) {
     scrollTargetRef.current = e.currentTarget.scrollTop
     if (!animFrameRef.current) {
+      lastTimeRef.current = 0
       animFrameRef.current = requestAnimationFrame(tick)
     }
   }
@@ -200,7 +194,7 @@ export default function Terbaru() {
   return (
     <div className="screen">
       <div className="grid-page">
-        <div className="terbaru-collapse">
+        <div className="terbaru-scroll" onScroll={handleScroll}>
           <div className="terbaru-banner" ref={bannerRef}>
             <img
               src={wallpaperUrl || '/terbaru-banner.jpg'}
@@ -209,10 +203,10 @@ export default function Terbaru() {
               onError={(e) => { e.currentTarget.style.display = 'none' }}
             />
             <div className="terbaru-banner-gradient" />
-            <h3 className="terbaru-banner-title">Terbaru</h3>
+            <h3 className="terbaru-banner-title" ref={titleRef}>Terbaru</h3>
           </div>
-          <div className="terbaru-cover" ref={coverRef} />
-          <div className="terbaru-search-wrap" ref={searchRef}>
+
+          <div className="terbaru-search-wrap">
             <div className="terbaru-search-glow" />
             <div className="terbaru-search-bar">
               <input
@@ -246,39 +240,39 @@ export default function Terbaru() {
               </p>
             )}
           </div>
-        </div>
 
-        {loading && (
-          <div className="empty-state" style={{ padding: 30 }}>Memuat...</div>
-        )}
+          {loading && (
+            <div className="empty-state" style={{ padding: 30 }}>Memuat...</div>
+          )}
 
-        {!loading && presets.length === 0 && (
-          <div className="empty-state" style={{ padding: 30 }}>Belum ada preset terbaru.</div>
-        )}
+          {!loading && presets.length === 0 && (
+            <div className="empty-state" style={{ padding: 30 }}>Belum ada preset terbaru.</div>
+          )}
 
-        {!loading && presets.length > 0 && (
-          <div className="preset-grid" onScroll={handleGridScroll}>
-            {presets.map((preset, i) => (
-              <PresetVideoCell
-                key={preset.id}
-                preset={preset}
-                index={i}
-                getCache={getCache}
-                setCache={setCache}
-                onNavigate={(p) => navigate(`/preset/${p.id}`, { state: { source: 'terbaru' } })}
-                onHoverStart={handleHoverStart}
-                onHoverEnd={handleHoverEnd}
-              />
-            ))}
-            <div
-              className="grid-cell grid-cell-viewall"
-              onClick={() => navigate('/lagu')}
-            >
-              <div className="grid-fallback" style={{ fontSize: 28 }}>🎵</div>
-              <div className="grid-cell-overlay">Lihat Semua</div>
+          {!loading && presets.length > 0 && (
+            <div className="preset-grid">
+              {presets.map((preset, i) => (
+                <PresetVideoCell
+                  key={preset.id}
+                  preset={preset}
+                  index={i}
+                  getCache={getCache}
+                  setCache={setCache}
+                  onNavigate={(p) => navigate(`/preset/${p.id}`, { state: { source: 'terbaru' } })}
+                  onHoverStart={handleHoverStart}
+                  onHoverEnd={handleHoverEnd}
+                />
+              ))}
+              <div
+                className="grid-cell grid-cell-viewall"
+                onClick={() => navigate('/lagu')}
+              >
+                <div className="grid-fallback" style={{ fontSize: 28 }}>🎵</div>
+                <div className="grid-cell-overlay">Lihat Semua</div>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )
