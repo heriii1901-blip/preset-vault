@@ -25,8 +25,6 @@ export default function Terbaru() {
   const activeVideoRef = useRef(null)
 
   const searchRef = useRef(null)
-  const searchShellRef = useRef(null)
-  const searchBaseHRef = useRef(0)
   const scrollTargetRef = useRef(0)
   const searchCurrentRef = useRef(0)
   const animFrameRef = useRef(null)
@@ -63,25 +61,6 @@ export default function Terbaru() {
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
     }
-  }, [])
-
-  // Ngukur tinggi asli search bar biar shell-nya bisa dikempesin pas scroll.
-  // Dependency array kosong + ngga manggil Supabase sama sekali, jadi ngga ada
-  // risiko query berulang / egress. ResizeObserver-nya di-disconnect pas unmount.
-  useEffect(() => {
-    const el = searchRef.current
-    if (!el) return
-    function sync() {
-      searchBaseHRef.current = el.offsetHeight
-      const shell = searchShellRef.current
-      if (shell) {
-        shell.style.height = `${searchBaseHRef.current * (1 - searchCurrentRef.current)}px`
-      }
-    }
-    sync()
-    const ro = new ResizeObserver(sync)
-    ro.observe(el)
-    return () => ro.disconnect()
   }, [])
 
   useEffect(() => {
@@ -155,13 +134,6 @@ export default function Terbaru() {
       sEl.style.pointerEvents = sVal > 0.5 ? 'none' : 'auto'
     }
 
-    // Shell-nya ikut kempes biar jatah tingginya balik ke grid — ngga nyisain
-    // ruang kosong (yang dulu ditutupin panel item itu).
-    const shellEl = searchShellRef.current
-    if (shellEl && searchBaseHRef.current) {
-      shellEl.style.height = `${searchBaseHRef.current * (1 - sVal)}px`
-    }
-
     const stillMoving = Math.abs(searchTarget - sVal) > 0.001
 
     if (stillMoving) {
@@ -217,20 +189,22 @@ export default function Terbaru() {
 
   return (
     <div className="screen">
-      <div className="grid-page">
-        <div className="terbaru-collapse">
-          <div className="terbaru-banner">
-            <img
-              src={wallpaperUrl || '/terbaru-banner.jpg'}
-              alt=""
-              draggable={false}
-              onError={(e) => { e.currentTarget.style.display = 'none' }}
-            />
-            <div className="terbaru-banner-gradient" />
-            <h3 className="terbaru-banner-title">Terbaru</h3>
-          </div>
+      <div className="grid-page terbaru-page">
+        <div className="terbaru-banner">
+          <img
+            src={wallpaperUrl || '/terbaru-banner.jpg'}
+            alt=""
+            draggable={false}
+            onError={(e) => { e.currentTarget.style.display = 'none' }}
+          />
+          <div className="terbaru-banner-gradient" />
+          <h3 className="terbaru-banner-title">Terbaru</h3>
+        </div>
 
-          <div className="terbaru-search-shell" ref={searchShellRef}>
+        <div className="terbaru-scroller" onScroll={handleGridScroll}>
+          <div className="terbaru-spacer" />
+
+          <div className="terbaru-sheet">
             <div className="terbaru-search-wrap" ref={searchRef}>
               <div className="terbaru-search-bar">
                 <input
@@ -264,40 +238,40 @@ export default function Terbaru() {
                 </p>
               )}
             </div>
+
+            {loading && (
+              <div className="empty-state" style={{ padding: 30 }}>Memuat...</div>
+            )}
+
+            {!loading && presets.length === 0 && (
+              <div className="empty-state" style={{ padding: 30 }}>Belum ada preset terbaru.</div>
+            )}
+
+            {!loading && presets.length > 0 && (
+              <div className="preset-grid preset-grid--static">
+                {presets.map((preset, i) => (
+                  <PresetVideoCell
+                    key={preset.id}
+                    preset={preset}
+                    index={i}
+                    getCache={getCache}
+                    setCache={setCache}
+                    onNavigate={(p) => navigate(`/preset/${p.id}`, { state: { source: 'terbaru' } })}
+                    onHoverStart={handleHoverStart}
+                    onHoverEnd={handleHoverEnd}
+                  />
+                ))}
+                <div
+                  className="grid-cell grid-cell-viewall"
+                  onClick={() => navigate('/lagu')}
+                >
+                  <div className="grid-fallback" style={{ fontSize: 28 }}>🎵</div>
+                  <div className="grid-cell-overlay">Lihat Semua</div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-
-        {loading && (
-          <div className="empty-state" style={{ padding: 30 }}>Memuat...</div>
-        )}
-
-        {!loading && presets.length === 0 && (
-          <div className="empty-state" style={{ padding: 30 }}>Belum ada preset terbaru.</div>
-        )}
-
-        {!loading && presets.length > 0 && (
-          <div className="preset-grid" onScroll={handleGridScroll}>
-            {presets.map((preset, i) => (
-              <PresetVideoCell
-                key={preset.id}
-                preset={preset}
-                index={i}
-                getCache={getCache}
-                setCache={setCache}
-                onNavigate={(p) => navigate(`/preset/${p.id}`, { state: { source: 'terbaru' } })}
-                onHoverStart={handleHoverStart}
-                onHoverEnd={handleHoverEnd}
-              />
-            ))}
-            <div
-              className="grid-cell grid-cell-viewall"
-              onClick={() => navigate('/lagu')}
-            >
-              <div className="grid-fallback" style={{ fontSize: 28 }}>🎵</div>
-              <div className="grid-cell-overlay">Lihat Semua</div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )
