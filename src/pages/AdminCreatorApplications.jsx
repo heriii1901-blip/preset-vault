@@ -8,7 +8,8 @@ export default function AdminCreatorApplications() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('pending')
   const [processingId, setProcessingId] = useState(null)
-
+  const [expandedId, setExpandedId] = useState(null)
+  
   useEffect(() => {
     loadApps()
   }, [])
@@ -85,7 +86,7 @@ export default function AdminCreatorApplications() {
       <div className="admin-content">
         <button
           className="back-btn ghost-static"
-          style={{ marginBottom: 14, width: 'fit-content' }}
+          style={{ margin: '0 0 14px 18px', width: 'fit-content' }}
           onClick={() => navigate(-1)}
         >
           ← Balik
@@ -96,12 +97,12 @@ export default function AdminCreatorApplications() {
           <h2>Pengajuan Kreator</h2>
         </div>
 
-        <div className="type-toggle">
+        <div className="type-toggle admin-pad">
           <button
             type="button"
             className="type-opt"
             style={filter === 'pending' ? { borderColor: 'var(--pink)', color: 'var(--pink)' } : undefined}
-            onClick={() => setFilter('pending')}
+            onClick={() => { setFilter('pending'); setExpandedId(null) }}
           >
             Pending
           </button>
@@ -109,7 +110,7 @@ export default function AdminCreatorApplications() {
             type="button"
             className="type-opt"
             style={filter === 'approved' ? { borderColor: 'var(--lime)', color: 'var(--lime)' } : undefined}
-            onClick={() => setFilter('approved')}
+            onClick={() => { setFilter('approved'); setExpandedId(null) }}
           >
             Diterima
           </button>
@@ -117,7 +118,7 @@ export default function AdminCreatorApplications() {
             type="button"
             className="type-opt"
             style={filter === 'rejected' ? { borderColor: '#FF5C5C', color: '#FF5C5C' } : undefined}
-            onClick={() => setFilter('rejected')}
+            onClick={() => { setFilter('rejected'); setExpandedId(null) }}
           >
             Ditolak
           </button>
@@ -129,61 +130,101 @@ export default function AdminCreatorApplications() {
           <div className="empty-state">Gak ada pengajuan di kategori ini.</div>
         )}
 
-        {!loading &&
-          filteredApps.map((app) => (
-            <div
-              key={app.id}
-              style={{
-                background: 'var(--surface-2)',
-                border: '1px solid var(--line)',
-                borderRadius: 14,
-                padding: 14,
-                marginBottom: 12,
-              }}
-            >
-              <div style={{ fontWeight: 700, marginBottom: 2 }}>{app.account_name || '(tanpa nama akun)'}</div>
-              <div style={{ fontSize: 12.5, color: 'var(--muted)', marginBottom: 4 }}>@{app.tiktok_username}</div>
-              <a
-                href={app.tiktok_link}
-                target="_blank"
-                rel="noreferrer"
-                style={{ fontSize: 12.5, color: 'var(--pink)', wordBreak: 'break-all' }}
-              >
-                {app.tiktok_link}
-              </a>
-              {app.am_version && (
-                <p style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 8 }}>Versi: {app.am_version}</p>
-              )}
-              {app.sample_link && (
-                <p style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 4, wordBreak: 'break-all' }}>
-                  Contoh preset: {app.sample_link}
-                </p>
-              )}
-              <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 8 }}>
-                Diajukan: {new Date(app.created_at).toLocaleDateString('id-ID')}
-              </p>
+                {!loading && (
+          <div className="admin-pad">
+            {filteredApps.map((app) => {
+              // Detail pengajuan: dipake langsung kalau pending, disembunyiin di balik
+              // panah kalau udah diterima/ditolak.
+              const detail = (
+                <>
+                  <a
+                    href={app.tiktok_link}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ fontSize: 12.5, color: 'var(--pink)', wordBreak: 'break-all' }}
+                  >
+                    {app.tiktok_link}
+                  </a>
+                  {app.am_version && (
+                    <p style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 8 }}>Versi: {app.am_version}</p>
+                  )}
+                  {app.sample_link && (
+                    <p style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 4, wordBreak: 'break-all' }}>
+                      Contoh preset: {app.sample_link}
+                    </p>
+                  )}
+                  <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 8 }}>
+                    Diajukan: {new Date(app.created_at).toLocaleDateString('id-ID')}
+                  </p>
+                </>
+              )
 
-              {app.status === 'pending' && (
-                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+              // PENDING: tetep kebuka semua kayak sebelumnya
+              if (app.status === 'pending') {
+                return (
+                  <div className="app-card" key={app.id} style={{ padding: 14 }}>
+                    <div className="app-card-name" style={{ whiteSpace: 'normal' }}>
+                      {app.account_name || '(tanpa nama akun)'}
+                    </div>
+                    <div className="app-card-user" style={{ marginBottom: 4, whiteSpace: 'normal' }}>
+                      @{app.tiktok_username}
+                    </div>
+                    {detail}
+                    <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                      <button
+                        className="admin-shortcut"
+                        style={{ color: 'var(--lime)' }}
+                        disabled={processingId === app.id}
+                        onClick={() => handleApprove(app)}
+                      >
+                        {processingId === app.id ? '...' : 'Terima'}
+                      </button>
+                      <button
+                        className="admin-shortcut admin-shortcut-danger"
+                        disabled={processingId === app.id}
+                        onClick={() => handleReject(app)}
+                      >
+                        {processingId === app.id ? '...' : 'Tolak'}
+                      </button>
+                    </div>
+                  </div>
+                )
+              }
+
+              // DITERIMA / DITOLAK: cuma nama + username, detailnya dibuka pakai panah
+              const open = expandedId === app.id
+              return (
+                <div className="app-card" key={app.id}>
                   <button
-                    className="admin-shortcut"
-                    style={{ color: 'var(--lime)' }}
-                    disabled={processingId === app.id}
-                    onClick={() => handleApprove(app)}
+                    type="button"
+                    className="app-card-head"
+                    onClick={() => setExpandedId(open ? null : app.id)}
+                    aria-expanded={open}
                   >
-                    {processingId === app.id ? '...' : 'Terima'}
+                    <div className="app-card-head-text">
+                      <div className="app-card-name">{app.account_name || '(tanpa nama akun)'}</div>
+                      <div className="app-card-user">@{app.tiktok_username}</div>
+                    </div>
+                    <svg
+                      className={`app-card-chevron${open ? ' is-open' : ''}`}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      width="18"
+                      height="18"
+                    >
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
                   </button>
-                  <button
-                    className="admin-shortcut admin-shortcut-danger"
-                    disabled={processingId === app.id}
-                    onClick={() => handleReject(app)}
-                  >
-                    {processingId === app.id ? '...' : 'Tolak'}
-                  </button>
+                  {open && <div className="app-card-body">{detail}</div>}
                 </div>
-              )}
-            </div>
-          ))}
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )
