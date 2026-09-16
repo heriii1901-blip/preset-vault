@@ -13,7 +13,7 @@
   align-items: center;
   gap: 10px;
   background: var(--surface-2);
-  border: 1px solid var(--line);
+  border: 1.5px solid var(--line);
   border-radius: 14px;
   padding: 14px 16px;
 }
@@ -23,10 +23,11 @@
   outline: none;
   color: var(--text);
   font-size: 15px;
+  font-weight: 600;
   width: 100%;
   font-family: var(--font-sans);
 }
-.search-bar input::placeholder { color: var(--muted); }
+.search-bar input::placeholder { color: var(--muted); font-weight: 600; }
  
 .song-list {
   flex: 1;
