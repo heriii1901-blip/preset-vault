@@ -7,8 +7,7 @@ import PresetVideoCell from '../components/PresetVideoCell'
 import { resolveTiktokVideoId } from '../utils/tiktokLink'
 
 const CACHE_KEY = 'terbaru'
-const SEARCH_COLLAPSE_DISTANCE = 70
-const BANNER_COVER_DISTANCE = 170
+const SEARCH_COLLAPSE_DISTANCE = 90
 const LERP_FACTOR = 0.18 // laju di ~60fps; dinormalisasi ke deltaTime di tick()
 
 function easeOutCubic(x) {
@@ -25,12 +24,11 @@ export default function Terbaru() {
   const [loading, setLoading] = useState(!cached)
   const activeVideoRef = useRef(null)
 
-  const bannerRef = useRef(null)
   const searchRef = useRef(null)
-  const coverRef = useRef(null)
+  const searchShellRef = useRef(null)
+  const searchBaseHRef = useRef(0)
   const scrollTargetRef = useRef(0)
   const searchCurrentRef = useRef(0)
-  const coverCurrentRef = useRef(0)
   const animFrameRef = useRef(null)
   const lastTimeRef = useRef(0)
 
@@ -65,6 +63,25 @@ export default function Terbaru() {
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
     }
+  }, [])
+
+  // Ngukur tinggi asli search bar biar shell-nya bisa dikempesin pas scroll.
+  // Dependency array kosong + ngga manggil Supabase sama sekali, jadi ngga ada
+  // risiko query berulang / egress. ResizeObserver-nya di-disconnect pas unmount.
+  useEffect(() => {
+    const el = searchRef.current
+    if (!el) return
+    function sync() {
+      searchBaseHRef.current = el.offsetHeight
+      const shell = searchShellRef.current
+      if (shell) {
+        shell.style.height = `${searchBaseHRef.current * (1 - searchCurrentRef.current)}px`
+      }
+    }
+    sync()
+    const ro = new ResizeObserver(sync)
+    ro.observe(el)
+    return () => ro.disconnect()
   }, [])
 
   useEffect(() => {
@@ -120,38 +137,32 @@ export default function Terbaru() {
     lastTimeRef.current = timestamp
 
     // Dinormalisasi ke deltaTime biar kecepatan animasinya konsisten
-    // di refresh rate berapa pun (60/90/120Hz) — ini yang bikin kesat kemarin.
+    // di refresh rate berapa pun (60/90/120Hz).
     const smoothing = 1 - Math.pow(1 - LERP_FACTOR, dt / 16.67)
 
     const scrollTop = scrollTargetRef.current
     const searchTarget = easeOutCubic(Math.min(scrollTop / SEARCH_COLLAPSE_DISTANCE, 1))
-    const coverTarget = easeOutCubic(Math.min(scrollTop / BANNER_COVER_DISTANCE, 1))
 
     searchCurrentRef.current += (searchTarget - searchCurrentRef.current) * smoothing
-    coverCurrentRef.current += (coverTarget - coverCurrentRef.current) * smoothing
 
     const sVal = searchCurrentRef.current
-    const cVal = coverCurrentRef.current
 
+    // Mengecil + naik ke atas + lenyap, barengan.
     const sEl = searchRef.current
     if (sEl) {
-      sEl.style.transform = `scale(${1 - sVal * 0.3}) translateY(${-sVal * 12}px)`
-      sEl.style.opacity = `${1 - sVal}`
-      sEl.style.pointerEvents = sVal > 0.85 ? 'none' : 'auto'
+      sEl.style.transform = `scale(${1 - sVal * 0.24}) translateY(${-sVal * 30}px)`
+      sEl.style.opacity = `${Math.max(0, 1 - sVal * 1.25)}`
+      sEl.style.pointerEvents = sVal > 0.5 ? 'none' : 'auto'
     }
 
-    const cEl = coverRef.current
-    if (cEl) {
-      cEl.style.transform = `scaleY(${cVal})`
+    // Shell-nya ikut kempes biar jatah tingginya balik ke grid — ngga nyisain
+    // ruang kosong (yang dulu ditutupin panel item itu).
+    const shellEl = searchShellRef.current
+    if (shellEl && searchBaseHRef.current) {
+      shellEl.style.height = `${searchBaseHRef.current * (1 - sVal)}px`
     }
 
-    const bEl = bannerRef.current
-    if (bEl) {
-      bEl.style.opacity = `${1 - cVal * 0.4}`
-    }
-
-    const stillMoving =
-      Math.abs(searchTarget - sVal) > 0.001 || Math.abs(coverTarget - cVal) > 0.001
+    const stillMoving = Math.abs(searchTarget - sVal) > 0.001
 
     if (stillMoving) {
       animFrameRef.current = requestAnimationFrame(tick)
@@ -208,7 +219,7 @@ export default function Terbaru() {
     <div className="screen">
       <div className="grid-page">
         <div className="terbaru-collapse">
-          <div className="terbaru-banner" ref={bannerRef}>
+          <div className="terbaru-banner">
             <img
               src={wallpaperUrl || '/terbaru-banner.jpg'}
               alt=""
@@ -218,40 +229,41 @@ export default function Terbaru() {
             <div className="terbaru-banner-gradient" />
             <h3 className="terbaru-banner-title">Terbaru</h3>
           </div>
-          <div className="terbaru-cover" ref={coverRef} />
-          <div className="terbaru-search-wrap" ref={searchRef}>
-            <div className="terbaru-search-glow" />
-            <div className="terbaru-search-bar">
-              <input
-                type="text"
-                placeholder="Tempel link TikTok di sini..."
-                value={linkQuery}
-                onChange={(e) => setLinkQuery(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleSearchByLink() }}
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="none"
-                spellCheck="false"
-              />
-              <button
-                type="button"
-                className="terbaru-search-btn"
-                onClick={handleSearchByLink}
-                disabled={searching}
-                aria-label="Cari preset dari link"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
-                  <path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z" />
-                  <rect x="6" y="6" width="12" height="15" rx="2" />
-                  <path d="M9 12h6M9 16h4" />
-                </svg>
-              </button>
+
+          <div className="terbaru-search-shell" ref={searchShellRef}>
+            <div className="terbaru-search-wrap" ref={searchRef}>
+              <div className="terbaru-search-bar">
+                <input
+                  type="text"
+                  placeholder="Tempel link TikTok di sini..."
+                  value={linkQuery}
+                  onChange={(e) => setLinkQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleSearchByLink() }}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                  spellCheck="false"
+                />
+                <button
+                  type="button"
+                  className="terbaru-search-btn"
+                  onClick={handleSearchByLink}
+                  disabled={searching}
+                  aria-label="Cari preset dari link"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
+                    <path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z" />
+                    <rect x="6" y="6" width="12" height="15" rx="2" />
+                    <path d="M9 12h6M9 16h4" />
+                  </svg>
+                </button>
+              </div>
+              {searchStatus && (
+                <p className={`terbaru-search-status terbaru-search-status--${searchStatus.type}`}>
+                  {searchStatus.text}
+                </p>
+              )}
             </div>
-            {searchStatus && (
-              <p className={`terbaru-search-status terbaru-search-status--${searchStatus.type}`}>
-                {searchStatus.text}
-              </p>
-            )}
           </div>
         </div>
 
