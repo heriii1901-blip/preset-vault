@@ -177,7 +177,7 @@ export default function Kreator({ hideHeader = false }) {
         </div>
       )}
 
-      <div className="search-input-wrap" style={{ padding: '0 20px', marginBottom: 10 }}>
+      <div className="search-input-wrap" style={{ padding: '16px 20px 0', marginBottom: 10 }}>
         <input
           type="search"
           className="search-input"
