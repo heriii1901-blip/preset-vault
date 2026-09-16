@@ -40,6 +40,13 @@
   padding: 0;
 }
 
+/* Varian buat Terbaru: grid-nya ngga jadi scroller sendiri, dia numpang di sheet */
+.preset-grid--static {
+  flex: none;
+  min-height: 0;
+  overflow: visible;
+}
+
 .grid-cell {
   position: relative;
   min-width: 0;
