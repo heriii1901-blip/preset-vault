@@ -133,7 +133,7 @@ export default function KreatorAddPreset() {
   return (
     <div className="screen">
       <div className="admin-content">
-        <button className="back-btn ghost-static" style={{ marginBottom: 14, width: 'fit-content' }} onClick={() => navigate(-1)}>
+        <button className="back-btn ghost-static" style={{ margin: '0 0 14px 18px', width: 'fit-content' }} onClick={() => navigate(-1)}>
           ← Balik
         </button>
 
@@ -142,7 +142,7 @@ export default function KreatorAddPreset() {
           <h2>Upload Preset Baru</h2>
         </div>
 
-        <form onSubmit={handleSave}>
+        <form onSubmit={handleSave} className="admin-pad">
           <div className="form-field">
             <label>Link XML (satu link per baris kalau lebih dari satu)</label>
             <div className="input-wrap">
