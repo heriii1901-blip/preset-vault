@@ -432,6 +432,8 @@
 }
 
 .wallpaper-preview {
+  position: relative;
+  aspect-ratio: 2.5 / 1;
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid var(--line);
