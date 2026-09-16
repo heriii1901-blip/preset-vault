@@ -287,7 +287,9 @@
 }
 
 /* Banner nempel di belakang, ngga ikut gerak. Yang gerak itu sheet-nya,
-   naik nutupin banner pas grid di-scroll. */
+   naik nutupin banner pas grid di-scroll. Bannernya dipendekin (2.5:1, bukan 16:9)
+   biar ngga makan ruang kebanyakan, dan search bar dikasih napas di atas-bawah
+   biar posisinya kerasa di tengah antara banner sm grid, ngga mepet ke banner. */
 .terbaru-page {
   position: relative;
 }
@@ -297,7 +299,7 @@
   top: 0;
   left: 0;
   right: 0;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 2.5 / 1;
   background: var(--surface-2);
   overflow: hidden;
   z-index: 0;
@@ -312,12 +314,12 @@
   background: transparent;
 }
 
-/* Jendela transparan seukuran banner. Ini yang bikin banner keliatan pas di atas,
-   dan ketutupan sheet begitu di-scroll. */
+/* Jendela transparan setinggi banner. Overlap-nya dikecilin (dari -28px ke -14px)
+   jadi cuma buat nutupin sudut radius sheet, bukan buat "makan" tinggi banner. */
 .terbaru-spacer {
   width: 100%;
-  aspect-ratio: 16 / 9;
-  margin-bottom: -28px;
+  aspect-ratio: 2.5 / 1;
+  margin-bottom: -14px;
 }
 
 .terbaru-sheet {
@@ -335,7 +337,7 @@
 }
 
 .terbaru-search-wrap {
-  padding: 22px 16px 10px;
+  padding: 26px 16px 20px;
   transform-origin: top center;
   will-change: transform, opacity;
 }
@@ -411,10 +413,6 @@
 }
 
 .terbaru-search-status--error { color: var(--pink); }
-
-.terbaru-banner {
-  position: relative;
-}
 
 .terbaru-banner-gradient {
   display: none;
