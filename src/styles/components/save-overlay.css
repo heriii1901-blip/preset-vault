@@ -194,10 +194,70 @@
 
 .request-card {
   background: var(--surface-2);
-  border: 1px solid var(--line);
+  border: 1.5px solid var(--line);
   border-radius: 12px;
   padding: 12px 14px;
   margin-bottom: 10px;
+}
+
+/* ===== Kartu pengajuan kreator yang bisa dibuka-tutup (status diterima/ditolak) ===== */
+.app-card {
+  background: var(--surface-2);
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.app-card-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  padding: 13px 14px;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+.app-card-head-text {
+  flex: 1;
+  min-width: 0;
+}
+.app-card-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-card-user {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-card-chevron {
+  flex-shrink: 0;
+  color: var(--muted);
+  transition: transform .22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.app-card-chevron.is-open {
+  transform: rotate(180deg);
+}
+.app-card-body {
+  padding: 0 14px 14px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  animation: appCardOpen .22s ease both;
+}
+@keyframes appCardOpen {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .request-card-top {
   display: flex;
