@@ -126,7 +126,7 @@ export default function AdminManagePresets() {
       <div className="admin-content">
         <button
           className="back-btn ghost-static"
-          style={{ marginBottom: 14, width: 'fit-content' }}
+          style={{ margin: '0 0 14px 18px', width: 'fit-content' }}
           onClick={() => (selectedSong ? setSelectedSong(null) : navigate(-1))}
         >
           ← Balik
@@ -138,7 +138,7 @@ export default function AdminManagePresets() {
         </div>
 
         {!loading && !selectedSong && (
-          <div style={{ marginBottom: 16 }}>
+          <div className="admin-pad" style={{ marginBottom: 16 }}>
             <button
               type="button"
               className="back-btn ghost-static"
@@ -161,7 +161,7 @@ export default function AdminManagePresets() {
           songs.length === 0 ? (
             <div className="empty-state">Belum ada lagu.</div>
           ) : (
-            <div className="preset-manage-list">
+            <div className="preset-manage-list admin-pad">
               {songs.map((song) => (
                 <div
                   className="preset-manage-row"
@@ -187,7 +187,7 @@ export default function AdminManagePresets() {
           filteredPresets.length === 0 ? (
             <div className="empty-state">Belum ada preset buat lagu ini.</div>
           ) : (
-            <div className="preset-manage-list">
+            <div className="preset-manage-list admin-pad">
               {filteredPresets.map((preset) => (
                 <div className="preset-manage-row" key={preset.id}>
                   <div className="pmr-info">
