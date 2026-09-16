@@ -95,16 +95,17 @@
 
 .song-menu-btn {
   flex-shrink: 0;
-  width: 30px; height: 30px;
+  width: 34px; height: 34px;
   display: flex; align-items: center; justify-content: center;
-  border-radius: 8px;
+  border-radius: 10px;
   background: none;
   border: none;
   color: var(--muted);
-  font-size: 18px;
+  padding: 0;
   line-height: 1;
   cursor: pointer;
 }
+.song-menu-btn svg { width: 20px; height: 20px; }
 .song-menu-btn:active { background: var(--surface); }
 
 /* List kreator - lebih pendek + PP bulat */
