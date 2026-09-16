@@ -129,7 +129,7 @@ export default function AdminSongRequests() {
       <div className="admin-content">
         <button
           className="back-btn ghost-static"
-          style={{ marginBottom: 14, width: 'fit-content' }}
+          style={{ margin: '0 0 14px 18px', width: 'fit-content' }}
           onClick={() => navigate(-1)}
         >
           ← Balik
@@ -140,7 +140,7 @@ export default function AdminSongRequests() {
           <h2>Permintaan Lagu Baru</h2>
         </div>
 
-        <div className="type-toggle">
+        <div className="type-toggle admin-pad">
           <button
             type="button"
             className="type-opt"
@@ -173,7 +173,7 @@ export default function AdminSongRequests() {
         )}
 
         {!loading && filteredRequests.length > 0 && (
-          <div className="preset-manage-list">
+          <div className="preset-manage-list admin-pad">
             {filteredRequests.map((req) => (
               <div className="request-card" key={req.id}>
                 <div className="request-card-top">
