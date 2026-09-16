@@ -15,7 +15,7 @@ export default function Home() {
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState([])
   const [menuSong, setMenuSong] = useState(null)
-  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 })
+  const [menuPos, setMenuPos] = useState(null)
   const navigate = useNavigate()
   const { isAdmin } = useAuth()
   const longPressTimer = useRef(null)
@@ -112,10 +112,26 @@ export default function Home() {
     setSelectedIds([])
   }
 
+  const ROW_MENU_H = 112 // tinggi kira-kira menu 2 item, buat nentuin buka ke atas/bawah
+
   function openRowMenu(song, e) {
     e.stopPropagation()
-    const rect = e.currentTarget.getBoundingClientRect()
-    setMenuPos({ top: rect.bottom + 6, right: Math.max(12, window.innerWidth - rect.right) })
+    const rowEl = e.currentTarget.closest('.song-row') || e.currentTarget
+    const rect = rowEl.getBoundingClientRect()
+    const btnRect = e.currentTarget.getBoundingClientRect()
+    const gap = 8
+    // Kalo mepet bawah layar, menunya dibalik ke atas bar
+    const openUp = rect.bottom + gap + ROW_MENU_H > window.innerHeight - 12
+    setMenuPos({
+      openUp,
+      rowTop: rect.top,
+      rowLeft: rect.left,
+      rowWidth: rect.width,
+      rowHeight: rect.height,
+      top: openUp ? undefined : rect.bottom + gap,
+      bottom: openUp ? window.innerHeight - rect.top + gap : undefined,
+      right: Math.max(12, window.innerWidth - btnRect.right),
+    })
     setMenuSong(song)
   }
   function closeRowMenu() {
@@ -243,8 +259,17 @@ export default function Home() {
                 <div className="song-meta-row">{song.presetCount || 0} preset</div>
               </div>
               {isAdmin && !selectionMode && (
-                <button type="button" className="song-menu-btn" onClick={(e) => openRowMenu(song, e)}>
-                  ⋮
+                <button
+                  type="button"
+                  className="song-menu-btn"
+                  aria-label="Menu lagu"
+                  onClick={(e) => openRowMenu(song, e)}
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="5" cy="12" r="1.9" />
+                    <circle cx="12" cy="12" r="1.9" />
+                    <circle cx="19" cy="12" r="1.9" />
+                  </svg>
                 </button>
               )}
             </div>
@@ -292,10 +317,42 @@ export default function Home() {
         </div>
       )}
 
-      {menuSong && (
+      {menuSong && menuPos && (
         <>
           <div className="row-menu-backdrop" onClick={closeRowMenu} />
-          <div className="row-menu" style={{ top: menuPos.top, right: menuPos.right }}>
+
+          {/* Salinan bar yang lagi dipilih, biar dia doang yang ngga kena redup */}
+          <div
+            className="row-menu-spotlight"
+            style={{
+              top: menuPos.rowTop,
+              left: menuPos.rowLeft,
+              width: menuPos.rowWidth,
+              height: menuPos.rowHeight,
+            }}
+          >
+            <div className="song-row">
+              <div className="song-thumb" style={{ background: menuSong.color }}>
+                {menuSong.coverUrl ? <img src={menuSong.coverUrl} alt="" draggable={false} /> : '♪'}
+              </div>
+              <div className="song-text">
+                <h4>{menuSong.name}</h4>
+                <div className="song-meta-row">{menuSong.presetCount || 0} preset</div>
+              </div>
+              <span className="song-menu-btn" style={{ color: 'var(--text)' }}>
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="5" cy="12" r="1.9" />
+                  <circle cx="12" cy="12" r="1.9" />
+                  <circle cx="19" cy="12" r="1.9" />
+                </svg>
+              </span>
+            </div>
+          </div>
+
+          <div
+            className={`row-menu${menuPos.openUp ? ' row-menu--up' : ''}`}
+            style={{ top: menuPos.top, bottom: menuPos.bottom, right: menuPos.right }}
+          >
             <button type="button" className="row-menu-item" onClick={handleMenuEdit}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                 <path d="M12 20h9" />
