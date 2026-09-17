@@ -132,7 +132,6 @@ export default function Terbaru() {
     if (sEl) {
       sEl.style.transform = `scale(${1 - sVal * 0.24}) translateY(${-sVal * 50}px)`
       sEl.style.opacity = `${Math.max(0, 1 - sVal * 0.5)}`
-      sEl.style.filter = `blur(${sVal * 8}px)`
       sEl.style.pointerEvents = sVal > 0.5 ? 'none' : 'auto'
     }
 
