@@ -24,6 +24,7 @@ export default function Terbaru() {
   const [loading, setLoading] = useState(!cached)
   const activeVideoRef = useRef(null)
 
+  const bannerRef = useRef(null)
   const searchRef = useRef(null)
   const scrollTargetRef = useRef(0)
   const searchCurrentRef = useRef(0)
@@ -126,13 +127,19 @@ export default function Terbaru() {
 
     const sVal = searchCurrentRef.current
 
-     // Mengecil + naik ke atas + lenyap + larut (blur), barengan.
+    // Mengecil + naik ke atas + lenyap + larut (blur), barengan.
     const sEl = searchRef.current
     if (sEl) {
       sEl.style.transform = `scale(${1 - sVal * 0.24}) translateY(${-sVal * 30}px)`
       sEl.style.opacity = `${Math.max(0, 1 - sVal * 1.25)}`
-      sEl.style.filter = `blur(${sVal * 3}px)`
+      sEl.style.filter = `blur(${sVal * 8}px)`
       sEl.style.pointerEvents = sVal > 0.5 ? 'none' : 'auto'
+    }
+
+    // Banner (area gelap + judul Terbaru) lenyap barengan, kurvanya disamain sm search bar.
+    const bEl = bannerRef.current
+    if (bEl) {
+      bEl.style.opacity = `${Math.max(0, 1 - sVal * 1.25)}`
     }
 
     const stillMoving = Math.abs(searchTarget - sVal) > 0.001
@@ -191,7 +198,7 @@ export default function Terbaru() {
   return (
     <div className="screen">
       <div className="grid-page terbaru-page">
-        <div className="terbaru-banner">
+        <div className="terbaru-banner" ref={bannerRef}>
           <img
             src={wallpaperUrl || '/terbaru-banner.jpg'}
             alt=""
