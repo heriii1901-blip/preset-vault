@@ -127,12 +127,15 @@ export default function Terbaru() {
 
     const sVal = searchCurrentRef.current
 
-    // Mengecil + naik ke atas + lenyap (termasuk blok hitamnya) + larut (blur)
+    // Mengecil + naik ke atas + lenyap + larut (blur), barengan.
     const sEl = searchRef.current
     if (sEl) {
       sEl.style.transform = `scale(${1 - sVal * 0.24}) translateY(${-sVal * 50}px)`
-      sEl.style.opacity = `${Math.max(0, 1 - sVal * 1)}` // Ini otomatis melenyapkan search bar + blok hitamnya
+      sEl.style.opacity = `${Math.max(0, 1 - sVal * 1)}`
       sEl.style.pointerEvents = sVal > 0.8 ? 'none' : 'auto'
+      
+      // Ini tambahan buat bikin blok hitamnya ikut memudar
+      sEl.parentElement.style.background = `color-mix(in srgb, var(--bg) ${Math.max(0, 1 - sVal * 1) * 100}%, transparent)`
     }
 
     // Banner (area gelap + judul Terbaru) lenyap barengan, kurvanya disamain sm search bar.
