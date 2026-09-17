@@ -17,6 +17,11 @@
   --text: #F7F6FA;
   --muted: #A6A6B4;
   --line: #5A5C67;
+
+  /* Rasio banner Terbaru (dipake juga di preview halaman Ubah Wallpaper biar konsisten).
+     Sebelumnya 16/9 kerasa kegedean, sekarang 2.15/1 — dikit lebih tinggi dari
+     percobaan 2.5/1 kemarin sesuai revisi. */
+  --terbaru-banner-ratio: 2.15 / 1;
 }
 
 * {
