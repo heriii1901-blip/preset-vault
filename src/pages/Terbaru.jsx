@@ -126,11 +126,12 @@ export default function Terbaru() {
 
     const sVal = searchCurrentRef.current
 
-    // Mengecil + naik ke atas + lenyap, barengan.
+     // Mengecil + naik ke atas + lenyap + larut (blur), barengan.
     const sEl = searchRef.current
     if (sEl) {
       sEl.style.transform = `scale(${1 - sVal * 0.24}) translateY(${-sVal * 30}px)`
       sEl.style.opacity = `${Math.max(0, 1 - sVal * 1.25)}`
+      sEl.style.filter = `blur(${sVal * 8}px)`
       sEl.style.pointerEvents = sVal > 0.5 ? 'none' : 'auto'
     }
 
