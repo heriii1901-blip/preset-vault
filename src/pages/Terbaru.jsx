@@ -131,11 +131,15 @@ export default function Terbaru() {
     const sEl = searchRef.current
     if (sEl) {
       sEl.style.transform = `scale(${1 - sVal * 0.24}) translateY(${-sVal * 50}px)`
-      sEl.style.opacity = `${Math.max(0, 1 - sVal * 1)}`
+      
+      // Bikin variabel baru khusus efek pudar yang dilambatin
+      const lambatPudar = 1 - (sVal * sVal);
+      
+      sEl.style.opacity = `${Math.max(0, lambatPudar)}`
       sEl.style.pointerEvents = sVal > 0.8 ? 'none' : 'auto'
       
-      // Ini tambahan buat bikin blok hitamnya ikut memudar
-      sEl.parentElement.style.background = `color-mix(in srgb, var(--bg) ${Math.max(0, 1 - sVal * 1) * 100}%, transparent)`
+      // Blok hitam juga dipakein rumus yang sama
+      sEl.parentElement.style.background = `color-mix(in srgb, var(--bg) ${Math.max(0, lambatPudar) * 100}%, transparent)`
     }
 
     // Banner (area gelap + judul Terbaru) lenyap barengan, kurvanya disamain sm search bar.
