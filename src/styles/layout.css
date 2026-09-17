@@ -431,10 +431,21 @@
   z-index: 1;
 }
 
+/* Preview di halaman Ubah Wallpaper numpang pake .terbaru-banner biar rasio &
+   tampilannya sama persis kayak di Terbaru. Tapi di sini .terbaru-banner HARUS
+   diubah balik ke position: relative + ngisi penuh, soalnya .wallpaper-preview
+   bukan scroller kayak di Terbaru — kalo dibiarin position: absolute, dia bakal
+   nyari parent positioned di luar sana dan kotak previewnya collapse jadi pendek/gepeng. */
 .wallpaper-preview {
   position: relative;
   aspect-ratio: var(--terbaru-banner-ratio, 2.5 / 1);
-  background: var(--surface-2);
+  border-radius: 16px;
   overflow: hidden;
-  z-index: 0;
+  border: 1.5px solid var(--line);
+}
+.wallpaper-preview .terbaru-banner {
+  position: static;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
 }
