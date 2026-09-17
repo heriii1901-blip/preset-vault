@@ -299,7 +299,7 @@
   top: 0;
   left: 0;
   right: 0;
-  aspect-ratio: var(--terbaru-banner-ratio, 2 / 1);
+  aspect-ratio: var(--terbaru-banner-ratio, 1.5 / 1);
   background: var(--surface-2);
   overflow: hidden;
   z-index: 0;
@@ -318,7 +318,7 @@
    jadi cuma buat nutupin sudut radius sheet, bukan buat "makan" tinggi banner. */
 .terbaru-spacer {
   width: 100%;
-  aspect-ratio: var(--terbaru-banner-ratio, 2 / 1);
+  aspect-ratio: var(--terbaru-banner-ratio, 1.5 / 1);
   margin-bottom: -14px;
 }
 
