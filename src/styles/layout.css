@@ -318,7 +318,7 @@
    jadi cuma buat nutupin sudut radius sheet, bukan buat "makan" tinggi banner. */
 .terbaru-spacer {
   width: 100%;
-  aspect-ratio: 2.5 / 1;
+  aspect-ratio: var(--terbaru-banner-ratio, 2.5 / 1);
   margin-bottom: -14px;
 }
 
@@ -433,8 +433,8 @@
 
 .wallpaper-preview {
   position: relative;
-  aspect-ratio: 2.5 / 1;
-  border-radius: 16px;
+  aspect-ratio: var(--terbaru-banner-ratio, 2.5 / 1);
+  background: var(--surface-2);
   overflow: hidden;
-  border: 1px solid var(--line);
+  z-index: 0;
 }
