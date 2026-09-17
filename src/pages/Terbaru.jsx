@@ -138,7 +138,7 @@ export default function Terbaru() {
     // Banner (area gelap + judul Terbaru) lenyap barengan, kurvanya disamain sm search bar.
     const bEl = bannerRef.current
     if (bEl) {
-      bEl.style.opacity = `${Math.max(0, 1 - sVal * 1.25)}`
+      bEl.style.opacity = `${Math.max(0, 1 - sVal * 1)}`
     }
 
     const stillMoving = Math.abs(searchTarget - sVal) > 0.001
@@ -197,14 +197,15 @@ export default function Terbaru() {
   return (
     <div className="screen">
       <div className="grid-page terbaru-page">
-        <div className="terbaru-banner" ref={bannerRef}>
+        <div className="terbaru-banner"> {/* Hapus ref dari sini */}
           <img
             src={wallpaperUrl || '/terbaru-banner.jpg'}
             alt=""
             draggable={false}
             onError={(e) => { e.currentTarget.style.display = 'none' }}
           />
-          <div className="terbaru-banner-gradient" />
+          {/* Pindahkan ref ke sini supaya cuma gradien gelapnya yang berefek */}
+          <div className="terbaru-banner-gradient" ref={bannerRef} />
           <h3 className="terbaru-banner-title">Terbaru</h3>
         </div>
 
