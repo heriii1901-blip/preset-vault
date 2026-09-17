@@ -131,8 +131,8 @@ export default function Terbaru() {
     const sEl = searchRef.current
     if (sEl) {
       sEl.style.transform = `scale(${1 - sVal * 0.24}) translateY(${-sVal * 50}px)`
-      sEl.style.opacity = `${Math.max(0, 1 - sVal * 0.5)}`
-      sEl.style.pointerEvents = sVal > 0.5 ? 'none' : 'auto'
+      sEl.style.opacity = `${Math.max(0, 1 - sVal * 1)}`
+      sEl.style.pointerEvents = sVal > 0.8 ? 'none' : 'auto'
     }
 
     // Banner (area gelap + judul Terbaru) lenyap barengan, kurvanya disamain sm search bar.
