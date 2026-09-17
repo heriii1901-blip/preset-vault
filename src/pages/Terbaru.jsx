@@ -7,7 +7,7 @@ import PresetVideoCell from '../components/PresetVideoCell'
 import { resolveTiktokVideoId } from '../utils/tiktokLink'
 
 const CACHE_KEY = 'terbaru'
-const SEARCH_COLLAPSE_DISTANCE = 90
+const SEARCH_COLLAPSE_DISTANCE = 120
 const LERP_FACTOR = 0.18 // laju di ~60fps; dinormalisasi ke deltaTime di tick()
 
 function easeOutCubic(x) {
