@@ -461,15 +461,24 @@ export async function compressVideoIfNeeded(file, onProgress, onStage, signal) {
     const duration = await getVideoDuration(file)
     if (!duration || duration <= 0) throw new Error('Durasi video ngga valid')
 
+    let hwReason = 'WebCodecs gak ada di browser ini'
     if (canUseWebCodecs()) {
       try {
         return await compressWithWebCodecs(file, duration, onProgress, onStage, signal)
       } catch (err) {
         if (err?.isPolicyError || signal?.aborted) throw err
+        hwReason = err?.message || String(err)
         console.warn('WebCodecs gagal, fallback ke ffmpeg.wasm:', err)
       }
     }
-    return await compressWithFFmpeg(file, duration, onProgress, onStage, signal)
+    try {
+      return await compressWithFFmpeg(file, duration, onProgress, onStage, signal)
+    } catch (ffErr) {
+      if (ffErr?.isPolicyError || signal?.aborted) throw ffErr
+      throw policyError(
+        `Video ${(file.size / 1024 / 1024).toFixed(1)} MB gagal dikompres. WebCodecs: ${hwReason} | ffmpeg: ${ffErr?.message || String(ffErr)}`
+      )
+    }
   } catch (err) {
     if (err?.isPolicyError) throw err
     if (signal?.aborted) return file // user batalin, pemanggil yang ngurus
