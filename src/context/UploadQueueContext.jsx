@@ -34,7 +34,9 @@ function toDbRecord(item) {
     stage: item.stage,
     progress: item.progress,
     errorMessage: item.errorMessage || null,
-    previewFileBlob: item.previewFile || item.previewFileBlob || null,
+    // video mentah cuma perlu disimpen buat item yang masih bisa dilanjut/diedit (bukan 'done'),
+    // biar riwayat gak numpuk file 10-20MB per item
+    previewFileBlob: item.status === 'done' ? null : (item.previewFile || item.previewFileBlob || null),
     previewFileName: item.previewFile?.name || item.previewFileName || null,
     previewFileType: item.previewFile?.type || item.previewFileType || null,
     songMode: item.songMode,
@@ -71,7 +73,11 @@ export function UploadQueueProvider({ children }) {
     setItems((prev) => {
       const next = prev.map((it) => (it.id === id ? { ...it, ...patch, updatedAt: Date.now() } : it))
       const found = next.find((it) => it.id === id)
-      if (found) saveQueueItem(toDbRecord(found))
+      // Simpen ke IndexedDB cuma pas status berubah (bukan tiap tick progress/stage) -
+      // dulu tiap update progress nulis ulang seluruh file video (10-20MB) ke IndexedDB
+      if (found && (patch.status !== undefined || patch.errorMessage !== undefined)) {
+        saveQueueItem(toDbRecord(found))
+      }
       return next
     })
   }, [])
