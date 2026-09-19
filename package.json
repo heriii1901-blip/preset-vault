@@ -16,7 +16,7 @@
     "react-router-dom": "^6.24.0",
     "@ffmpeg/ffmpeg": "^0.12.10",
     "@ffmpeg/util": "^0.12.1",
-    "mediabunny": "^1.58.1"
+    "mediabunny": "^1.58.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
