@@ -485,7 +485,7 @@ export async function compressVideoIfNeeded(file, onProgress, onStage, signal) {
     console.error('Gagal kompres video:', err)
     // Jangan diem2 upload file mentah >5MB - tolak biar bisa dicoba lagi
     throw policyError(
-      `Video ${(file.size / 1024 / 1024).toFixed(1)} MB gagal dikompres (jaringan/compressor). Coba lagi.`
+      `Video ${(file.size / 1024 / 1024).toFixed(1)} MB gagal dikompres: ${err?.message || String(err)}`
     )
   }
 }
