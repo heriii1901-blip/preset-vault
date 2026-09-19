@@ -200,7 +200,13 @@ const MAX_SIZE_BYTES = 5 * 1024 * 1024 // Target akhir kalau kena kompres (dulu 
 const HARD_LIMIT_BYTES = 5.5 * 1024 * 1024 // Toleransi nyelos 0.5MB, lebih dari ini DITOLAK (isi 5 * 1024 * 1024 kalau mau ketat)
 const AUDIO_BITRATE_KBPS = 64
 const MIN_VIDEO_BITRATE_KBPS = 350 // dulu 150 - kegedean turunnya buat konten gerak cepet, jadi pecah/blocky
-const SAFETY_MARGIN = 0.88 // dulu 0.92 - dilebarin biar percobaan pertama jarang kegedean (tiap ngulang = encode ulang penuh)
+const SAFETY_MARGIN = 0.88 // jalur ffmpeg.wasm (dulu 0.92) - biar percobaan pertama jarang kegedean
+const HW_SAFETY_MARGIN = 0.85 // jalur WebCodecs - encoder hardware suka meleset dari bitrate target, jadi lebih longgar
+const RESOLUTION_STEPS = [1280, 960, 720, 540] // sisi terpanjang (px)
+const MAX_ATTEMPTS = 5 // jalur ffmpeg.wasm
+const FFMPEG_ATTEMPT_SHARES = [0.6, 0.2, 0.1, 0.05, 0.05] // jatah bar progress per percobaan (percobaan 1 paling gede)
+const HW_ATTEMPT_SHARES = [0.7, 0.2, 0.1] // jalur WebCodecs: maks 3 percobaan, tiap percobaan cuma hitungan detik
+const FFMPEG_EXEC_TIMEOUT_MS = 240000 // 1 percobaan ffmpeg.wasm gak boleh lebih dari 4 menit, kalo iya dianggap macet
 
 // Error yang emang disengaja (bukan bug) - pesannya aman ditampilin ke user apa adanya
 function policyError(message) {
@@ -208,12 +214,20 @@ function policyError(message) {
   err.isPolicyError = true
   return err
 }
-const RESOLUTION_STEPS = [1280, 960, 720, 540] // sisi terpanjang (px)
-const MAX_ATTEMPTS = 5
 
 // Cap sisi terpanjang (landscape: width, portrait: height), gak upscale video kecil
 function buildScaleFilter(maxDim) {
   return `if(gt(iw\\,ih)\\,min(iw\\,${maxDim})\\,-2):if(gt(iw\\,ih)\\,-2\\,min(ih\\,${maxDim}))`
+}
+
+// Mulai dari resolusi yang emang cocok buat bitrate segini, bukan selalu dari 1280.
+// Bitrate rendah di resolusi tinggi = pecah/blocky (terutama konten gerak cepet kayak jedag-jedug).
+// Turunin resolusi duluan itu jaga kualitas jauh lebih baik ketimbang maksa bitrate super rendah.
+function pickResIndex(videoBitrateKbps) {
+  if (videoBitrateKbps < 500) return 3 // 540p
+  if (videoBitrateKbps < 800) return 2 // 720p
+  if (videoBitrateKbps < 1400) return 1 // 960p
+  return 0
 }
 
 async function remuxFaststart(file, onStage, signal) {
@@ -239,6 +253,206 @@ async function remuxFaststart(file, onStage, signal) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// JALUR UTAMA: WebCodecs (encoder bawaan browser/HP, pake hardware) lewat mediabunny.
+// Jauh lebih cepet dari ffmpeg.wasm (detik, bukan menit), gak perlu download core 30MB.
+// ---------------------------------------------------------------------------
+function canUseWebCodecs() {
+  return typeof VideoEncoder !== 'undefined' && typeof VideoDecoder !== 'undefined'
+}
+
+const evenDim = (n) => Math.max(2, Math.round(n / 2) * 2)
+
+async function compressWithWebCodecs(file, duration, onProgress, onStage, signal) {
+  // Di-import pas dibutuhin aja, biar gak nambah berat bundle awal
+  const { Input, Output, Conversion, BlobSource, BufferTarget, Mp4OutputFormat, ALL_FORMATS } = await import('mediabunny')
+
+  const totalKbps = ((MAX_SIZE_BYTES * 8) / 1000 / duration) * HW_SAFETY_MARGIN
+  const startKbps = Math.max(Math.floor(totalKbps - AUDIO_BITRATE_KBPS), MIN_VIDEO_BITRATE_KBPS)
+  let videoKbps = startKbps
+  let resIndex = pickResIndex(videoKbps)
+  let resultBuffer = null
+
+  for (let attempt = 1; attempt <= HW_ATTEMPT_SHARES.length; attempt++) {
+    if (signal?.aborted) return file
+    onStage?.(attempt > 1 ? `Ngompres ulang (percobaan ${attempt})...` : 'Ngompres video...')
+
+    const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS })
+    let onAbort = null
+    try {
+      const videoTrack = await input.getPrimaryVideoTrack()
+      if (!videoTrack) throw new Error('Track video ngga ketemu')
+      const hasAudio = !!(await input.getPrimaryAudioTrack())
+
+      const srcW = videoTrack.displayWidth
+      const srcH = videoTrack.displayHeight
+      const scale = Math.min(1, RESOLUTION_STEPS[resIndex] / Math.max(srcW, srcH))
+
+      const output = new Output({
+        format: new Mp4OutputFormat({ fastStart: 'in-memory' }), // moov di depan = langsung bisa di-stream, gak perlu remux lagi
+        target: new BufferTarget(),
+      })
+      const conversion = await Conversion.init({
+        input,
+        output,
+        tracks: 'primary',
+        video: { width: evenDim(srcW * scale), height: evenDim(srcH * scale), fit: 'fill', codec: 'avc', bitrate: videoKbps * 1000 },
+        audio: { codec: 'aac', bitrate: AUDIO_BITRATE_KBPS * 1000 },
+      })
+      if (!conversion.isValid) throw new Error('Browser ini gak bisa encode video ini lewat WebCodecs')
+      // Preset ini sound-first: jangan sampe hasilnya diem2 bisu gara2 encoder audio gak ada
+      if (hasAudio && conversion.discardedTracks.some((d) => d.track.isAudioTrack() && d.reason !== 'discarded_by_user')) {
+        throw new Error('Encoder audio gak tersedia di browser ini')
+      }
+
+      const base = HW_ATTEMPT_SHARES.slice(0, attempt - 1).reduce((a, b) => a + b, 0)
+      const share = HW_ATTEMPT_SHARES[attempt - 1]
+      conversion.onProgress = (p) => onProgress?.(Math.min(base + Math.max(0, Math.min(p, 1)) * share, 1))
+
+      onAbort = () => { conversion.cancel().catch(() => {}) }
+      if (signal) {
+        if (signal.aborted) return file
+        signal.addEventListener('abort', onAbort)
+      }
+
+      try {
+        await conversion.execute()
+      } catch (err) {
+        if (signal?.aborted) return file // user batalin, pemanggil yang ngurus
+        throw err
+      }
+
+      resultBuffer = output.target.buffer
+      if (!resultBuffer) throw new Error('Hasil kompres kosong')
+    } finally {
+      if (onAbort) signal?.removeEventListener('abort', onAbort)
+      input.dispose()
+    }
+
+    if (resultBuffer.byteLength <= MAX_SIZE_BYTES) break
+
+    // Masih kegedean: turunin bitrate proporsional sama seberapa kegedean-nya (encoder hardware murah, ulang aja)
+    if (videoKbps > MIN_VIDEO_BITRATE_KBPS) {
+      const ratio = (MAX_SIZE_BYTES * 0.93) / resultBuffer.byteLength
+      videoKbps = Math.max(Math.floor(videoKbps * Math.min(ratio, 0.95)), MIN_VIDEO_BITRATE_KBPS)
+    } else if (resIndex < RESOLUTION_STEPS.length - 1) {
+      resIndex++
+      videoKbps = startKbps
+    } else {
+      break
+    }
+  }
+
+  if (!resultBuffer) throw new Error('Hasil kompres kosong')
+  if (resultBuffer.byteLength > HARD_LIMIT_BYTES) {
+    throw policyError(
+      `Hasil kompres masih ${(resultBuffer.byteLength / 1024 / 1024).toFixed(1)} MB (maks 5 MB). Coba video yang lebih pendek.`
+    )
+  }
+  if (resultBuffer.byteLength >= file.size) return file
+  return new File([resultBuffer], file.name.replace(/\.\w+$/, '.mp4'), { type: 'video/mp4' })
+}
+
+// ---------------------------------------------------------------------------
+// JALUR CADANGAN: ffmpeg.wasm - dipake cuma kalo browser gak support WebCodecs
+// atau encoder-nya gagal. Lambat (menit di HP), tapi jalan di mana-mana.
+// ---------------------------------------------------------------------------
+async function compressWithFFmpeg(file, duration, onProgress, onStage, signal) {
+  const targetTotalKbps = (MAX_SIZE_BYTES * 8) / 1000 / duration * SAFETY_MARGIN
+  let videoBitrateKbps = Math.floor(targetTotalKbps - AUDIO_BITRATE_KBPS)
+  if (videoBitrateKbps < MIN_VIDEO_BITRATE_KBPS) videoBitrateKbps = MIN_VIDEO_BITRATE_KBPS
+
+  onStage?.('Nyiapin compressor...')
+  // Progress asli dari ffmpeg (0-1) itu progress SATU exec/percobaan doang, dan reset
+  // ke 0 tiap percobaan baru mulai. Biar persen gak keliatan mundur pas retry, tiap percobaan
+  // dijatah porsi tertentu dari total (percobaan 1 paling gede), dan progress gapernah dibolehin turun.
+  let peakProgress = 0
+  let currentAttempt = 1
+  const ffmpeg = await getFFmpeg(
+    (p) => {
+      const share = FFMPEG_ATTEMPT_SHARES[currentAttempt - 1] ?? 0
+      const base = FFMPEG_ATTEMPT_SHARES.slice(0, currentAttempt - 1).reduce((a, b) => a + b, 0)
+      const val = base + Math.max(0, Math.min(p, 1)) * share
+      if (val > peakProgress) {
+        peakProgress = val
+        onProgress?.(val)
+      }
+    },
+    (dlP) => {
+      onStage?.(`Download compressor (${Math.round(dlP * 100)}%)...`)
+    },
+    signal
+  )
+  const inputName = 'input' + (file.name.match(/\.\w+$/)?.[0] || '.mp4')
+  const outputName = 'output.mp4'
+  await ffmpeg.writeFile(inputName, await fetchFile(file))
+
+  let compressedBlob = null
+  let currentBitrateKbps = videoBitrateKbps
+  let resIndex = pickResIndex(currentBitrateKbps)
+  let attempt = 0
+
+  while (attempt < MAX_ATTEMPTS) {
+    attempt++
+    currentAttempt = attempt
+    onStage?.(attempt > 1 ? `Ngompres ulang (percobaan ${attempt})...` : 'Ngompres video...')
+    const maxDim = RESOLUTION_STEPS[resIndex]
+    try {
+      await raceWithAbort(
+        ffmpeg.exec([
+          '-i', inputName,
+          '-vf', `scale=${buildScaleFilter(maxDim)}`,
+          '-c:v', 'libx264',
+          '-b:v', `${currentBitrateKbps}k`,
+          '-maxrate', `${Math.floor(currentBitrateKbps * 1.15)}k`,
+          '-bufsize', `${currentBitrateKbps * 2}k`,
+          '-preset', 'ultrafast', // dites: ~2x lebih cepet dari veryfast, hasil ukuran hampir sama
+          '-c:a', 'aac',
+          '-b:a', `${AUDIO_BITRATE_KBPS}k`,
+          '-movflags', '+faststart',
+          outputName,
+        ]),
+        FFMPEG_EXEC_TIMEOUT_MS,
+        signal,
+        'Compressor macet (kelamaan ngompres)'
+      )
+    } catch (err) {
+      terminateFFmpeg() // exec gak bisa dibatalin baik2, satu2nya cara ngehentiin ya matiin worker-nya
+      throw err
+    }
+
+    const data = await ffmpeg.readFile(outputName)
+    compressedBlob = new Blob([data.buffer], { type: 'video/mp4' })
+
+    if (compressedBlob.size <= MAX_SIZE_BYTES) break
+
+    if (currentBitrateKbps > MIN_VIDEO_BITRATE_KBPS) {
+      // Masih kegedean → turunin bitrate proporsional sama seberapa kegedean-nya (bukan asal x0.7)
+      const ratio = (MAX_SIZE_BYTES * 0.93) / compressedBlob.size
+      currentBitrateKbps = Math.max(Math.floor(currentBitrateKbps * Math.min(ratio, 0.95)), MIN_VIDEO_BITRATE_KBPS)
+    } else if (resIndex < RESOLUTION_STEPS.length - 1) {
+      // Bitrate udah mentok di floor tapi masih kegedean → turunin resolusi, reset bitrate ke target awal
+      resIndex++
+      currentBitrateKbps = videoBitrateKbps
+    } else {
+      // Udah di resolusi & bitrate paling minimal (540p) → stop, jangan dipaksa lagi
+      break
+    }
+  }
+
+  await ffmpeg.deleteFile(inputName)
+  await ffmpeg.deleteFile(outputName)
+
+  if (!compressedBlob) throw new Error('Hasil kompres kosong')
+  if (compressedBlob.size > HARD_LIMIT_BYTES) {
+    throw policyError(
+      `Hasil kompres masih ${(compressedBlob.size / 1024 / 1024).toFixed(1)} MB (maks 5 MB). Coba video yang lebih pendek.`
+    )
+  }
+  if (compressedBlob.size >= file.size) return file
+  return new File([compressedBlob], file.name.replace(/\.\w+$/, '.mp4'), { type: 'video/mp4' })
+}
+
 export async function compressVideoIfNeeded(file, onProgress, onStage, signal) {
   if (!file) return file
   if (file.size <= SKIP_COMPRESS_BYTES) return remuxFaststart(file, onStage, signal)
@@ -247,97 +461,15 @@ export async function compressVideoIfNeeded(file, onProgress, onStage, signal) {
     const duration = await getVideoDuration(file)
     if (!duration || duration <= 0) throw new Error('Durasi video ngga valid')
 
-    const targetTotalKbps = (MAX_SIZE_BYTES * 8) / 1000 / duration * SAFETY_MARGIN
-    let videoBitrateKbps = Math.floor(targetTotalKbps - AUDIO_BITRATE_KBPS)
-    if (videoBitrateKbps < MIN_VIDEO_BITRATE_KBPS) videoBitrateKbps = MIN_VIDEO_BITRATE_KBPS
-
-    onStage?.('Nyiapin compressor...')
-    // Progress asli dari ffmpeg (0-1) itu progress SATU exec/percobaan doang, dan reset
-    // ke 0 tiap percobaan baru mulai (kalo hasil kompres masih kegedean & diulang lagi).
-    // Kalo dikirim mentah-mentah ke UI, persen keliatan mundur pas retry. Makanya di sini
-    // tiap percobaan dijatah 1/MAX_ATTEMPTS dari total, dan progress gapernah dibolehin turun.
-    let peakProgress = 0
-    let currentAttempt = 1
-    const ffmpeg = await getFFmpeg(
-      (p) => {
-        const attemptShare = 1 / MAX_ATTEMPTS
-        const base = (currentAttempt - 1) * attemptShare
-        const val = base + Math.max(0, Math.min(p, 1)) * attemptShare
-        if (val > peakProgress) {
-          peakProgress = val
-          onProgress?.(val)
-        }
-      },
-      (dlP) => {
-        onStage?.(`Download compressor (${Math.round(dlP * 100)}%)...`)
-      },
-      signal
-    )
-    const inputName = 'input' + (file.name.match(/\.\w+$/)?.[0] || '.mp4')
-    const outputName = 'output.mp4'
-    await ffmpeg.writeFile(inputName, await fetchFile(file))
-
-    let compressedBlob = null
-    let currentBitrateKbps = videoBitrateKbps
-
-    // Mulai dari resolusi yang emang cocok buat bitrate segini, bukan selalu dari 1280.
-    // Bitrate rendah di resolusi tinggi = pecah/blocky (terutama konten gerak cepet kayak jedag-jedug).
-    // Turunin resolusi duluan itu jaga kualitas jauh lebih baik ketimbang maksa bitrate super rendah.
-    let resIndex = 0
-    if (currentBitrateKbps < 500) resIndex = 3      // 540p
-    else if (currentBitrateKbps < 800) resIndex = 2 // 720p
-    else if (currentBitrateKbps < 1400) resIndex = 1 // 960p
-    let attempt = 0
-
-    while (attempt < MAX_ATTEMPTS) {
-      attempt++
-      currentAttempt = attempt
-      onStage?.(attempt > 1 ? `Ngompres ulang (percobaan ${attempt})...` : 'Ngompres video...')
-      const maxDim = RESOLUTION_STEPS[resIndex]
-      await ffmpeg.exec([
-        '-i', inputName,
-        '-vf', `scale=${buildScaleFilter(maxDim)}`,
-        '-c:v', 'libx264',
-        '-b:v', `${currentBitrateKbps}k`,
-        '-maxrate', `${Math.floor(currentBitrateKbps * 1.15)}k`,
-        '-bufsize', `${currentBitrateKbps * 2}k`,
-        '-preset', 'veryfast',
-        '-c:a', 'aac',
-        '-b:a', `${AUDIO_BITRATE_KBPS}k`,
-        '-movflags', '+faststart',
-        outputName,
-      ])
-
-      const data = await ffmpeg.readFile(outputName)
-      compressedBlob = new Blob([data.buffer], { type: 'video/mp4' })
-
-      if (compressedBlob.size <= MAX_SIZE_BYTES) break
-
-      if (currentBitrateKbps > MIN_VIDEO_BITRATE_KBPS) {
-        // Masih kegedean → turunin bitrate dulu di resolusi yang sama
-        // Proporsional sama seberapa kegedean hasilnya (bukan asal x0.7) - biasanya cukup 1x ulang
-        const ratio = (MAX_SIZE_BYTES * 0.93) / compressedBlob.size
-        currentBitrateKbps = Math.max(Math.floor(currentBitrateKbps * Math.min(ratio, 0.95)), MIN_VIDEO_BITRATE_KBPS)
-      } else if (resIndex < RESOLUTION_STEPS.length - 1) {
-        // Bitrate udah mentok di floor tapi masih kegedean → turunin resolusi, reset bitrate ke target awal
-        resIndex++
-        currentBitrateKbps = videoBitrateKbps
-      } else {
-        // Udah di resolusi & bitrate paling minimal (540p) → stop, jangan dipaksa lagi
-        break
+    if (canUseWebCodecs()) {
+      try {
+        return await compressWithWebCodecs(file, duration, onProgress, onStage, signal)
+      } catch (err) {
+        if (err?.isPolicyError || signal?.aborted) throw err
+        console.warn('WebCodecs gagal, fallback ke ffmpeg.wasm:', err)
       }
     }
-
-    await ffmpeg.deleteFile(inputName)
-    await ffmpeg.deleteFile(outputName)
-
-    if (!compressedBlob || compressedBlob.size >= file.size) return file
-    if (compressedBlob.size > HARD_LIMIT_BYTES) {
-      throw policyError(
-        `Hasil kompres masih ${(compressedBlob.size / 1024 / 1024).toFixed(1)} MB (maks 5 MB). Coba video yang lebih pendek.`
-      )
-    }
-    return new File([compressedBlob], file.name.replace(/\.\w+$/, '.mp4'), { type: 'video/mp4' })
+    return await compressWithFFmpeg(file, duration, onProgress, onStage, signal)
   } catch (err) {
     if (err?.isPolicyError) throw err
     if (signal?.aborted) return file // user batalin, pemanggil yang ngurus
