@@ -196,10 +196,18 @@ function getVideoDuration(file) {
 }
 
 const SKIP_COMPRESS_BYTES = 5 * 1024 * 1024 // Di bawah ini, auto post tanpa kompres sama sekali
-const MAX_SIZE_BYTES = 6 * 1024 * 1024 // Target akhir kalau kena kompres
+const MAX_SIZE_BYTES = 5 * 1024 * 1024 // Target akhir kalau kena kompres (dulu 6MB)
+const HARD_LIMIT_BYTES = 5.5 * 1024 * 1024 // Toleransi nyelos 0.5MB, lebih dari ini DITOLAK (isi 5 * 1024 * 1024 kalau mau ketat)
 const AUDIO_BITRATE_KBPS = 64
 const MIN_VIDEO_BITRATE_KBPS = 350 // dulu 150 - kegedean turunnya buat konten gerak cepet, jadi pecah/blocky
-const SAFETY_MARGIN = 0.92
+const SAFETY_MARGIN = 0.88 // dulu 0.92 - dilebarin biar percobaan pertama jarang kegedean (tiap ngulang = encode ulang penuh)
+
+// Error yang emang disengaja (bukan bug) - pesannya aman ditampilin ke user apa adanya
+function policyError(message) {
+  const err = new Error(message)
+  err.isPolicyError = true
+  return err
+}
 const RESOLUTION_STEPS = [1280, 960, 720, 540] // sisi terpanjang (px)
 const MAX_ATTEMPTS = 5
 
@@ -307,7 +315,9 @@ export async function compressVideoIfNeeded(file, onProgress, onStage, signal) {
 
       if (currentBitrateKbps > MIN_VIDEO_BITRATE_KBPS) {
         // Masih kegedean → turunin bitrate dulu di resolusi yang sama
-        currentBitrateKbps = Math.max(Math.floor(currentBitrateKbps * 0.7), MIN_VIDEO_BITRATE_KBPS)
+        // Proporsional sama seberapa kegedean hasilnya (bukan asal x0.7) - biasanya cukup 1x ulang
+        const ratio = (MAX_SIZE_BYTES * 0.93) / compressedBlob.size
+        currentBitrateKbps = Math.max(Math.floor(currentBitrateKbps * Math.min(ratio, 0.95)), MIN_VIDEO_BITRATE_KBPS)
       } else if (resIndex < RESOLUTION_STEPS.length - 1) {
         // Bitrate udah mentok di floor tapi masih kegedean → turunin resolusi, reset bitrate ke target awal
         resIndex++
@@ -322,9 +332,19 @@ export async function compressVideoIfNeeded(file, onProgress, onStage, signal) {
     await ffmpeg.deleteFile(outputName)
 
     if (!compressedBlob || compressedBlob.size >= file.size) return file
+    if (compressedBlob.size > HARD_LIMIT_BYTES) {
+      throw policyError(
+        `Hasil kompres masih ${(compressedBlob.size / 1024 / 1024).toFixed(1)} MB (maks 5 MB). Coba video yang lebih pendek.`
+      )
+    }
     return new File([compressedBlob], file.name.replace(/\.\w+$/, '.mp4'), { type: 'video/mp4' })
   } catch (err) {
-    console.error('Gagal kompres video, pake file asli:', err)
-    return file
+    if (err?.isPolicyError) throw err
+    if (signal?.aborted) return file // user batalin, pemanggil yang ngurus
+    console.error('Gagal kompres video:', err)
+    // Jangan diem2 upload file mentah >5MB - tolak biar bisa dicoba lagi
+    throw policyError(
+      `Video ${(file.size / 1024 / 1024).toFixed(1)} MB gagal dikompres (jaringan/compressor). Coba lagi.`
+    )
   }
 }
