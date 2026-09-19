@@ -424,7 +424,11 @@ export default function AdminAddPreset() {
       }
     } catch (err) {
       console.error('Gagal simpen preset:', err)
-      setStatusMsg(isEditMode ? '❌ Gagal update. Cek koneksi / setting Supabase.' : '❌ Gagal simpen. Cek koneksi / setting Supabase.')
+      setStatusMsg(
+        err?.isPolicyError
+          ? `❌ ${err.message}`
+          : isEditMode ? '❌ Gagal update. Cek koneksi / setting Supabase.' : '❌ Gagal simpen. Cek koneksi / setting Supabase.'
+      )
     } finally {
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current)
       setSaving(false)
