@@ -17,6 +17,39 @@ const CATEGORY_LABEL = {
   lainnya: 'Lainnya',
 }
 
+const FAB_ACTIONS = [
+  {
+    label: 'Tambah Efek',
+    to: '/efek/tambah',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3l2 5.4 5.4 2-5.4 2-2 5.4-2-5.4-5.4-2 5.4-2 2-5.4z" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Tambah Preset',
+    to: '/admin/tambah-preset',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Kelola Preset',
+    to: '/admin/kelola-preset',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="4" y1="7" x2="20" y2="7" />
+        <line x1="4" y1="12" x2="20" y2="12" />
+        <line x1="4" y1="17" x2="14" y2="17" />
+      </svg>
+    ),
+  },
+]
+
 export default function EfekGrid() {
   const navigate = useNavigate()
   const { isAdmin } = useAuth()
@@ -24,7 +57,8 @@ export default function EfekGrid() {
   const cached = getCache(CACHE_KEY)
   const [categories, setCategories] = useState(cached?.data || [])
   const [loading, setLoading] = useState(!cached)
-
+  const [fabOpen, setFabOpen] = useState(false)
+  
   useEffect(() => {
     async function loadCategories() {
       if (!getCache(CACHE_KEY)) setLoading(true)
@@ -98,14 +132,42 @@ export default function EfekGrid() {
       </div>
 
       {isAdmin && (
-        <button
-          type="button"
-          className="efek-fab"
-          onClick={() => navigate('/efek/tambah')}
-          aria-label="Tambah Efek"
-        >
-          +
-        </button>
+        <>
+          <div
+            className={`efek-fab-backdrop${fabOpen ? ' is-open' : ''}`}
+            onClick={() => setFabOpen(false)}
+          />
+
+          <div className={`efek-fab-dial${fabOpen ? ' is-open' : ''}`}>
+            {FAB_ACTIONS.map((action, i) => (
+              <button
+                key={action.label}
+                type="button"
+                className="efek-fab-bubble"
+                style={{
+                  transitionDelay: `${(fabOpen ? FAB_ACTIONS.length - 1 - i : i) * 45}ms`,
+                }}
+                onClick={() => { setFabOpen(false); navigate(action.to) }}
+              >
+                {action.icon}
+                <span>{action.label}</span>
+              </button>
+            ))}
+
+            <button
+              type="button"
+              className={`efek-fab${fabOpen ? ' is-open' : ''}`}
+              onClick={() => setFabOpen((v) => !v)}
+              aria-label="Menu admin efek"
+              aria-expanded={fabOpen}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+          </div>
+        </>
       )}
     </div>
   )
