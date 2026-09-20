@@ -45,19 +45,6 @@ export default function Kreator({ hideHeader = false }) {
   const { isAdmin } = useAuth()
   const navigate = useNavigate()
   const { getCache, setCache } = usePresetCache()
-  const [pendingSongCount, setPendingSongCount] = useState(0)
-
-  useEffect(() => {
-    if (!isAdmin) return
-    supabase
-      .from('song_requests')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'pending')
-      .then(({ count, error }) => {
-        if (error) return console.error('Gagal ambil jumlah permintaan lagu:', error)
-        setPendingSongCount(count || 0)
-      })
-  }, [isAdmin])
 
   const cachedList = getCache(CACHE_KEY)
   const cachedRegistered = getCache(REGISTERED_CACHE_KEY)
@@ -105,7 +92,7 @@ export default function Kreator({ hideHeader = false }) {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('creator_username, account_name, avatar_url, account_font, account_bold')
+          .select('creator_username, account_name, avatar_url, account_font, account_bold, creator_since')
           .eq('is_creator', true)
         if (error) throw error
         const map = {}
@@ -148,9 +135,26 @@ export default function Kreator({ hideHeader = false }) {
   const [searchTerm, setSearchTerm] = useState('')
 
   const adminKey = adminProfile?.creator_username || null
-  const otherCreatorsAll = adminKey
-    ? creatorList.filter((c) => c.creator_username !== adminKey)
-    : creatorList
+
+  // Urutan daftar kreator:
+  // 1) admin (di-pin paling atas, dirender terpisah di bawah)
+  // 2) kreator terdaftar (udah di-approve), yang paling LAMA diterima di atas, yang baru daftar di bawah
+  // 3) akun yang cuma muncul dari preset tapi belum daftar kreator (urutan lama: preset terbaru dulu)
+  const registeredList = Object.values(registeredMap)
+    .filter((p) => p.creator_username && p.creator_username !== adminKey)
+    .sort((a, b) => {
+      const ta = a.creator_since ? new Date(a.creator_since).getTime() : Infinity
+      const tb = b.creator_since ? new Date(b.creator_since).getTime() : Infinity
+      return ta === tb ? 0 : ta < tb ? -1 : 1
+    })
+  const unregisteredList = creatorList.filter(
+    (c) => c.creator_username !== adminKey && !registeredMap[c.creator_username]
+  )
+  const otherCreatorsAll = [
+    ...registeredList.map((p) => ({ creator_username: p.creator_username })),
+    ...unregisteredList,
+  ]
+  
   const adminDisplayName = adminProfile?.account_name || adminKey || adminProfile?.username || 'Admin'
   const adminAvatar = adminProfile?.avatar_url || null
 
@@ -245,17 +249,6 @@ export default function Kreator({ hideHeader = false }) {
           </>
         )}
       </div>
-
-      {isAdmin && (
-        <div className="admin-shortcut-row" style={{ padding: '0 20px 10px', marginTop: 14 }}>
-          <button className="admin-shortcut" onClick={() => navigate('/admin/kreator-pengajuan')}>
-            Review Pengajuan
-          </button>
-          <button className="admin-shortcut" onClick={() => navigate('/admin/song-requests')}>
-            Request Lagu{pendingSongCount > 0 ? ` (${pendingSongCount})` : ''}
-          </button>
-        </div>
-      )}
     </div>
   )
 }
