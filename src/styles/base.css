@@ -24,6 +24,20 @@
   --terbaru-banner-ratio: 2.15 / 1;
 }
 
+:root[data-theme='dark'] { color-scheme: dark; }
+
+/* Mode cerah: cukup nimpa variable warna, semua komponen udah pake var() */
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #F5F4FA;
+  --surface: #FFFFFF;
+  --surface-2: #EDEBF4;
+  --text: #16151C;
+  --muted: #6B6A7B;
+  --line: #D3D1DE;
+  --card-bg: rgba(22, 21, 28, 0.05);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
