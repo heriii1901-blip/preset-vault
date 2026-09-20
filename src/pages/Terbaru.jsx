@@ -165,6 +165,21 @@ export default function Terbaru() {
     }
   }
 
+  // Tombol papan klip: tempel teks dari clipboard ke kolom (kayak Ctrl+V)
+  async function handlePaste() {
+    try {
+      const text = await navigator.clipboard.readText()
+      if (!text || !text.trim()) {
+        setSearchStatus({ type: 'empty', text: 'Clipboard kosong, salin link TikTok dulu.' })
+        return
+      }
+      setLinkQuery(text.trim())
+      setSearchStatus(null)
+    } catch {
+      setSearchStatus({ type: 'error', text: 'Gak bisa baca clipboard, tempel manual aja ya.' })
+    }
+  }
+
   async function handleSearchByLink() {
     const raw = linkQuery.trim()
     if (!raw) {
@@ -235,15 +250,26 @@ export default function Terbaru() {
                 />
                 <button
                   type="button"
+                  className="terbaru-paste-btn"
+                  onClick={handlePaste}
+                  aria-label="Tempel dari clipboard"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20">
+                    <path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z" />
+                    <rect x="6" y="6" width="12" height="15" rx="2" />
+                    <path d="M9 12h6M9 16h4" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
                   className="terbaru-search-btn"
                   onClick={handleSearchByLink}
                   disabled={searching}
                   aria-label="Cari preset dari link"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
-                    <path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z" />
-                    <rect x="6" y="6" width="12" height="15" rx="2" />
-                    <path d="M9 12h6M9 16h4" />
+                    <circle cx="11" cy="11" r="7" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
                   </svg>
                 </button>
               </div>
