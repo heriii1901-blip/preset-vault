@@ -13,7 +13,7 @@
   top: 0;
   left: 0;
   border-radius: 999px;
-  background: rgba(212, 255, 61, 0.16);
+  background: var(--accent-soft);
   opacity: 0;
   pointer-events: none;
   z-index: 0;
@@ -50,7 +50,7 @@
 }
 .icon-outline { stroke: currentColor; }
 .icon-fill {
-  stroke: var(--lime);
+  stroke: var(--accent);
   clip-path: inset(100% 0 0 0);
   transition: clip-path .85s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -278,9 +278,9 @@
   left: 0;
   bottom: -1px;
   height: 3px;
-  background: linear-gradient(90deg, var(--lime), color-mix(in srgb, var(--lime) 65%, white));
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 65%, white));
   border-radius: 100px 100px 0 0;
-  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--lime) 55%, transparent);
+  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--accent) 55%, transparent);
   pointer-events: none;
   z-index: 1;
   transition: box-shadow .2s ease;
@@ -451,3 +451,29 @@
   border: 2px solid var(--surface);
   z-index: 2;
 }
+
+/* Judul halaman seragam (Terbaru, Lagu, Efek, Kreator): posisi & ukuran sama kayak judul Terbaru */
+.page-title {
+  margin: 0;
+  padding: 14px 16px 0;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+/* Tombol tempel (papan klip) di search bar Terbaru */
+.terbaru-paste-btn {
+  flex-shrink: 0;
+  width: 40px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.terbaru-paste-btn:active { color: var(--text); }
