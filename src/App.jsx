@@ -1,6 +1,7 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { PresetCacheProvider } from './context/PresetCacheContext'
+import { AdminPendingProvider } from './context/AdminPendingContext'
 import { UploadQueueProvider } from './context/UploadQueueContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { BottomNav } from './components/BottomNav'
@@ -17,6 +18,7 @@ import EfekGrid from './pages/EfekGrid'
 import EfekKategori from './pages/EfekKategori'
 import EfekFeed from './pages/EfekFeed'
 import EfekTambah from './pages/EfekTambah'
+import AdminManageEfek from './pages/AdminManageEfek'
 import DownloadEfek from './pages/DownloadEfek'
 import PresetFeed from './pages/PresetFeed'
 import KreatorHome from './pages/KreatorHome'
@@ -41,6 +43,7 @@ export default function App() {
   return (
     <AuthProvider>
       <PresetCacheProvider>
+      <AdminPendingProvider>
       <UploadQueueProvider>
         <div className="phone-wrap">
           <div className={`phone${isFullscreenFromTerbaru ? ' phone--nav-overlay' : ''}`}>
@@ -186,6 +189,14 @@ export default function App() {
                   }
                 />
                 <Route
+                  path="/admin/kelola-efek"
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <AdminManageEfek />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/efek/:effectId"
                   element={
                     <ProtectedRoute>
@@ -258,6 +269,7 @@ export default function App() {
           </div>
         </div>
       </UploadQueueProvider>
+      </AdminPendingProvider>
       </PresetCacheProvider>
     </AuthProvider>
   )
