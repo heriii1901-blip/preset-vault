@@ -2,6 +2,7 @@ import { createContext, useContext, useRef, useState, useCallback, useEffect, us
 import { supabase } from '../supabase'
 import { resolveTiktokVideoId } from '../utils/tiktokLink'
 import { compressVideoIfNeeded, terminateFFmpeg } from '../utils/compressVideo'
+import { usePresetCache } from './PresetCacheContext'
 import { uploadToR2 } from '../utils/uploadToR2'
 import { generateCoverFromVideo } from '../utils/generateCoverFromVideo'
 import {
@@ -58,6 +59,9 @@ function toDbRecord(item) {
 }
 
 export function UploadQueueProvider({ children }) {
+  const { clearCache } = usePresetCache()
+  const clearCacheRef = useRef(clearCache)
+  clearCacheRef.current = clearCache
   const [items, setItems] = useState([])
   const itemsRef = useRef([])
   const queueRef = useRef([])
@@ -217,6 +221,8 @@ export function UploadQueueProvider({ children }) {
         .update({ preset_count: (songRow?.preset_count || 0) + 1 })
         .eq('id', songId)
 
+      // Buang cache grid profil biar video baru langsung muncul (dulu baru muncul setelah app dibuka ulang)
+      clearCacheRef.current(`own-presets:${job.creatorUsername}`)
       updateItem(job.id, { status: 'done', stage: 'Beres!', progress: 100, finishedAt: Date.now() })
     } catch (err) {
       if (cancelState.cancelled) return
