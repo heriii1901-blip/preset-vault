@@ -9,6 +9,7 @@ import { useSwipePages } from '../hooks/useSwipePages'
 import { useTabIndicator } from '../hooks/useTabIndicator'
 import PresetVideoCell from '../components/PresetVideoCell'
 import ProfileTabIcon from '../components/ProfileTabIcon'
+import AvatarViewer from '../components/AvatarViewer'
 
 const COVER_TIME = 2
 
@@ -36,6 +37,7 @@ export default function Profile() {
   const [favorites, setFavorites] = useState([])
   const [loadingFavs, setLoadingFavs] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [avatarOpen, setAvatarOpen] = useState(false)
   const isApk = isRunningAsApk()
   const activeVideoRef = useRef(null)
   
@@ -364,7 +366,7 @@ export default function Profile() {
 
         <div className="profile-header">
           {photoUrl ? (
-            <img className="avatar-img" style={{ width: 64, height: 64, minWidth: 64, minHeight: 64, aspectRatio: '1 / 1', objectFit: 'cover', flexShrink: 0 }} src={photoUrl} alt="Foto profil" />
+            <img className="avatar-img" style={{ width: 64, height: 64, minWidth: 64, minHeight: 64, aspectRatio: '1 / 1', objectFit: 'cover', flexShrink: 0, cursor: 'pointer' }} src={photoUrl} alt="Foto profil" onClick={() => setAvatarOpen(true)} />
           ) : (
             <div className="avatar" style={{ width: 64, height: 64, minWidth: 64, minHeight: 64, aspectRatio: '1 / 1', fontSize: 19, flexShrink: 0 }}>{initials}</div>
           )}
@@ -586,6 +588,8 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      <AvatarViewer open={avatarOpen} src={photoUrl} onClose={() => setAvatarOpen(false)} />
 
       <div className={`profile-menu-backdrop${menuOpen ? ' is-open' : ''}`} onClick={() => setMenuOpen(false)}>
         <div className={`profile-menu-drawer${menuOpen ? ' is-open' : ''}`} onClick={(e) => e.stopPropagation()}>
