@@ -266,3 +266,14 @@
   transform: scale(1);
 }
 
+/* Tombol kembali di full screen: panah putih tebal ala TikTok, tanpa lingkaran gelap */
+.feed-back-btn {
+  top: 10px;
+  left: 6px;
+  width: 44px;
+  height: 44px;
+  background: none;
+  color: #fff;
+  font-size: 0;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+}
