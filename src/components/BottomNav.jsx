@@ -65,7 +65,7 @@ export function BottomNav() {
   return (
     <div className="bottom-nav" ref={containerRef}>
       <div className="nav-pill" style={pillStyle} />
-      <NavLink to="/" end className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+      <NavLink to="/" end className={`nav-item${isTerbaruActive ? ' active' : ''}`}>
         <span className="nav-icon" ref={(el) => (iconRefs.current[0] = el)}>
           <svg className="icon-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 12a9 9 0 1 0 2.6-6.3" />
