@@ -43,6 +43,7 @@ export default function AdminCreatorApplications() {
         .from('profiles')
         .update({
           is_creator: true,
+          creator_since: new Date().toISOString(),
           creator_username: app.tiktok_username,
           tiktok_link: app.tiktok_link,
           account_name: app.account_name,account_font: app.account_font,
