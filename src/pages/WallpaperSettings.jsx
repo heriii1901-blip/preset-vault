@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabase'
+import { deleteFromR2 } from '../utils/deleteFromR2'
 
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
 const MAX_RAW_BYTES = 5 * 1024 * 1024
@@ -86,13 +87,7 @@ export default function WallpaperSettings() {
         .eq('id', user.id)
       if (error) throw error
 
-      if (oldUrl) {
-        fetch('/api/delete-from-r2', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: oldUrl }),
-        }).catch((err) => console.error('Gagal hapus wallpaper lama:', err))
-      }
+      if (oldUrl) deleteFromR2(oldUrl)
 
       setProfile({ wallpaper_url: url })
       setFile(null)
@@ -118,12 +113,8 @@ export default function WallpaperSettings() {
         .eq('id', user.id)
       if (error) throw error
 
-      fetch('/api/delete-from-r2', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: oldUrl }),
-      }).catch((err) => console.error('Gagal hapus wallpaper lama:', err))
-
+      deleteFromR2(oldUrl)
+      
       setProfile({ wallpaper_url: null })
       setFile(null)
       setPreview(null)
