@@ -321,6 +321,12 @@ export default function EfekFeed() {
     }
   }
 
+  // 1x tap = play/pause, 2x tap = love + animasi hati (gak bisa unlike lewat double tap)
+  const { hearts, handleTap } = useDoubleTapLike({
+    onSingleTap: togglePlayPause,
+    onLike: (id) => { if (!favoritedIds.has(id)) toggleFavorite(id) },
+  })
+
   const handleShare = async (effect) => {
     const shareUrl = `${window.location.origin}/efek/${effect.id}`
     const shareData = {
@@ -393,7 +399,7 @@ export default function EfekFeed() {
                       loop
                       playsInline
                       preload={activeId === effect.id ? 'auto' : loadedIds.has(effect.id) ? 'metadata' : 'none'}
-                      onClick={() => togglePlayPause(effect.id)}
+                      onClick={(e) => handleTap(effect.id, e)}
                       onTimeUpdate={(e) => handleTimeUpdate(effect.id, e)}
                       onError={(e) => handleVideoError(effect.id, e)}
                       onLoadedData={() => {
@@ -419,6 +425,7 @@ export default function EfekFeed() {
                   {isPaused && (
                     <div className="feed-pause-icon" onClick={() => togglePlayPause(effect.id)}>▶</div>
                   )}
+                  <LoveBurst hearts={hearts.filter((h) => h.id === effect.id)} />
 
                   <div className="feed-overlay">
                     <h4>{effect.title}</h4>
