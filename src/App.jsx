@@ -29,6 +29,7 @@ import AdminSongRequests from './pages/AdminSongRequests'
 import EditProfile from './pages/EditProfile'
 import TentangAplikasi from './pages/TentangAplikasi'
 import WallpaperSettings from './pages/WallpaperSettings'
+import Pengaturan from './pages/Pengaturan'
 
 export default function App() {
   const location = useLocation()
@@ -110,11 +111,20 @@ export default function App() {
                   }
                 />
 
-                 <Route
+                <Route
                   path="/ubah-wallpaper"
                   element={
                     <ProtectedRoute>
                       <WallpaperSettings />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/pengaturan"
+                  element={
+                    <ProtectedRoute>
+                      <Pengaturan />
                     </ProtectedRoute>
                   }
                 />
