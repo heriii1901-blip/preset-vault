@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { useAuth } from '../context/AuthContext'
+import { sortByDailyOrder } from '../utils/dailyOrder'
 
 export default function PresetFeed() {
   const { presetId } = useParams()
@@ -74,7 +75,12 @@ export default function PresetFeed() {
         const { data: allPresets, error: listErr } = await query
         if (listErr) throw listErr
 
-        setPresets(allPresets || [])
+         // Dari halaman lagu: urutan full screen HARUS sama kayak urutan grid (acak per hari, bukan urutan upload)
+        let finalList = allPresets || []
+        if (!isFromTerbaru && !isFromKreator && !isFromFavorit) {
+          finalList = sortByDailyOrder(finalList, clickedPreset.song_id)
+        }
+        setPresets(finalList)
       } catch (err) {
         console.error('Gagal ambil feed preset:', err)
       } finally {
