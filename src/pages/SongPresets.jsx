@@ -3,12 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { usePresetCache } from '../context/PresetCacheContext'
 import PresetVideoCell from '../components/PresetVideoCell'
+import { dayKeyWIB, sortByDailyOrder } from '../utils/dailyOrder'
 
 export default function SongPresets() {
   const { songId } = useParams()
   const navigate = useNavigate()
   const { getCache, setCache, clearCache } = usePresetCache()
-  const cacheKey = `song:${songId}`
+  const cacheKey = `song:${songId}:${dayKeyWIB()}`
   const cached = getCache(cacheKey)
   const [song, setSong] = useState(cached?.data?.song || null)
   const [presets, setPresets] = useState(cached?.data?.presets || [])
@@ -29,14 +30,10 @@ export default function SongPresets() {
         if (error) throw error
         setSong(songData)
 
-        // Acak urutan preset (Fisher-Yates shuffle) biar gak sesuai tanggal upload
-        const shuffled = [...(presetsData || [])]
-        for (let i = shuffled.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1))
-          ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
-        }
-        setPresets(shuffled)
-        setCache(cacheKey, { song: songData, presets: shuffled })
+        // Urutan acak tapi tetap seharian, ganti tiap jam 12 malam WIB (sama persis dgn urutan di full screen)
+        const ordered = sortByDailyOrder(presetsData || [], songId)
+        setPresets(ordered)
+        setCache(cacheKey, { song: songData, presets: ordered })
       } catch (err) {
         console.error('Gagal ambil preset lagu:', err)
       } finally {
