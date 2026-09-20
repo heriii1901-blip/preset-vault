@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { supabase } from '../supabase'
 import { applyTheme, getTheme } from '../utils/theme'
 
 const MoonIcon = (props) => (
@@ -22,13 +24,57 @@ const SunIcon = (props) => (
   </svg>
 )
 
+// Isi menu Privasi (kunci disimpan di kolom profiles.privacy)
+const PRIVACY_ITEMS = [
+  { key: 'uploads', label: 'Video diunggah' },
+  { key: 'liked_videos', label: 'Video disukai' },
+  { key: 'liked_effects', label: 'Efek disukai' },
+  { key: 'liked_songs', label: 'Lagu disukai' },
+  { key: 'followed_creators', label: 'Kreator diikuti' },
+]
+
 export default function Pengaturan() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [theme, setTheme] = useState(() => getTheme())
   const isLight = theme === 'light'
+  const [privacyOpen, setPrivacyOpen] = useState(false)
+  const [privacyLoaded, setPrivacyLoaded] = useState(false)
+  const [privacy, setPrivacy] = useState({})
 
   function toggleTheme() {
     setTheme(applyTheme(isLight ? 'dark' : 'light'))
+  }
+
+  // Data privasi baru diambil pas menu Privasi pertama kali dibuka (hemat egress)
+  useEffect(() => {
+    if (!privacyOpen || privacyLoaded || !user) return
+    let cancelled = false
+    supabase
+      .from('profiles')
+      .select('privacy')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled) return
+        if (error) console.error('Gagal ambil pengaturan privasi:', error)
+        setPrivacy(data?.privacy || {})
+        setPrivacyLoaded(true)
+      })
+    return () => { cancelled = true }
+  }, [privacyOpen, privacyLoaded, user])
+
+  async function togglePrivacy(key) {
+    if (!user) return
+    const before = privacy
+    const next = { ...privacy, [key]: !privacy[key] }
+    setPrivacy(next)
+    const { error } = await supabase.from('profiles').update({ privacy: next }).eq('id', user.id)
+    if (error) {
+      console.error('Gagal simpan privasi:', error)
+      setPrivacy(before)
+      alert('Gagal menyimpan pengaturan privasi, coba lagi.')
+    }
   }
 
   return (
@@ -47,15 +93,9 @@ export default function Pengaturan() {
           <h2>Pengaturan</h2>
         </div>
 
-        <div className="settings-group">
-          <div className="settings-group-title">Tampilan</div>
-
-          <div className="settings-row">
-            <div className="settings-row-text">
-              <h4>Mode Tampilan</h4>
-              <p>{isLight ? 'Lagi pakai mode cerah' : 'Lagi pakai mode gelap'}</p>
-            </div>
-
+        <div className="settings-list">
+          <div className="settings-item">
+            <span className="settings-title">Mode Tampilan</span>
             <button
               type="button"
               role="switch"
@@ -71,6 +111,43 @@ export default function Pengaturan() {
               </span>
             </button>
           </div>
+
+          <button
+            type="button"
+            className="settings-item settings-item--button"
+            onClick={() => setPrivacyOpen((v) => !v)}
+            aria-expanded={privacyOpen}
+          >
+            <span className="settings-title">Privasi</span>
+            <svg
+              className={`settings-chevron${privacyOpen ? ' is-open' : ''}`}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+
+          {privacyOpen && (
+            <div className="settings-sub">
+              {PRIVACY_ITEMS.map((item) => (
+                <div className="settings-subitem" key={item.key}>
+                  <span className="settings-subtitle">{item.label}</span>
+                  <button
+                    type="button"
+                    className={`settings-visibility${privacy[item.key] ? ' is-private' : ''}`}
+                    onClick={() => togglePrivacy(item.key)}
+                  >
+                    {privacy[item.key] ? 'Pribadi' : 'Publik'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
