@@ -1,5 +1,5 @@
 import { isRunningAsApk } from '../utils/isTWA'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabase'
@@ -8,6 +8,7 @@ import { creatorNameStyle } from '../utils/creatorFont'
 import { useSwipePages } from '../hooks/useSwipePages'
 import { useTabIndicator } from '../hooks/useTabIndicator'
 import PresetVideoCell from '../components/PresetVideoCell'
+import ProfileTabIcon from '../components/ProfileTabIcon'
 
 const COVER_TIME = 2
 
@@ -50,11 +51,21 @@ export default function Profile() {
   // Tab bar dipake semua akun (bukan cuma kreator) biar konsisten, dan biar
   // siap kalo nanti Favorit Efek juga ditambahin buat user biasa.
   // Postingan cuma buat kreator (yang punya preset sendiri).
-  const tabKeys = [
-  'postingan',
-  'favorit',
-  'efek',
-]
+    const tabKeys = [
+    'postingan',
+    'favorit',
+    'efek',
+    'lagu',
+    'kreator',
+  ]
+
+  const TAB_LABEL = {
+    postingan: 'Postingan',
+    favorit: 'Favorit',
+    efek: 'Efek',
+    lagu: 'Lagu',
+    kreator: 'Kreator',
+  }
   const tabCount = tabKeys.length
   const { activeIndex: activeTab, progress: tabProgress, trackStyle, scrollerRef, goTo: goToTabRaw, touchHandlers } = useSwipePages(tabCount)
   const { containerRef: tabsRef, tabRefs, indicatorStyle, getTabColor } = useTabIndicator(tabProgress, tabCount)
@@ -104,6 +115,7 @@ export default function Profile() {
             presets:preset_id (
               id,
               preview_video_url,
+              cover_url,
               creator_username,
               song_id,
               songs:song_id (name)
@@ -208,6 +220,42 @@ export default function Profile() {
 
   const goToTab = goToTabRaw
 
+  // Tab "Lagu" & "Kreator" diturunin dari daftar favorit yang UDAH ke-load,
+  // jadi murni olah data di memori — gak ada useEffect/query Supabase baru,
+  // gak nambah egress sama sekali.
+  const favSongs = useMemo(() => {
+    const map = new Map()
+    favorites.forEach((p) => {
+      if (!p?.song_id) return
+      const cur = map.get(p.song_id) || {
+        id: p.song_id,
+        name: p.songs?.name || 'Tanpa judul',
+        count: 0,
+        cover: null,
+      }
+      cur.count += 1
+      if (!cur.cover && p.cover_url) cur.cover = p.cover_url
+      map.set(p.song_id, cur)
+    })
+    return Array.from(map.values())
+  }, [favorites])
+
+  const favCreators = useMemo(() => {
+    const map = new Map()
+    favorites.forEach((p) => {
+      if (!p?.creator_username) return
+      const cur = map.get(p.creator_username) || {
+        username: p.creator_username,
+        count: 0,
+        cover: null,
+      }
+      cur.count += 1
+      if (!cur.cover && p.cover_url) cur.cover = p.cover_url
+      map.set(p.creator_username, cur)
+    })
+    return Array.from(map.values())
+  }, [favorites])
+  
   const displayName = isCreator
     ? (profile?.account_name || (creatorUsername ? `@${creatorUsername}` : fallbackName))
     : (profile?.username || fallbackName)
@@ -307,8 +355,10 @@ export default function Profile() {
                 className={`profile-tab${activeTab === i ? ' is-active' : ''}`}
                 style={{ color: getTabColor(i) }}
                 onClick={() => goToTab(i)}
+                aria-label={TAB_LABEL[key]}
+                title={TAB_LABEL[key]}
               >
-                {key === 'postingan' ? 'Postingan' : key === 'favorit' ? 'Favorit' : 'Efek'}
+                <ProfileTabIcon name={key} active={activeTab === i} />
               </button>
             ))}
           </div>
@@ -364,6 +414,62 @@ export default function Profile() {
                               <div className="grid-fallback">🎬</div>
                             )}
                             <div className="grid-cell-overlay">{effect.title}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {key === 'lagu' && (
+                  <>
+                    {loadingFavs && <div className="empty-state">Memuat...</div>}
+                    {!loadingFavs && favSongs.length === 0 && (
+                      <div className="empty-state">
+                        Belum ada lagu di sini. Favoritin preset dulu, lagunya bakal otomatis kekumpul di tab ini.
+                      </div>
+                    )}
+                    {!loadingFavs && favSongs.length > 0 && (
+                      <div className="profile-row-list">
+                        {favSongs.map((song) => (
+                          <div className="song-row" key={song.id} onClick={() => navigate(`/lagu/${song.id}`)}>
+                            <div className="song-thumb">
+                              {song.cover ? <img src={song.cover} alt="" draggable={false} /> : '🎵'}
+                            </div>
+                            <div className="song-text">
+                              <h4>{song.name}</h4>
+                              <div className="song-meta-row">{song.count} preset difavoritin</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {key === 'kreator' && (
+                  <>
+                    {loadingFavs && <div className="empty-state">Memuat...</div>}
+                    {!loadingFavs && favCreators.length === 0 && (
+                      <div className="empty-state">
+                        Belum ada kreator di sini. Favoritin preset dulu, kreatornya bakal otomatis kekumpul di tab ini.
+                      </div>
+                    )}
+                    {!loadingFavs && favCreators.length > 0 && (
+                      <div className="profile-row-list">
+                        {favCreators.map((kreator) => (
+                          <div
+                            className="song-row"
+                            key={kreator.username}
+                            onClick={() => navigate(`/kreator/${kreator.username}`)}
+                          >
+                            <div className="song-thumb" style={{ borderRadius: '50%' }}>
+                              {kreator.cover ? <img src={kreator.cover} alt="" draggable={false} /> : '👤'}
+                            </div>
+                            <div className="song-text">
+                              <h4>@{kreator.username}</h4>
+                              <div className="song-meta-row">{kreator.count} preset difavoritin</div>
+                            </div>
                           </div>
                         ))}
                       </div>
