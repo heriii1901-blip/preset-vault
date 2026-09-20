@@ -275,6 +275,7 @@ export default function Home() {
             </div>
           ))}
         </div>
+      </div>
 
       {selectionMode && (
         <div className="selection-bar">
