@@ -165,11 +165,8 @@ export default function EfekGrid() {
 
   return (
     <div className="screen">
+      <h1 className="page-title">Efek</h1>
       <div className="list-content">
-        <div className="list-header">
-          <div className="eyebrow">EFEK</div>
-          <h1 className="home-tagline">Efek Alight Motion siap pakai</h1>
-        </div>
 
         <div className="song-list">
           {loading && <div className="empty-state">Memuat...</div>}
