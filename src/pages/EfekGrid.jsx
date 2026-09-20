@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { usePresetCache } from '../context/PresetCacheContext'
 import { useAuth } from '../context/AuthContext'
+import { useAdminPending } from '../context/AdminPendingContext'
 
 const CACHE_KEY = 'efek-grid'
 
@@ -17,23 +18,56 @@ const CATEGORY_LABEL = {
   lainnya: 'Lainnya',
 }
 
+const iconProps = {
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 2,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+}
+
+// Urutan dari ATAS ke BAWAH. Yang paling sering dipake ditaro paling bawah (paling deket tombol +).
+// badge = angka merah antrian yang nunggu keputusan admin.
 const FAB_ACTIONS = [
   {
-    label: 'Tambah Efek',
-    to: '/efek/tambah',
+    label: 'Request Lagu',
+    to: '/admin/song-requests',
+    badge: 'songCount',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 3l2 5.4 5.4 2-5.4 2-2 5.4-2-5.4-5.4-2 5.4-2 2-5.4z" />
+      <svg {...iconProps}>
+        <path d="M9 18V5l12-2v13" />
+        <circle cx="6" cy="18" r="3" />
+        <circle cx="18" cy="16" r="3" />
       </svg>
     ),
   },
   {
-    label: 'Tambah Preset',
-    to: '/admin/tambah-preset',
+    label: 'Review Pengajuan',
+    to: '/admin/kreator-pengajuan',
+    badge: 'applicationCount',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="12" y1="5" x2="12" y2="19" />
-        <line x1="5" y1="12" x2="19" y2="12" />
+      <svg {...iconProps}>
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <polyline points="16 11 18 13 22 9" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Kelola Efek',
+    to: '/admin/kelola-efek',
+    icon: (
+      <svg {...iconProps}>
+        <line x1="4" y1="21" x2="4" y2="14" />
+        <line x1="4" y1="10" x2="4" y2="3" />
+        <line x1="12" y1="21" x2="12" y2="12" />
+        <line x1="12" y1="8" x2="12" y2="3" />
+        <line x1="20" y1="21" x2="20" y2="16" />
+        <line x1="20" y1="12" x2="20" y2="3" />
+        <line x1="1" y1="14" x2="7" y2="14" />
+        <line x1="9" y1="8" x2="15" y2="8" />
+        <line x1="17" y1="16" x2="23" y2="16" />
       </svg>
     ),
   },
@@ -41,10 +75,29 @@ const FAB_ACTIONS = [
     label: 'Kelola Preset',
     to: '/admin/kelola-preset',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg {...iconProps}>
         <line x1="4" y1="7" x2="20" y2="7" />
         <line x1="4" y1="12" x2="20" y2="12" />
         <line x1="4" y1="17" x2="14" y2="17" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Tambah Preset',
+    to: '/admin/tambah-preset',
+    icon: (
+      <svg {...iconProps}>
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Tambah Efek',
+    to: '/efek/tambah',
+    icon: (
+      <svg {...iconProps}>
+        <path d="M12 3l2 5.4 5.4 2-5.4 2-2 5.4-2-5.4-5.4-2 5.4-2 2-5.4z" />
       </svg>
     ),
   },
@@ -53,12 +106,13 @@ const FAB_ACTIONS = [
 export default function EfekGrid() {
   const navigate = useNavigate()
   const { isAdmin } = useAuth()
+  const pending = useAdminPending()
   const { getCache, setCache } = usePresetCache()
   const cached = getCache(CACHE_KEY)
   const [categories, setCategories] = useState(cached?.data || [])
   const [loading, setLoading] = useState(!cached)
   const [fabOpen, setFabOpen] = useState(false)
-  
+
   useEffect(() => {
     async function loadCategories() {
       if (!getCache(CACHE_KEY)) setLoading(true)
@@ -139,20 +193,24 @@ export default function EfekGrid() {
           />
 
           <div className={`efek-fab-dial${fabOpen ? ' is-open' : ''}`}>
-            {FAB_ACTIONS.map((action, i) => (
-              <button
-                key={action.label}
-                type="button"
-                className="efek-fab-bubble"
-                style={{
-                  transitionDelay: `${(fabOpen ? FAB_ACTIONS.length - 1 - i : i) * 45}ms`,
-                }}
-                onClick={() => { setFabOpen(false); navigate(action.to) }}
-              >
-                {action.icon}
-                <span>{action.label}</span>
-              </button>
-            ))}
+            {FAB_ACTIONS.map((action, i) => {
+              const count = action.badge ? pending[action.badge] : 0
+              return (
+                <button
+                  key={action.label}
+                  type="button"
+                  className="efek-fab-bubble"
+                  style={{
+                    transitionDelay: `${(fabOpen ? FAB_ACTIONS.length - 1 - i : i) * 45}ms`,
+                  }}
+                  onClick={() => { setFabOpen(false); navigate(action.to) }}
+                >
+                  {action.icon}
+                  <span>{action.label}</span>
+                  {count > 0 && <span className="efek-fab-badge">{count}</span>}
+                </button>
+              )
+            })}
 
             <button
               type="button"
@@ -165,6 +223,7 @@ export default function EfekGrid() {
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
+              {pending.total > 0 && <span className="efek-fab-dot" />}
             </button>
           </div>
         </>
