@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { usePresetCache } from '../context/PresetCacheContext'
+import { deleteFromR2 } from '../utils/deleteFromR2'
 
 const CATEGORIES = [
   { value: 'overlay', label: 'Overlay' },
@@ -107,6 +108,9 @@ export default function AdminManageEfek() {
 
       const { error } = await supabase.from('effects').delete().eq('id', effect.id)
       if (error) throw error
+
+      // Data udah kehapus -> bersihin video + cover-nya di R2
+      await deleteFromR2([effect.preview_video_url, effect.cover_url])
       setEffects((prev) => prev.filter((e) => e.id !== effect.id))
       clearEfekCaches(effect.category)
     } catch (err) {
