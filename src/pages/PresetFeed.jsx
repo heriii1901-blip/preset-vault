@@ -2,6 +2,8 @@ import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { useAuth } from '../context/AuthContext'
+import { useDoubleTapLike } from '../hooks/useDoubleTapLike'
+import { HEART_PATH, LoveGradientDefs, LoveBurst } from '../components/LoveBurst'
 import { sortByDailyOrder } from '../utils/dailyOrder'
 
 export default function PresetFeed() {
@@ -377,6 +379,12 @@ export default function PresetFeed() {
     }
   }
 
+  // 1x tap = play/pause, 2x tap = love + animasi hati (gak bisa unlike lewat double tap)
+  const { hearts, handleTap } = useDoubleTapLike({
+    onSingleTap: togglePlayPause,
+    onLike: (id) => { if (!favoritedIds.has(id)) toggleFavorite(id) },
+  })
+
   const handleShare = async (preset) => {
     const shareUrl = `${window.location.origin}/preset/${preset.id}`
     const shareData = {
@@ -421,6 +429,7 @@ export default function PresetFeed() {
   return (
     <div className="screen">
       <button className="feed-back-btn" onClick={() => navigate(-1)}>←</button>
+      <LoveGradientDefs />
 
       {loading && (
         <div className="empty-state" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -450,7 +459,7 @@ export default function PresetFeed() {
                       loop
                       playsInline
                       preload={activeId === preset.id ? 'auto' : loadedIds.has(preset.id) ? 'metadata' : 'none'}
-                      onClick={() => togglePlayPause(preset.id)}
+                      onClick={(e) => handleTap(preset.id, e)}
                       onTimeUpdate={(e) => handleTimeUpdate(preset.id, e)}
                       onError={(e) => handleVideoError(preset.id, e)}
                       onLoadedData={() => {
@@ -476,6 +485,7 @@ export default function PresetFeed() {
                   {isPaused && (
                     <div className="feed-pause-icon" onClick={() => togglePlayPause(preset.id)}>▶</div>
                   )}
+                  <LoveBurst hearts={hearts.filter((h) => h.id === preset.id)} />
 
                   <div className="feed-overlay">
                     <h4>{preset.songs?.name || songName}</h4>
@@ -521,7 +531,7 @@ export default function PresetFeed() {
                       aria-label="Favoritkan"
                     >
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z" />
+                       <path d={HEART_PATH} />
                       </svg>
                     </button>
                     <button
