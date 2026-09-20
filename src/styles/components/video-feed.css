@@ -156,8 +156,8 @@
 }
 
 .feed-icon-btn.love.active svg {
-  fill: var(--pink);
-  stroke: var(--pink);
+  fill: url(#pamLoveGradient);
+  stroke: url(#pamLoveGradient);
 }
  
 
@@ -277,3 +277,25 @@
   font-size: 0;
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
 }
+
+/* Animasi hati double tap (gradien ungu-merah-biru) */
+.love-burst {
+  position: absolute;
+  width: 96px;
+  height: 96px;
+  margin: -48px 0 0 -48px;
+  pointer-events: none;
+  z-index: 4;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.35));
+  animation: loveBurst 0.85s ease-out forwards;
+}
+@keyframes loveBurst {
+  0%   { opacity: 0; transform: scale(0.3) rotate(var(--tilt, 0deg)); }
+  18%  { opacity: 1; transform: scale(1.15) rotate(var(--tilt, 0deg)); }
+  32%  { transform: scale(0.95) rotate(var(--tilt, 0deg)); }
+  70%  { opacity: 1; transform: scale(1) translateY(-8px) rotate(var(--tilt, 0deg)); }
+  100% { opacity: 0; transform: scale(1.1) translateY(-46px) rotate(var(--tilt, 0deg)); }
+}
+
+/* Ikon ▶ pause jangan nangkep tap, biar double tap tetap kena ke video */
+.feed-pause-icon { pointer-events: none; }
