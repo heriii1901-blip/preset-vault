@@ -39,7 +39,7 @@ export default function Profile() {
   const isApk = isRunningAsApk()
   const activeVideoRef = useRef(null)
   
-  const ownCacheKey = user?.id ? `own-presets:${user.id}` : null
+  const ownCacheKey = creatorUsername ? `own-presets:${creatorUsername}` : null
   const cachedOwn = ownCacheKey ? getCache(ownCacheKey) : null
   const [ownPresets, setOwnPresets] = useState(cachedOwn?.data || [])
   const [loadingOwn, setLoadingOwn] = useState(false)
@@ -156,7 +156,12 @@ export default function Profile() {
   // Load preset yang di-upload sendiri (khusus kreator), dishare cache-nya sama halaman Kreator
   useEffect(() => {
     if (!isCreator || !creatorUsername) return
-    if (getCache(`own-presets:${creatorUsername}`)) return
+    // Kalo udah ada di cache, PAKE isinya buat ngisi grid (dulu cuma di-skip, jadi grid kosong)
+    const cachedNow = getCache(`own-presets:${creatorUsername}`)
+    if (cachedNow) {
+      setOwnPresets(cachedNow.data || [])
+      return
+    }
     async function loadOwnPresets() {
       setLoadingOwn(true)
       try {
@@ -403,7 +408,7 @@ export default function Profile() {
                     aria-label={TAB_LABEL[key]}
                     title={TAB_LABEL[key]}
                   >
-                    <ProfileTabIcon name={key} active={activeTab === i} />
+                    <ProfileTabIcon name={postView === 'list' ? 'postingan-list' : 'postingan'} active={activeTab === i} />
                   </button>
                   <button
                     type="button"
@@ -412,8 +417,8 @@ export default function Profile() {
                     aria-label="Pilih tampilan postingan"
                     aria-expanded={viewMenuOpen}
                   >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M6 9l6 6 6-6" />
+                    <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round">
+                      <path d="M6 9h12l-6 8z" />
                     </svg>
                   </button>
                 </div>
