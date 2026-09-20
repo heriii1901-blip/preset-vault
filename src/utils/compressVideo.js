@@ -230,8 +230,33 @@ function pickResIndex(videoBitrateKbps) {
   return 0
 }
 
+// Cek cepet: kalo box moov udah di depan mdat, video udah faststart -> gak perlu ffmpeg sama sekali
+async function isAlreadyFaststart(file) {
+  try {
+    let pos = 0
+    for (let i = 0; i < 20 && pos < file.size; i++) {
+      const head = new DataView(await file.slice(pos, pos + 16).arrayBuffer())
+      if (head.byteLength < 8) return false
+      let size = head.getUint32(0)
+      const type = String.fromCharCode(head.getUint8(4), head.getUint8(5), head.getUint8(6), head.getUint8(7))
+      if (type === 'moov') return true
+      if (type === 'mdat') return false
+      if (size === 1) {
+        if (head.byteLength < 16) return false
+        size = Number(head.getBigUint64(8))
+      } else if (size === 0) {
+        return false
+      }
+      if (size < 8) return false
+      pos += size
+    }
+  } catch { /* anggap belum faststart, lanjut remux */ }
+  return false
+}
+
 async function remuxFaststart(file, onStage, signal) {
   try {
+    if (file.type === 'video/mp4' && (await isAlreadyFaststart(file))) return file
     onStage?.('Nyiapin video...')
     const ffmpeg = await getFFmpeg(null, (dlP) => {
       onStage?.(`Download compressor (${Math.round(dlP * 100)}%)...`)
@@ -288,6 +313,12 @@ async function compressWithWebCodecs(file, duration, onProgress, onStage, signal
       const srcH = videoTrack.displayHeight
       const scale = Math.min(1, RESOLUTION_STEPS[resIndex] / Math.max(srcW, srcH))
 
+      // Maks 30fps (sumber 60fps bikin decoder/encoder HP kerja 2x), tapi fps sumber gak dinaikin
+      let outFps = 30
+      try {
+        const stats = await videoTrack.computePacketStats(120)
+        if (stats.averagePacketRate > 0) outFps = Math.min(30, Math.round(stats.averagePacketRate))
+      } catch { /* pake 30 */ }
       const output = new Output({
         format: new Mp4OutputFormat({ fastStart: 'in-memory' }), // moov di depan = langsung bisa di-stream, gak perlu remux lagi
         target: new BufferTarget(),
@@ -296,7 +327,7 @@ async function compressWithWebCodecs(file, duration, onProgress, onStage, signal
         input,
         output,
         tracks: 'primary',
-        video: { width: evenDim(srcW * scale), height: evenDim(srcH * scale), fit: 'fill', codec: 'avc', bitrate: videoKbps * 1000 },
+        video: { width: evenDim(srcW * scale), height: evenDim(srcH * scale), fit: 'fill', frameRate: outFps, codec: 'avc', bitrate: videoKbps * 1000 },
         audio: { codec: 'aac', bitrate: AUDIO_BITRATE_KBPS * 1000 },
       })
       if (!conversion.isValid) throw new Error('Browser ini gak bisa encode video ini lewat WebCodecs')
@@ -307,21 +338,39 @@ async function compressWithWebCodecs(file, duration, onProgress, onStage, signal
 
       const base = HW_ATTEMPT_SHARES.slice(0, attempt - 1).reduce((a, b) => a + b, 0)
       const share = HW_ATTEMPT_SHARES[attempt - 1]
-      conversion.onProgress = (p) => onProgress?.(Math.min(base + Math.max(0, Math.min(p, 1)) * share, 1))
-
+      // Watchdog: kalo 25 detik gak ada kemajuan sama sekali, anggap decoder/encoder HP macet
+      const STALL_MS = 25000
+      let stallTimer = null
+      let rejectStall = null
+      const stallPromise = new Promise((_, reject) => { rejectStall = reject })
+      stallPromise.catch(() => {})
+      const armStall = () => {
+        clearTimeout(stallTimer)
+        stallTimer = setTimeout(() => {
+          conversion.cancel().catch(() => {})
+          rejectStall(new Error(`Encoder macet (gak ada kemajuan ${STALL_MS / 1000} detik)`))
+        }, STALL_MS)
+      }
+      conversion.onProgress = (p) => {
+        armStall()
+        onProgress?.(Math.min(base + Math.max(0, Math.min(p, 1)) * share, 1))
+      }
       onAbort = () => { conversion.cancel().catch(() => {}) }
       if (signal) {
         if (signal.aborted) return file
         signal.addEventListener('abort', onAbort)
       }
 
+      armStall()
       try {
-        await conversion.execute()
+        await Promise.race([conversion.execute(), stallPromise])
       } catch (err) {
         if (signal?.aborted) return file // user batalin, pemanggil yang ngurus
         throw err
+      } finally {
+        clearTimeout(stallTimer)
       }
-
+      
       resultBuffer = output.target.buffer
       if (!resultBuffer) throw new Error('Hasil kompres kosong')
     } finally {
@@ -402,6 +451,7 @@ async function compressWithFFmpeg(file, duration, onProgress, onStage, signal) {
         ffmpeg.exec([
           '-i', inputName,
           '-vf', `scale=${buildScaleFilter(maxDim)}`,
+          '-r', '30',
           '-c:v', 'libx264',
           '-b:v', `${currentBitrateKbps}k`,
           '-maxrate', `${Math.floor(currentBitrateKbps * 1.15)}k`,
