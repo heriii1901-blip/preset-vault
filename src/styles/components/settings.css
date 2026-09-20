@@ -1,0 +1,68 @@
+/* ===== HALAMAN PENGATURAN ===== */
+.settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.settings-group-title {
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+.settings-row-text { flex: 1; min-width: 0; }
+.settings-row-text h4 { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+.settings-row-text p { font-size: 12px; color: var(--muted); }
+
+.theme-toggle {
+  position: relative;
+  width: 64px;
+  height: 34px;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: var(--bg);
+  cursor: pointer;
+}
+.theme-toggle-track-icon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  color: var(--muted);
+  opacity: 0.5;
+}
+.theme-toggle-track-icon--moon { left: 7px; }
+.theme-toggle-track-icon--sun { right: 7px; }
+
+.theme-toggle-knob {
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--violet), #4A32C9);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-50%);
+  transition: transform .26s cubic-bezier(.2, 1.2, .4, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+.theme-toggle.is-light .theme-toggle-knob { transform: translate(30px, -50%); }
+.theme-toggle-knob svg { width: 15px; height: 15px; }
