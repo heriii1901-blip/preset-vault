@@ -40,13 +40,13 @@ export default function TambahLagu() {
     try {
       const { data: existing, error: findErr } = await supabase
         .from('songs')
-        .select('id')
-        .eq('name', name.trim())
+        .select('id, name')
+        .ilike('name', name.trim())
         .maybeSingle()
       if (findErr) throw findErr
 
       if (existing) {
-        setStatusMsg('Lagu ini udah ada di list.')
+        setStatusMsg(`Lagu "${existing.name}" udah ada di list.`)
         return
       }
 
