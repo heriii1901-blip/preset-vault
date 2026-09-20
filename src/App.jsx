@@ -10,6 +10,7 @@ import { ServerNoticeBanner } from './components/ServerNoticeBanner'
 import Login from './pages/Login'
 import Home from './pages/Home'
 import AdminAddPreset from './pages/AdminAddPreset'
+import TambahLagu from './pages/TambahLagu'
 import AdminManagePresets from './pages/AdminManagePresets'
 import Profile from './pages/Profile'
 import SongPresets from './pages/SongPresets'
@@ -137,6 +138,14 @@ export default function App() {
                   element={
                     <ProtectedRoute requireAdmin>
                       <AdminAddPreset />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/tambah-lagu"
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <TambahLagu />
                     </ProtectedRoute>
                   }
                 />
