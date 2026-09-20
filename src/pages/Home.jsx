@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { useAuth } from '../context/AuthContext'
 import { usePresetCache } from '../context/PresetCacheContext'
+import { deleteFromR2 } from '../utils/deleteFromR2'
 
 const CACHE_KEY = 'lagu-list'
 
@@ -182,10 +183,19 @@ export default function Home() {
     )
     if (!ok) return
     try {
+      // Catat dulu file video + cover semua preset di lagu ini, buat dihapus dari R2 setelah data kehapus
+      const { data: doomed } = await supabase
+        .from('presets')
+        .select('preview_video_url, cover_url')
+        .in('song_id', ids)
       const { error: presetErr } = await supabase.from('presets').delete().in('song_id', ids)
       if (presetErr) throw presetErr
       const { error: songErr } = await supabase.from('songs').delete().in('id', ids)
       if (songErr) throw songErr
+      const fileUrls = (doomed || []).flatMap((p) => [p.preview_video_url, p.cover_url]).filter(Boolean)
+      for (let i = 0; i < fileUrls.length; i += 20) {
+        await deleteFromR2(fileUrls.slice(i, i + 20))
+      }
       setSongs((prev) => prev.filter((s) => !ids.includes(s.id)))
     } catch (err) {
       console.error('Gagal hapus lagu:', err)
@@ -197,10 +207,9 @@ export default function Home() {
 
   return (
     <div className="screen">
+      <h1 className="page-title">Lagu</h1>
       <div className="list-content">
         <div className="list-header">
-          <div className="eyebrow">BERANDA</div>
-          <h1 className="home-tagline">Cari & Download Preset Alight Motion</h1>
           <div className="search-bar">
             <svg viewBox="0 0 24 24" fill="none" stroke="#8A8A96" strokeWidth="2" width="19" height="19">
               <circle cx="11" cy="11" r="7" />
