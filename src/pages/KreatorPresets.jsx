@@ -4,6 +4,7 @@ import { supabase } from '../supabase'
 import { usePresetCache } from '../context/PresetCacheContext'
 import { creatorNameStyle } from '../utils/creatorFont'
 import PresetVideoCell from '../components/PresetVideoCell'
+import AvatarViewer from '../components/AvatarViewer'
 
 const THUMB_COLORS = [
   'linear-gradient(135deg,#7C5CFF,#4A32C9)',
@@ -27,6 +28,7 @@ export default function KreatorPresets() {
   const [presets, setPresets] = useState(cached?.data || [])
   const [loading, setLoading] = useState(!cached)
   const [creatorProfile, setCreatorProfile] = useState(null)
+  const [avatarOpen, setAvatarOpen] = useState(false)
   const activeVideoRef = useRef(null)
   const gridRef = useRef(null)
 
@@ -71,6 +73,26 @@ export default function KreatorPresets() {
     if (creatorUsername) loadCreatorProfile()
   }, [creatorUsername])
 
+  // Tombol share: bagiin link halaman kreator ini
+  async function handleShareCreator() {
+    const url = `${window.location.origin}/kreator/${creatorUsername}`
+    const name = creatorProfile?.account_name || `@${creatorUsername}`
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: name, text: `Lihat preset dari ${name} di PAM`, url })
+      } catch (err) {
+        if (err?.name !== 'AbortError') console.error('Gagal share kreator:', err)
+      }
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      alert('Link kreator disalin.')
+    } catch (err) {
+      console.error('Gagal salin link kreator:', err)
+    }
+  }
+
   function resetToCover(video) {
     if (!video) return
     video.pause()
@@ -102,13 +124,19 @@ export default function KreatorPresets() {
 
   return (
     <div className="screen">
-      <button
-        className="back-btn ghost-static"
-        style={{ margin: '14px 0 0 16px', width: 'fit-content' }}
-        onClick={() => { clearCache(cacheKey); navigate(-1) }}
-      >
-        ← Balik
-      </button>
+      <div className="topbar-row">
+        <button
+          className="back-btn ghost-static"
+          onClick={() => { clearCache(cacheKey); navigate(-1) }}
+        >
+          ← Balik
+        </button>
+        <button type="button" className="share-icon-btn" onClick={handleShareCreator} aria-label="Bagikan kreator">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+            <path d="M14 9V5l7 7-7 7v-4.1c-5 0-8.5 1.6-11 5.1 1-5 4-10 11-11z" />
+          </svg>
+        </button>
+      </div>
 
       <div className="kreator-profile-header">
         {creatorProfile?.avatar_url ? (
@@ -116,7 +144,8 @@ export default function KreatorPresets() {
             src={creatorProfile.avatar_url}
             alt=""
             className="kreator-profile-avatar"
-            style={{ width: 72, height: 72, objectFit: 'cover' }}
+            style={{ width: 72, height: 72, objectFit: 'cover', cursor: 'pointer' }}
+            onClick={() => setAvatarOpen(true)}
           />
         ) : (
           <div className="kreator-profile-avatar" style={{ width: 72, height: 72, background: colorFor(creatorUsername) }}>
@@ -147,6 +176,8 @@ export default function KreatorPresets() {
           )}
         </div>
       </div>
+
+      <AvatarViewer open={avatarOpen} src={creatorProfile?.avatar_url} onClose={() => setAvatarOpen(false)} />
 
       {loading && (
         <div className="empty-state" style={{ padding: 30 }}>Memuat...</div>
