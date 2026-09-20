@@ -44,7 +44,19 @@ export default function Profile() {
   const [ownPresets, setOwnPresets] = useState(cachedOwn?.data || [])
   const [loadingOwn, setLoadingOwn] = useState(false)
 
-    // Efek yang di-love (sama kayak sistem Favorit preset)
+  // Mode tampilan tab Postingan: 'grid' (kotak) atau 'list' (per lagu). Pilihan diinget di HP.
+  const [postView, setPostView] = useState(() => {
+    try {
+      return localStorage.getItem('pam-post-view') === 'list' ? 'list' : 'grid'
+    } catch {
+      return 'grid'
+    }
+  })
+  const [viewMenuOpen, setViewMenuOpen] = useState(false)
+  const [expandedSongs, setExpandedSongs] = useState([])
+  const [songNames, setSongNames] = useState({})
+
+  // Efek yang di-love (sama kayak sistem Favorit preset)
   const [favoriteEffects, setFavoriteEffects] = useState([])
   const [loadingFavEfek, setLoadingFavEfek] = useState(true)
 
@@ -220,41 +232,70 @@ export default function Profile() {
 
   const goToTab = goToTabRaw
 
-  // Tab "Lagu" & "Kreator" diturunin dari daftar favorit yang UDAH ke-load,
-  // jadi murni olah data di memori — gak ada useEffect/query Supabase baru,
-  // gak nambah egress sama sekali.
-  const favSongs = useMemo(() => {
-    const map = new Map()
-    favorites.forEach((p) => {
-      if (!p?.song_id) return
-      const cur = map.get(p.song_id) || {
-        id: p.song_id,
-        name: p.songs?.name || 'Tanpa judul',
-        count: 0,
-        cover: null,
-      }
-      cur.count += 1
-      if (!cur.cover && p.cover_url) cur.cover = p.cover_url
-      map.set(p.song_id, cur)
-    })
-    return Array.from(map.values())
-  }, [favorites])
+    function chooseView(mode) {
+    setPostView(mode)
+    setViewMenuOpen(false)
+    goToTab(0)
+    try {
+      localStorage.setItem('pam-post-view', mode)
+    } catch {
+      // localStorage diblok, pilihan tetap kepasang buat sesi ini
+    }
+  }
 
-  const favCreators = useMemo(() => {
-    const map = new Map()
-    favorites.forEach((p) => {
-      if (!p?.creator_username) return
-      const cur = map.get(p.creator_username) || {
-        username: p.creator_username,
-        count: 0,
-        cover: null,
+  function toggleSong(id) {
+    setExpandedSongs((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+  }
+
+  // Id lagu unik dari preset milik sendiri, digabung jadi satu string biar dep array-nya stabil
+  const ownSongIdsKey = useMemo(
+    () => Array.from(new Set(ownPresets.map((p) => p.song_id).filter(Boolean))).sort().join(','),
+    [ownPresets]
+  )
+
+  // Nama lagu buat mode List. Cuma jalan pas mode List dibuka DAN masih ada lagu yang namanya belum diketahui.
+  // Dep array [postView, ownSongIdsKey]: setSongNames NGGAK ngubah dep apa pun, dan ada guard "udah lengkap -> return",
+  // jadi TIDAK ada loop / query berulang (egress aman).
+  useEffect(() => {
+    if (postView !== 'list' || !ownSongIdsKey) return
+    const ids = ownSongIdsKey.split(',')
+    if (ids.every((id) => songNames[id])) return
+    let cancelled = false
+    async function loadSongNames() {
+      try {
+        const { data, error } = await supabase.from('songs').select('id, name').in('id', ids)
+        if (error) throw error
+        if (cancelled) return
+        const map = {}
+        ;(data || []).forEach((song) => {
+          map[song.id] = song.name
+        })
+        setSongNames((prev) => ({ ...prev, ...map }))
+      } catch (err) {
+        console.error('Gagal ambil nama lagu:', err)
       }
-      cur.count += 1
-      if (!cur.cover && p.cover_url) cur.cover = p.cover_url
-      map.set(p.creator_username, cur)
+    }
+    loadSongNames()
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [postView, ownSongIdsKey])
+
+  // Preset milik sendiri dikelompokin per lagu (khusus lagu yang dia pernah post), urut A-Z kayak daftar lagu
+  const ownSongGroups = useMemo(() => {
+    const map = new Map()
+    ownPresets.forEach((p) => {
+      const key = p.song_id || 'none'
+      if (!map.has(key)) map.set(key, { id: key, presets: [], cover: null })
+      const group = map.get(key)
+      group.presets.push(p)
+      if (!group.cover && p.cover_url) group.cover = p.cover_url
     })
     return Array.from(map.values())
-  }, [favorites])
+      .map((g) => ({ ...g, name: g.id === 'none' ? 'Tanpa lagu' : songNames[g.id] || 'Memuat...' }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }, [ownPresets, songNames])
   
   const displayName = isCreator
     ? (profile?.account_name || (creatorUsername ? `@${creatorUsername}` : fallbackName))
@@ -347,20 +388,86 @@ export default function Profile() {
         {tabCount > 1 && (
           <div className="profile-tabs" ref={tabsRef}>
             <div className="tab-indicator" style={indicatorStyle} />
-            {tabKeys.map((key, i) => (
-              <button
-                key={key}
-                ref={(el) => (tabRefs.current[i] = el)}
-                type="button"
-                className={`profile-tab${activeTab === i ? ' is-active' : ''}`}
-                style={{ color: getTabColor(i) }}
-                onClick={() => goToTab(i)}
-                aria-label={TAB_LABEL[key]}
-                title={TAB_LABEL[key]}
-              >
-                <ProfileTabIcon name={key} active={activeTab === i} />
-              </button>
-            ))}
+            {tabKeys.map((key, i) =>
+              key === 'postingan' && isCreator ? (
+                <div
+                  key={key}
+                  ref={(el) => (tabRefs.current[i] = el)}
+                  className={`profile-tab profile-tab-split${activeTab === i ? ' is-active' : ''}`}
+                  style={{ color: getTabColor(i) }}
+                >
+                  <button
+                    type="button"
+                    className="profile-tab-main"
+                    onClick={() => goToTab(i)}
+                    aria-label={TAB_LABEL[key]}
+                    title={TAB_LABEL[key]}
+                  >
+                    <ProfileTabIcon name={key} active={activeTab === i} />
+                  </button>
+                  <button
+                    type="button"
+                    className={`profile-tab-caret${viewMenuOpen ? ' is-open' : ''}`}
+                    onClick={() => setViewMenuOpen((v) => !v)}
+                    aria-label="Pilih tampilan postingan"
+                    aria-expanded={viewMenuOpen}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  key={key}
+                  ref={(el) => (tabRefs.current[i] = el)}
+                  type="button"
+                  className={`profile-tab${activeTab === i ? ' is-active' : ''}`}
+                  style={{ color: getTabColor(i) }}
+                  onClick={() => goToTab(i)}
+                  aria-label={TAB_LABEL[key]}
+                  title={TAB_LABEL[key]}
+                >
+                  <ProfileTabIcon name={key} active={activeTab === i} />
+                </button>
+              )
+            )}
+
+            {viewMenuOpen && (
+              <>
+                <div className="profile-view-menu-backdrop" onClick={() => setViewMenuOpen(false)} />
+                <div className="profile-view-menu">
+                  <button
+                    type="button"
+                    className={`profile-view-item${postView === 'grid' ? ' is-selected' : ''}`}
+                    onClick={() => chooseView('grid')}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="7.5" height="7.5" rx="1.6" />
+                      <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6" />
+                      <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6" />
+                      <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6" />
+                    </svg>
+                    <span>Kotak</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`profile-view-item${postView === 'list' ? ' is-selected' : ''}`}
+                    onClick={() => chooseView('list')}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="9" y1="6" x2="21" y2="6" />
+                      <line x1="9" y1="12" x2="21" y2="12" />
+                      <line x1="9" y1="18" x2="21" y2="18" />
+                      <circle cx="4.5" cy="6" r="1" />
+                      <circle cx="4.5" cy="12" r="1" />
+                      <circle cx="4.5" cy="18" r="1" />
+                    </svg>
+                    <span>List</span>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -374,8 +481,49 @@ export default function Profile() {
                     {!loadingOwn && ownPresets.length === 0 && (
                       <div className="empty-state">Kamu belum upload preset apapun.</div>
                     )}
-                    {!loadingOwn && ownPresets.length > 0 &&
+                    {!loadingOwn && ownPresets.length > 0 && postView === 'grid' &&
                       renderGrid(ownPresets, { source: 'kreator', creatorUsername })}
+
+                    {!loadingOwn && ownPresets.length > 0 && postView === 'list' && (
+                      <div className="profile-song-list">
+                        {ownSongGroups.map((group) => {
+                          const open = expandedSongs.includes(group.id)
+                          return (
+                            <div className="profile-song-item" key={group.id}>
+                              <div
+                                className={`song-row profile-song-row${open ? ' is-open' : ''}`}
+                                onClick={() => toggleSong(group.id)}
+                              >
+                                <div className="song-thumb" style={{ background: 'var(--surface-2)' }}>
+                                  {group.cover ? <img src={group.cover} alt="" draggable={false} /> : '♪'}
+                                </div>
+                                <div className="song-text">
+                                  <h4>{group.name}</h4>
+                                  <div className="song-meta-row">{group.presets.length} video kamu</div>
+                                </div>
+                                <svg
+                                  className={`profile-song-chevron${open ? ' is-open' : ''}`}
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.4"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M6 9l6 6 6-6" />
+                                </svg>
+                              </div>
+
+                              {open && (
+                                <div className="profile-song-grid">
+                                  {renderGrid(group.presets, { source: 'kreator', creatorUsername })}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
                   </>
                 )}
 
@@ -422,59 +570,11 @@ export default function Profile() {
                 )}
 
                 {key === 'lagu' && (
-                  <>
-                    {loadingFavs && <div className="empty-state">Memuat...</div>}
-                    {!loadingFavs && favSongs.length === 0 && (
-                      <div className="empty-state">
-                        Belum ada lagu di sini. Favoritin preset dulu, lagunya bakal otomatis kekumpul di tab ini.
-                      </div>
-                    )}
-                    {!loadingFavs && favSongs.length > 0 && (
-                      <div className="profile-row-list">
-                        {favSongs.map((song) => (
-                          <div className="song-row" key={song.id} onClick={() => navigate(`/lagu/${song.id}`)}>
-                            <div className="song-thumb">
-                              {song.cover ? <img src={song.cover} alt="" draggable={false} /> : '🎵'}
-                            </div>
-                            <div className="song-text">
-                              <h4>{song.name}</h4>
-                              <div className="song-meta-row">{song.count} preset difavoritin</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </>
+                  <div className="empty-state">Belum ada isinya, segera hadir.</div>
                 )}
 
                 {key === 'kreator' && (
-                  <>
-                    {loadingFavs && <div className="empty-state">Memuat...</div>}
-                    {!loadingFavs && favCreators.length === 0 && (
-                      <div className="empty-state">
-                        Belum ada kreator di sini. Favoritin preset dulu, kreatornya bakal otomatis kekumpul di tab ini.
-                      </div>
-                    )}
-                    {!loadingFavs && favCreators.length > 0 && (
-                      <div className="profile-row-list">
-                        {favCreators.map((kreator) => (
-                          <div
-                            className="song-row"
-                            key={kreator.username}
-                            onClick={() => navigate(`/kreator/${kreator.username}`)}
-                          >
-                            <div className="song-thumb" style={{ borderRadius: '50%' }}>
-                              {kreator.cover ? <img src={kreator.cover} alt="" draggable={false} /> : '👤'}
-                            </div>
-                            <div className="song-text">
-                              <h4>@{kreator.username}</h4>
-                              <div className="song-meta-row">{kreator.count} preset difavoritin</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </>
+                  <div className="empty-state">Belum ada isinya, segera hadir.</div>
                 )}
               </div>
             ))}
