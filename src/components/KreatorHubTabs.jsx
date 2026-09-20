@@ -9,9 +9,7 @@ export default function KreatorHubTabs({ creatorUsername, ownPresets, loadingOwn
 
   return (
     <div className="kreator-hub">
-      <div className="kreator-page-header">
-        <div className="eyebrow">KREATOR</div>
-      </div>
+      <h1 className="page-title">Kreator</h1>
 
       <div className="kreator-hub-tabs" ref={containerRef}>
         <div className="tab-indicator" style={indicatorStyle} />
