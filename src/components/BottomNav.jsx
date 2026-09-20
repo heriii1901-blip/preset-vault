@@ -1,12 +1,13 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { supabase } from '../supabase'
+import { useAdminPending } from '../context/AdminPendingContext'
 
 export function BottomNav() {
   const location = useLocation()
   const navigate = useNavigate()
   const { isAdmin, logout } = useAuth()
+  const { total: pendingTotal } = useAdminPending()
 
   const isTerbaruActive =
     location.pathname === '/' ||
@@ -15,8 +16,6 @@ export function BottomNav() {
   const isEfekActive = location.pathname.startsWith('/efek')
   const isKreatorActive = location.pathname.startsWith('/kreator')
   const isAkunActive = location.pathname === '/akun'
-
-  const [pendingSongCount, setPendingSongCount] = useState(0)
 
   // --- Pill indicator (ala Mihon) ---
   const containerRef = useRef(null)
@@ -62,18 +61,6 @@ export function BottomNav() {
     window.addEventListener('resize', updatePill)
     return () => window.removeEventListener('resize', updatePill)
   }, [activeIndex])
-  
-  useEffect(() => {
-    if (!isAdmin) return
-    supabase
-      .from('song_requests')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'pending')
-      .then(({ count, error }) => {
-        if (error) return console.error('Gagal ambil jumlah permintaan lagu:', error)
-        setPendingSongCount(count || 0)
-      })
-  }, [isAdmin])
 
   return (
     <div className="bottom-nav" ref={containerRef}>
@@ -96,6 +83,7 @@ export function BottomNav() {
 
       <NavLink to="/efek" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
         <span className="nav-icon" ref={(el) => (iconRefs.current[1] = el)}>
+          {isAdmin && pendingTotal > 0 && <span className="nav-dot" />}
           <svg className="icon-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 2l1.6 5.3L19 9l-5.4 1.7L12 16l-1.6-5.3L5 9l5.4-1.7L12 2z" />
             <path d="M19 15l.8 2.6L22.4 18.4l-2.6.8L19 21.8l-.8-2.6-2.6-.8 2.6-.8L19 15z" />
@@ -122,17 +110,6 @@ export function BottomNav() {
         <span>lagu</span>
       </NavLink>
 
-      {isLaguActive && isAdmin && (
-        <div className="nav-submenu">
-          <NavLink to="/admin/tambah-preset" className={({ isActive }) => `nav-subitem${isActive ? ' active' : ''}`}>
-            <span>Panel Admin</span>
-          </NavLink>
-          <NavLink to="/admin/kelola-preset" className={({ isActive }) => `nav-subitem${isActive ? ' active' : ''}`}>
-            <span>Kelola Preset</span>
-          </NavLink>
-        </div>
-      )}
-
       <NavLink to="/kreator" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
         <span className="nav-icon" ref={(el) => (iconRefs.current[3] = el)}>
           <svg className="icon-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -146,20 +123,6 @@ export function BottomNav() {
         </span>
         <span>Kreator</span>
       </NavLink>
-
-      {isKreatorActive && isAdmin && (
-        <div className="nav-submenu">
-          <NavLink to="/admin/kreator-pengajuan" className={({ isActive }) => `nav-subitem${isActive ? ' active' : ''}`}>
-            <span>Review Pengajuan</span>
-          </NavLink>
-          <NavLink to="/admin/song-requests" className={({ isActive }) => `nav-subitem${isActive ? ' active' : ''}`}>
-            <span className="nav-subitem-row">
-              Request Lagu
-              {pendingSongCount > 0 && <span className="nav-subitem-badge">{pendingSongCount}</span>}
-            </span>
-          </NavLink>
-        </div>
-      )}
 
       <NavLink to="/akun" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
         <span className="nav-icon" ref={(el) => (iconRefs.current[4] = el)}>
