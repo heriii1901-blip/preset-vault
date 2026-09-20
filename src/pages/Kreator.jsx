@@ -175,11 +175,7 @@ export default function Kreator({ hideHeader = false }) {
 
   return (
     <div className="screen">
-      {!hideHeader && (
-        <div className="kreator-page-header">
-          <div className="eyebrow">KREATOR</div>
-        </div>
-      )}
+      {!hideHeader && <h1 className="page-title">Kreator</h1>}
 
       <div className="search-input-wrap" style={{ padding: '16px 20px 0', marginBottom: 10 }}>
         <input
