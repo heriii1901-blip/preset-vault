@@ -14,6 +14,8 @@
   --violet: #7C5CFF;
   --pink: #FF3D7F;
   --lime: #D4FF3D;
+  --accent: #D4FF3D;                      /* warna aktif: pill nav, garis tab, ikon nav aktif */
+  --accent-soft: rgba(212, 255, 61, 0.16); /* warna pill di belakang ikon aktif */
   --text: #F7F6FA;
   --muted: #A9AEB6;
   --line: #2A2F36;
@@ -21,7 +23,7 @@
   /* Rasio banner Terbaru (dipake juga di preview halaman Ubah Wallpaper biar konsisten).
      Sebelumnya 16/9 kerasa kegedean, sekarang 2.15/1 — dikit lebih tinggi dari
      percobaan 2.5/1 kemarin sesuai revisi. */
-  --terbaru-banner-ratio: 2.15 / 1;
+  --terbaru-banner-ratio: 1.75 / 1;
 }
 
 :root[data-theme='dark'] { color-scheme: dark; }
@@ -36,6 +38,9 @@
   --muted: #6B6A7B;
   --line: #D3D1DE;
   --card-bg: rgba(22, 21, 28, 0.05);
+  /* Hijau stabilo gak kebaca di background terang -> pakai ungu (kebalikan hijau stabilo di roda warna) */
+  --accent: #6A45FF;
+  --accent-soft: rgba(106, 69, 255, 0.14);
 }
 
 * {
@@ -52,6 +57,11 @@
 input, textarea {
   user-select: text;
   -webkit-user-select: text;
+}
+
+/* Hilangin garis 2 di pojok kanan bawah kotak teks (itu gagang resize bawaan browser) */
+textarea {
+  resize: none;
 }
 
 /* PENTING: button/input/textarea/select defaultnya PAKE FONT BAWAAN OS, bukan font
@@ -176,3 +186,27 @@ button:focus, a:focus {
   display: none;
 }
  
+/* ===== Tombol kembali ala TikTok/IG: panah tebal aja, tanpa kotak & tanpa teks ===== */
+.back-btn.ghost-static {
+  position: relative;
+  height: 40px;
+  min-width: 40px;
+  padding: 0 20px;
+  border: none;
+  background: none;
+  border-radius: 50%;
+  font-size: 0; /* sembunyiin teks "← Balik" di semua halaman */
+  color: var(--text);
+}
+.back-btn.ghost-static::before,
+.feed-back-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 26px;
+  height: 26px;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 4.5 7.5 12 15 19.5'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 4.5 7.5 12 15 19.5'/%3E%3C/svg%3E") center / contain no-repeat;
+}
