@@ -228,3 +228,102 @@
   color: var(--muted);
 }
  
+/* ===== Tab Postingan: tombol v + menu tampilan (Kotak / List) ===== */
+.profile-tab-split {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: default;
+}
+.profile-tab-split:active { transform: none; background: none; }
+.profile-tab-main,
+.profile-tab-caret {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+}
+.profile-tab-main { padding: 11px 2px 13px 8px; }
+.profile-tab-caret { padding: 11px 8px 13px 2px; }
+.profile-tab-caret svg {
+  width: 14px;
+  height: 14px;
+  transition: transform .2s ease;
+}
+.profile-tab-caret.is-open svg { transform: rotate(180deg); }
+
+.profile-view-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: transparent;
+}
+.profile-view-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 12px;
+  z-index: 31;
+  min-width: 150px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--surface-2);
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  transform-origin: top left;
+  animation: viewMenuIn .16s ease-out;
+}
+@keyframes viewMenuIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+.profile-view-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+.profile-view-item svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--muted);
+}
+.profile-view-item.is-selected { background: rgba(124, 92, 255, 0.15); }
+.profile-view-item.is-selected svg { color: var(--violet); }
+
+/* ===== Tab Postingan mode List: baris lagu, dibuka pakai v -> grid video kamu di lagu itu ===== */
+.profile-song-list { padding: 8px 0 30px; }
+.profile-song-item .song-row { margin: 0 18px 8px; }
+.profile-song-row.is-open { background: rgba(124, 92, 255, 0.12); }
+.profile-song-chevron {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--muted);
+  transition: transform .22s ease;
+}
+.profile-song-chevron.is-open { transform: rotate(180deg); }
+.profile-song-grid {
+  margin: 0 0 14px;
+  animation: songGridIn .2s ease-out;
+}
+@keyframes songGridIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
