@@ -226,7 +226,7 @@ export default function Home() {
           {!loading && filteredSongs.length === 0 && songs.length === 0 && (
             <div className="empty-state">
               Belum ada lagu/preset tersimpen.
-              {isAdmin && ' Tambahin dulu lewat Panel Admin.'}
+             {isAdmin && ' Tambahin dulu lewat tombol + di menu Efek.'}
             </div>
           )}
 
@@ -275,18 +275,6 @@ export default function Home() {
             </div>
           ))}
         </div>
-
-        {isAdmin && !selectionMode && (
-          <div className="admin-shortcut-row">
-            <button className="admin-shortcut" onClick={() => navigate('/admin/tambah-preset')}>
-              ⚙ Panel Admin
-            </button>
-            <button className="admin-shortcut admin-shortcut-danger" onClick={() => navigate('/admin/kelola-preset')}>
-              🗑 Kelola Preset
-            </button>
-          </div>
-        )}
-      </div>
 
       {selectionMode && (
         <div className="selection-bar">
