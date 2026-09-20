@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { resolveTiktokVideoId } from '../utils/tiktokLink'
+import { deleteFromR2 } from '../utils/deleteFromR2'
 
 export default function AdminManagePresets() {
   const navigate = useNavigate()
@@ -76,20 +77,11 @@ export default function AdminManagePresets() {
     if (!ok) return
     setDeletingId(preset.id)
     try {
-      if (preset.preview_video_url) {
-        try {
-          await fetch('/api/delete-from-r2', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: preset.preview_video_url }),
-          })
-        } catch (r2Err) {
-          console.error('Gagal hapus video di R2 (lanjut hapus data):', r2Err)
-        }
-      }
-
       const { error: delErr } = await supabase.from('presets').delete().eq('id', preset.id)
       if (delErr) throw delErr
+
+      // Data di Supabase udah kehapus -> baru bersihin file-nya di R2 (video + cover)
+      await deleteFromR2([preset.preview_video_url, preset.cover_url])
       if (preset.song_id) {
         const { data: songRow } = await supabase
           .from('songs')
