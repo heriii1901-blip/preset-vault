@@ -55,7 +55,19 @@ const FAB_ACTIONS = [
     ),
   },
   {
-    label: 'Kelola Efek',
+    label: 'Kreator Khusus',
+    to: '/admin/kreator-khusus',
+    icon: (
+      <svg {...iconProps}>
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <line x1="19" y1="8" x2="19" y2="14" />
+        <line x1="16" y1="11" x2="22" y2="11" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Kelola Preset',
     to: '/admin/kelola-efek',
     icon: (
       <svg {...iconProps}>
@@ -100,6 +112,15 @@ const FAB_ACTIONS = [
       <svg {...iconProps}>
         <line x1="12" y1="5" x2="12" y2="19" />
         <line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Post Khusus',
+    to: '/admin/post-khusus',
+    icon: (
+      <svg {...iconProps}>
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
       </svg>
     ),
   },
