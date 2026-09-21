@@ -4,6 +4,7 @@ import { supabase } from '../supabase'
 import { resolveTiktokVideoId } from '../utils/tiktokLink'
 import { compressVideoIfNeeded } from '../utils/compressVideo'
 import { uploadToR2 } from '../utils/uploadToR2'
+import { safeHref } from '../utils/safeUrl'
 import { generateCoverFromVideo } from '../utils/generateCoverFromVideo'
 import { useUploadQueue } from '../context/UploadQueueContext'
 import { useSwipePages } from '../hooks/useSwipePages'
@@ -802,7 +803,7 @@ export default function AdminAddPreset() {
               <div className="queue-history-title">{preset.songs?.name || 'Lagu'}</div>
               <div className="queue-history-meta">@{preset.creator_username}</div>
                <a
-                href={preset.mb_link}
+                href={safeHref(preset.mb_link)}
                 target="_blank"
                 rel="noreferrer"
                 onClick={(e) => e.stopPropagation()}
