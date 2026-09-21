@@ -1,4 +1,5 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getCaller } from "../lib/apiAuth.js";
 
 export const config = {
   api: {
@@ -24,6 +25,9 @@ export default async function handler(req, res) {
   }
 
   try {
+    const caller = await getCaller(req);
+    if (!caller) return res.status(401).json({ error: "Harus login dulu" });
+
     const chunks = [];
     let totalSize = 0;
     for await (const chunk of req) {
@@ -44,7 +48,7 @@ export default async function handler(req, res) {
     if (!ALLOWED_TYPES.includes(fileType)) {
       return res.status(400).json({ error: "Format PP cuma boleh PNG, JPG, atau GIF" });
     }
-    const key = `avatars/${Date.now()}-${fileName}`;
+    const key = `avatars/${Date.now()}-${String(fileName).replace(/[^A-Za-z0-9._-]+/g, "_")}`;
 
     await s3.send(
       new PutObjectCommand({
