@@ -8,6 +8,7 @@ import { usePresetCache } from '../context/PresetCacheContext'
 const CACHE_KEY = 'kreator-list'
 const REGISTERED_CACHE_KEY = 'kreator-list-registered'
 const ADMIN_PROFILE_CACHE_KEY = 'kreator-admin-profile'
+const GUEST_CACHE_KEY = 'kreator-guests'
 
 const THUMB_COLORS = [
   'linear-gradient(135deg,#7C5CFF,#4A32C9)',
@@ -53,7 +54,8 @@ export default function Kreator({ hideHeader = false }) {
   const [loadingList, setLoadingList] = useState(!cachedList)
   const [registeredMap, setRegisteredMap] = useState(cachedRegistered?.data || {})
   const [adminProfile, setAdminProfile] = useState(getCache(ADMIN_PROFILE_CACHE_KEY)?.data || null)
-
+  const [guestMap, setGuestMap] = useState(getCache(GUEST_CACHE_KEY)?.data || {})
+  
   useEffect(() => {
     async function loadCreatorList() {
       if (getCache(CACHE_KEY)) return
@@ -132,8 +134,29 @@ export default function Kreator({ hideHeader = false }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const [searchTerm, setSearchTerm] = useState('')
+  // Profil kreator khusus (ditambah admin). Query publik ke guest_creators, sekali per sesi.
+  // Dep array kosong + dijaga cache -> ngga ada resiko loop / egress berulang.
+  useEffect(() => {
+    async function loadGuests() {
+      if (getCache(GUEST_CACHE_KEY)) return
+      try {
+        const { data, error } = await supabase
+          .from('guest_creators')
+          .select('creator_username, display_name, avatar_url')
+        if (error) throw error
+        const map = {}
+        for (const g of data || []) map[g.creator_username] = g
+        setGuestMap(map)
+        setCache(GUEST_CACHE_KEY, map)
+      } catch (err) {
+        console.error('Gagal ambil kreator khusus:', err)
+      }
+    }
+    loadGuests()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
+  const [searchTerm, setSearchTerm] = useState('')
   const adminKey = adminProfile?.creator_username || null
 
   // Urutan daftar kreator:
@@ -162,7 +185,7 @@ export default function Kreator({ hideHeader = false }) {
   const otherCreators = keyword
     ? otherCreatorsAll.filter((c) => {
         const registered = registeredMap[c.creator_username]
-        const displayName = registered?.account_name || c.creator_username
+        const displayName = registered?.account_name || guestMap[c.creator_username]?.display_name || c.creator_username
         return (
           c.creator_username.toLowerCase().includes(keyword) ||
           displayName.toLowerCase().includes(keyword)
@@ -223,19 +246,19 @@ export default function Kreator({ hideHeader = false }) {
             )}
             {otherCreators.map((c) => {
               const registered = registeredMap[c.creator_username]
-              const displayName = registered?.account_name || c.creator_username
+              const displayName = registered?.account_name || guestMap[c.creator_username]?.display_name || c.creator_username
               return (
                 <div
                   key={c.creator_username}
                   className="song-row"
                   onClick={() => navigate(`/kreator/${c.creator_username}`)}
                 >
-                  <CreatorAvatar displayKey={displayName} avatarUrl={registered?.avatar_url} />
+                  <CreatorAvatar displayKey={displayName} avatarUrl={registered?.avatar_url || guestMap[c.creator_username]?.avatar_url} />
                   <div className="song-text">
                     <h4 style={registered ? creatorNameStyle(registered.account_font, registered.account_bold) : undefined}>
-                      {registered?.account_name ? displayName : `@${c.creator_username}`}
+                      {displayName !== c.creator_username ? displayName : `@${c.creator_username}`}
                     </h4>
-                    {registered?.account_name && (
+                    {displayName !== c.creator_username && (
                       <p style={{ fontSize: 11, color: 'var(--muted)', margin: 0 }}>@{c.creator_username}</p>
                     )}
                   </div>
