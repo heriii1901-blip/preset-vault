@@ -38,4 +38,4 @@ export function useDoubleTapLike({ onSingleTap, onLike }) {
   }
 
   return { hearts, handleTap }
-}s
+}
