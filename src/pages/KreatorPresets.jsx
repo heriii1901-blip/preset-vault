@@ -5,6 +5,7 @@ import { usePresetCache } from '../context/PresetCacheContext'
 import { creatorNameStyle } from '../utils/creatorFont'
 import PresetVideoCell from '../components/PresetVideoCell'
 import AvatarViewer from '../components/AvatarViewer'
+import { safeHref } from '../utils/safeUrl'
 
 const THUMB_COLORS = [
   'linear-gradient(135deg,#7C5CFF,#4A32C9)',
@@ -165,7 +166,7 @@ export default function KreatorPresets() {
           )}
           {creatorProfile?.is_creator && (creatorProfile?.contact_link || creatorProfile?.tiktok_link) && (
             <a
-              href={creatorProfile.contact_link || creatorProfile.tiktok_link}
+              href={safeHref(creatorProfile.contact_link || creatorProfile.tiktok_link)}
               target="_blank"
               rel="noreferrer"
               className="kreator-profile-link"
