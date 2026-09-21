@@ -223,6 +223,8 @@ export function UploadQueueProvider({ children }) {
 
       // Buang cache grid profil biar video baru langsung muncul (dulu baru muncul setelah app dibuka ulang)
       clearCacheRef.current(`own-presets:${job.creatorUsername}`)
+      clearCacheRef.current('kreator-list')
+      clearCacheRef.current(`kreator-presets:${job.creatorUsername}`)
       updateItem(job.id, { status: 'done', stage: 'Beres!', progress: 100, finishedAt: Date.now() })
     } catch (err) {
       if (cancelState.cancelled) return
