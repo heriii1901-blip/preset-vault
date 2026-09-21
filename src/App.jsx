@@ -36,6 +36,8 @@ import EditProfile from './pages/EditProfile'
 import TentangAplikasi from './pages/TentangAplikasi'
 import WallpaperSettings from './pages/WallpaperSettings'
 import Pengaturan from './pages/Pengaturan'
+import AdminKreatorKhusus from './pages/AdminKreatorKhusus'
+import AdminPostKhusus from './pages/AdminPostKhusus'
 
 export default function App() {
   const location = useLocation()
@@ -289,7 +291,23 @@ export default function App() {
                     </ProtectedRoute>
                   }
                 />
-              </Routes>
+              <Routes>
+                <Route
+                  path="/admin/kreator-khusus"
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <AdminKreatorKhusus />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/post-khusus"
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <AdminPostKhusus />
+                    </ProtectedRoute>
+                  }
+                />
             </div>
 
             {shouldShowNav && <BottomNav />}
