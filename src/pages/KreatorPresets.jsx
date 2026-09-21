@@ -66,7 +66,28 @@ export default function KreatorPresets() {
           .eq('creator_username', creatorUsername)
           .maybeSingle()
         if (error) throw error
-        setCreatorProfile(data)
+        if (data) {
+          setCreatorProfile(data)
+          return
+        }
+        // Bukan kreator terdaftar -> coba kreator khusus (ditambah admin)
+        const { data: guest, error: guestErr } = await supabase
+          .from('guest_creators')
+          .select('display_name, bio, avatar_url, tiktok_link')
+          .eq('creator_username', creatorUsername)
+          .maybeSingle()
+        if (guestErr) throw guestErr
+        setCreatorProfile(
+          guest
+            ? {
+                is_guest: true,
+                account_name: guest.display_name,
+                bio: guest.bio,
+                avatar_url: guest.avatar_url,
+                tiktok_link: guest.tiktok_link,
+              }
+            : null
+        )
       } catch (err) {
         console.error('Gagal ambil profil kreator:', err)
       }
@@ -164,7 +185,7 @@ export default function KreatorPresets() {
           {creatorProfile?.bio && (
             <p style={{ fontSize: 12, lineHeight: 1.4, marginTop: 4, color: 'var(--text)' }}>{creatorProfile.bio}</p>
           )}
-          {creatorProfile?.is_creator && (creatorProfile?.contact_link || creatorProfile?.tiktok_link) && (
+          {(creatorProfile?.is_creator || creatorProfile?.is_guest) && (creatorProfile?.contact_link || creatorProfile?.tiktok_link) && (
             <a
               href={safeHref(creatorProfile.contact_link || creatorProfile.tiktok_link)}
               target="_blank"
@@ -172,7 +193,7 @@ export default function KreatorPresets() {
               className="kreator-profile-link"
               onClick={(e) => e.stopPropagation()}
             >
-              🔗 Link Kontak
+              {creatorProfile.is_guest ? '🔗 TikTok' : '🔗 Link Kontak'}
             </a>
           )}
         </div>
