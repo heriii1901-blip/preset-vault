@@ -66,9 +66,11 @@ export default function WallpaperSettings() {
     setSaving(true)
     setStatusMsg('')
     try {
+      const { data: sessionData } = await supabase.auth.getSession()
       const uploadRes = await fetch('/api/upload-wallpaper-to-r2', {
         method: 'POST',
         headers: {
+          Authorization: `Bearer ${sessionData?.session?.access_token || ''}`,
           'x-file-name': file.name,
           'Content-Type': file.type,
         },
