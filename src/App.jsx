@@ -28,6 +28,8 @@ import KreatorPresets from './pages/KreatorPresets'
 import AdminCreatorApplications from './pages/AdminCreatorApplications'
 import DownloadPage from './pages/DownloadPage'
 import KreatorAddPreset from './pages/KreatorAddPreset'
+import KreatorManagePresets from './pages/KreatorManagePresets'
+import KreatorSongRequests from './pages/KreatorSongRequests'
 import AdminSongRequests from './pages/AdminSongRequests'
 import EditProfile from './pages/EditProfile'
 import TentangAplikasi from './pages/TentangAplikasi'
@@ -250,6 +252,22 @@ export default function App() {
                   element={
                     <ProtectedRoute>
                       <KreatorAddPreset />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/kreator/kelola-preset"
+                  element={
+                    <ProtectedRoute>
+                      <KreatorManagePresets />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/kreator/request-lagu"
+                  element={
+                    <ProtectedRoute>
+                      <KreatorSongRequests />
                     </ProtectedRoute>
                   }
                 />
