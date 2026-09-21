@@ -43,6 +43,7 @@ export default function Terbaru() {
           .from('presets')
           .select('*')
           .eq('link_pending', false)
+          .eq('hide_from_latest', false)
           .order('created_at', { ascending: false })
           .limit(20)
         if (error) throw error
