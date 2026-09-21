@@ -14,7 +14,9 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "URL gak valid" });
     }
 
-    if (!target.hostname.endsWith("tiktok.com")) {
+    const host = target.hostname.toLowerCase();
+    const isTiktokHost = host === "tiktok.com" || host.endsWith(".tiktok.com");
+    if (!["http:", "https:"].includes(target.protocol) || !isTiktokHost) {
       return res.status(400).json({ error: "Bukan link TikTok" });
     }
 
