@@ -65,7 +65,7 @@ export default function PresetFeed() {
         let query = supabase.from('presets').select('*, songs(name)').eq('link_pending', false)
 
         if (isFromTerbaru) {
-          query = query.order('created_at', { ascending: false }).limit(20)
+          query = query.eq('hide_from_latest', false).order('created_at', { ascending: false }).limit(20)
         } else if (isFromKreator && filterCreatorUsername) {
           query = query.eq('creator_username', filterCreatorUsername).order('created_at', { ascending: false })
         } else if (isFromFavorit) {
