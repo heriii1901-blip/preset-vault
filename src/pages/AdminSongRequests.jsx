@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
+import { safeHref } from '../utils/safeUrl'
 
 const THUMB_COLORS = [
   'linear-gradient(135deg,#7C5CFF,#4A32C9)',
@@ -225,7 +226,7 @@ export default function AdminSongRequests() {
 
                 {req.tiktok_link && (
                   <a
-                    href={req.tiktok_link}
+                    href={safeHref(req.tiktok_link)}
                     target="_blank"
                     rel="noreferrer"
                     style={{ fontSize: 12.5, color: 'var(--pink)', wordBreak: 'break-all', display: 'block', marginTop: 8 }}
