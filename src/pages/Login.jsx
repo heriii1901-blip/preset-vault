@@ -1,13 +1,15 @@
 import LoadingScreen from "../components/LoadingScreen";
 import { useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { savePostLoginRedirect } from '../utils/postLoginRedirect'
 
 export default function Login() {
   const { user, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const waveRef = useRef(null)
-
+  
   // Kalau udah login, langsung lempar ke home, gak usah liat layar login lagi
   useEffect(() => {
     if (user) navigate('/', { replace: true })
@@ -28,6 +30,8 @@ export default function Login() {
 
   const handleLogin = async () => {
     try {
+      // Simpen halaman tujuan (kalo ada) sebelum login Google mindahin app ke luar
+      savePostLoginRedirect(location.state?.from)
       await loginWithGoogle()
     } catch (err) {
       console.error('Login gagal:', err)
