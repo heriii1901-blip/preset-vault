@@ -10,6 +10,7 @@ import { useTabIndicator } from '../hooks/useTabIndicator'
 import PresetVideoCell from '../components/PresetVideoCell'
 import ProfileTabIcon from '../components/ProfileTabIcon'
 import AvatarViewer from '../components/AvatarViewer'
+import { safeHref } from '../utils/safeUrl'
 
 const COVER_TIME = 2
 
@@ -380,7 +381,7 @@ export default function Profile() {
             {profile?.bio && <p className="profile-bio">{profile.bio}</p>}
             {isCreator && profile?.contact_link && (
               <a
-                href={profile.contact_link}
+                href={safeHref(profile.contact_link)}
                 target="_blank"
                 rel="noreferrer"
                 className="profile-link"
