@@ -291,7 +291,6 @@ export default function App() {
                     </ProtectedRoute>
                   }
                 />
-              <Routes>
                 <Route
                   path="/admin/kreator-khusus"
                   element={
@@ -308,6 +307,7 @@ export default function App() {
                     </ProtectedRoute>
                   }
                 />
+              </Routes>
             </div>
 
             {shouldShowNav && <BottomNav />}
