@@ -1,18 +1,30 @@
+import { supabase } from '../supabase'
+
 // Upload file langsung ke R2 (bukan lewat Vercel function) pake presigned URL.
 // Ini yang bikin video gede ga ke-block sama limit ukuran body Vercel.
 export function uploadToR2(file, folder = 'presets', onProgress) {
   return new Promise((resolve, reject) => {
-    fetch('/api/get-upload-url', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fileName: file.name,
-        contentType: file.type || 'video/mp4',
-        folder,
-      }),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Gagal minta izin upload')
+    supabase.auth
+      .getSession()
+      .then(({ data }) =>
+        fetch('/api/get-upload-url', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${data?.session?.access_token || ''}`,
+          },
+          body: JSON.stringify({
+            fileName: file.name,
+            contentType: file.type || 'video/mp4',
+            folder,
+          }),
+        })
+      )
+      .then(async (res) => {
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}))
+          throw new Error(errData.error || 'Gagal minta izin upload')
+        }
         return res.json()
       })
       .then(({ uploadUrl, publicUrl }) => {
