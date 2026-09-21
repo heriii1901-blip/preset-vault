@@ -4,6 +4,7 @@ import { PresetCacheProvider } from './context/PresetCacheContext'
 import { AdminPendingProvider } from './context/AdminPendingContext'
 import { UploadQueueProvider } from './context/UploadQueueContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import PostLoginRedirect from './components/PostLoginRedirect'
 import { BottomNav } from './components/BottomNav'
 import { ServerNoticeBanner } from './components/ServerNoticeBanner'
 
@@ -48,6 +49,7 @@ export default function App() {
       <PresetCacheProvider>
       <AdminPendingProvider>
       <UploadQueueProvider>
+        <PostLoginRedirect />
         <div className="phone-wrap">
           <div className={`phone${isFullscreenFromTerbaru ? ' phone--nav-overlay' : ''}`}>
             <div className="page-transition" key={location.pathname}>
