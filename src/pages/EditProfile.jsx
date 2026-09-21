@@ -180,9 +180,11 @@ export default function EditProfile() {
       const oldAvatarUrl = profile?.avatar_url || null
 
       if (avatarFile) {
+        const { data: sessionData } = await supabase.auth.getSession()
         const uploadRes = await fetch('/api/upload-avatar-to-r2', {
           method: 'POST',
           headers: {
+            Authorization: `Bearer ${sessionData?.session?.access_token || ''}`,
             'x-file-name': avatarFile.name,
             'Content-Type': avatarFile.type,
           },
