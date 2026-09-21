@@ -2,6 +2,8 @@ import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { useAuth } from '../context/AuthContext'
+import { useDoubleTapLike } from '../hooks/useDoubleTapLike'
+import { HEART_PATH, LoveGradientDefs, LoveBurst } from '../components/LoveBurst'
 
 export default function EfekFeed() {
   const { effectId } = useParams()
@@ -371,6 +373,7 @@ export default function EfekFeed() {
   return (
     <div className="screen">
       <button className="feed-back-btn" onClick={() => navigate(-1)}>←</button>
+      <LoveGradientDefs />
 
       {loading && (
         <div className="empty-state" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -455,7 +458,7 @@ export default function EfekFeed() {
                       aria-label="Favoritkan"
                     >
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z" />
+                        <path d={HEART_PATH} />
                       </svg>
                     </button>
                     <button
