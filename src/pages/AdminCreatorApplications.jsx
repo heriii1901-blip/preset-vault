@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
+import { safeHref } from '../utils/safeUrl'
 
 export default function AdminCreatorApplications() {
   const navigate = useNavigate()
@@ -139,7 +140,7 @@ export default function AdminCreatorApplications() {
               const detail = (
                 <>
                   <a
-                    href={app.tiktok_link}
+                    href={safeHref(app.tiktok_link)}
                     target="_blank"
                     rel="noreferrer"
                     style={{ fontSize: 12.5, color: 'var(--pink)', wordBreak: 'break-all' }}
