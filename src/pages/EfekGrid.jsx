@@ -97,7 +97,6 @@ const FAB_ACTIONS = [
   {    
   // Post Khusus, Tambah Efek, dan Tambah Lagu udah pindah jadi tab di dalam
   // halaman "Tambah Preset" (biar ngga bala di menu +), jadi ngga perlu item FAB sendiri lagi.
-  {
     label: 'Tambah Preset',
     to: '/admin/tambah-preset',
     icon: (
