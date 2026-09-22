@@ -10,12 +10,12 @@
         { "key": "Cross-Origin-Embedder-Policy", "value": "credentialless" },
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    }
   ],
   "functions": {
     "api/download-tiktok-video.js": {
       "maxDuration": 60
     }
   }
-}
-  ]
 }
