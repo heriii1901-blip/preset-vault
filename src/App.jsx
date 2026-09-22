@@ -11,7 +11,6 @@ import { ServerNoticeBanner } from './components/ServerNoticeBanner'
 import Login from './pages/Login'
 import Home from './pages/Home'
 import AdminAddPreset from './pages/AdminAddPreset'
-import TambahLagu from './pages/TambahLagu'
 import AdminManagePresets from './pages/AdminManagePresets'
 import Profile from './pages/Profile'
 import SongPresets from './pages/SongPresets'
@@ -19,7 +18,6 @@ import Terbaru from './pages/Terbaru'
 import EfekGrid from './pages/EfekGrid'
 import EfekKategori from './pages/EfekKategori'
 import EfekFeed from './pages/EfekFeed'
-import EfekTambah from './pages/EfekTambah'
 import AdminManageEfek from './pages/AdminManageEfek'
 import DownloadEfek from './pages/DownloadEfek'
 import PresetFeed from './pages/PresetFeed'
@@ -37,7 +35,6 @@ import TentangAplikasi from './pages/TentangAplikasi'
 import WallpaperSettings from './pages/WallpaperSettings'
 import Pengaturan from './pages/Pengaturan'
 import AdminKreatorKhusus from './pages/AdminKreatorKhusus'
-import AdminPostKhusus from './pages/AdminPostKhusus'
 
 export default function App() {
   const location = useLocation()
@@ -147,14 +144,7 @@ export default function App() {
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/admin/tambah-lagu"
-                  element={
-                    <ProtectedRoute requireAdmin>
-                      <TambahLagu />
-                    </ProtectedRoute>
-                  }
-                />
+                
                 <Route
                   path="/admin/edit-preset/:presetId"
                   element={
@@ -195,14 +185,7 @@ export default function App() {
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/efek/tambah"
-                  element={
-                    <ProtectedRoute requireAdmin>
-                      <EfekTambah />
-                    </ProtectedRoute>
-                  }
-                />
+                
                 <Route
                   path="/admin/kelola-efek"
                   element={
@@ -299,14 +282,7 @@ export default function App() {
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/admin/post-khusus"
-                  element={
-                    <ProtectedRoute requireAdmin>
-                      <AdminPostKhusus />
-                    </ProtectedRoute>
-                  }
-                />
+                
               </Routes>
             </div>
 
