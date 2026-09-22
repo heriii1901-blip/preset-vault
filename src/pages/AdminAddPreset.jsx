@@ -7,6 +7,7 @@ import { uploadToR2 } from '../utils/uploadToR2'
 import { safeHref } from '../utils/safeUrl'
 import { generateCoverFromVideo } from '../utils/generateCoverFromVideo'
 import { useUploadQueue } from '../context/UploadQueueContext'
+import { useAuth } from '../context/AuthContext'
 import { useSwipePages } from '../hooks/useSwipePages'
 import { useTabIndicator } from '../hooks/useTabIndicator'
 
@@ -18,16 +19,33 @@ const THUMB_COLORS = [
   'linear-gradient(135deg,#4A32C9,#15151D)',
 ]
 
+const EFEK_CATEGORIES = [
+  { value: 'overlay', label: 'Overlay' },
+  { value: 'glitch', label: 'Glitch' },
+  { value: 'cc', label: 'CC' },
+  { value: 'jj', label: 'Efek JJ' },
+  { value: 'transisi', label: 'Transisi' },
+  { value: 'lainnya', label: 'Lainnya' },
+]
+
+// Dipake tab Post Khusus buat ambil video TikTok otomatis (pindahan dari AdminPostKhusus.jsx)
+async function authHeader() {
+  const { data } = await supabase.auth.getSession()
+  return `Bearer ${data?.session?.access_token || ''}`
+}
+
 export default function AdminAddPreset() {
   const navigate = useNavigate()
   const { presetId } = useParams()
   const [searchParams] = useSearchParams()
   const isEditMode = Boolean(presetId)
   const fromPending = searchParams.get('from') === 'pending'
-  const { enqueuePresetUpload, history, cancelJob, resubmitQueueItem, deleteHistoryItem, getQueueItemForEdit } = useUploadQueue()
+  const { enqueuePresetUpload, enqueueEfekUpload, history, cancelJob, resubmitQueueItem, deleteHistoryItem, getQueueItemForEdit } = useUploadQueue()
+  const { user, creatorUsername: authCreatorUsername } = useAuth()
   const [editingQueueId, setEditingQueueId] = useState(null)
-  const { activeIndex: activePanel, progress: panelProgress, trackStyle, scrollerRef, goTo: goToPanelRaw, touchHandlers } = useSwipePages(4)
-  const { containerRef: tabsRef, tabRefs, indicatorStyle, getTabColor } = useTabIndicator(panelProgress, 4)
+  // 7 tab: Tambah Preset, Post Khusus, Tambah Efek, Tambah Lagu, Riwayat Upload, Link Kosong, Cover Lama
+  const { activeIndex: activePanel, progress: panelProgress, trackStyle, scrollerRef, goTo: goToPanelRaw, touchHandlers } = useSwipePages(7)
+  const { containerRef: tabsRef, tabRefs, indicatorStyle, getTabColor } = useTabIndicator(panelProgress, 7)
   const [pendingLinkPresets, setPendingLinkPresets] = useState([])
   const [loadingPendingLinks, setLoadingPendingLinks] = useState(true)
 
@@ -52,6 +70,58 @@ export default function AdminAddPreset() {
   const cancelledRef = useRef(false)
   const progressIntervalRef = useRef(null)
   const originalSongIdRef = useRef('')
+
+  // --- State tab "Post Khusus" (pindahan dari AdminPostKhusus.jsx) ---
+  const [guests, setGuests] = useState([])
+  const [loadingGuests, setLoadingGuests] = useState(true)
+  const [selectedGuestId, setSelectedGuestId] = useState('')
+  const [guestDropdownOpen, setGuestDropdownOpen] = useState(false)
+  const guestDropdownRef = useRef(null)
+  const [pkSongMode, setPkSongMode] = useState('existing')
+  const [pkSelectedSongId, setPkSelectedSongId] = useState('')
+  const [pkSongDropdownOpen, setPkSongDropdownOpen] = useState(false)
+  const pkSongDropdownRef = useRef(null)
+  const [pkNewSongName, setPkNewSongName] = useState('')
+  const [pkXmlLink, setPkXmlLink] = useState('')
+  const [pkMbLink, setPkMbLink] = useState('')
+  const [pkTiktokLink, setPkTiktokLink] = useState('')
+  const [pkPreviewFile, setPkPreviewFile] = useState(null)
+  const [pkSkipCompress, setPkSkipCompress] = useState(false)
+  const [pkStatusMsg, setPkStatusMsg] = useState('')
+  const [pkAutoFetching, setPkAutoFetching] = useState(false)
+
+  // --- State tab "Tambah Efek" (pindahan dari EfekTambah.jsx) ---
+  const [efekTitle, setEfekTitle] = useState('')
+  const [efekCategory, setEfekCategory] = useState('overlay')
+  const [efekXmlLink, setEfekXmlLink] = useState('')
+  const [efekMbLink, setEfekMbLink] = useState('')
+  const [efekPreviewFile, setEfekPreviewFile] = useState(null)
+  const [efekStatusMsg, setEfekStatusMsg] = useState('')
+
+  // --- State tab "Tambah Lagu" (pindahan dari TambahLagu.jsx) ---
+  const [laguName, setLaguName] = useState('')
+  const [laguSaving, setLaguSaving] = useState(false)
+  const [laguStatusMsg, setLaguStatusMsg] = useState('')
+
+  // Ambil daftar kreator khusus SEKALI pas halaman dibuka (dep array kosong) -> ngga ada
+  // resiko loop / query berulang, sama kayak pola loadSongs/loadPendingLinkPresets di bawah.
+  useEffect(() => {
+    async function loadGuests() {
+      try {
+        const { data, error } = await supabase
+          .from('guest_creators')
+          .select('id, creator_username, display_name')
+          .order('created_at', { ascending: true })
+        if (error) throw error
+        setGuests(data || [])
+      } catch (err) {
+        console.error('Gagal ambil kreator khusus:', err)
+      } finally {
+        setLoadingGuests(false)
+      }
+    }
+    loadGuests()
+  }, [])
 
   useEffect(() => {
     async function loadSongs() {
@@ -120,6 +190,12 @@ export default function AdminAddPreset() {
     function handleClickOutside(e) {
       if (songDropdownRef.current && !songDropdownRef.current.contains(e.target)) {
         setSongDropdownOpen(false)
+      }
+      if (guestDropdownRef.current && !guestDropdownRef.current.contains(e.target)) {
+        setGuestDropdownOpen(false)
+      }
+      if (pkSongDropdownRef.current && !pkSongDropdownRef.current.contains(e.target)) {
+        setPkSongDropdownOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -224,6 +300,143 @@ export default function AdminAddPreset() {
   }
 
   const goToPanel = goToPanelRaw
+
+  // Kreator yang dipilih SENGAJA ngga di-reset: biar enak spam post buat kreator yang sama.
+  const pkResetForm = () => {
+    setPkXmlLink('')
+    setPkMbLink('')
+    setPkTiktokLink('')
+    setPkPreviewFile(null)
+    setPkSkipCompress(false)
+    setPkNewSongName('')
+    setPkSongMode('existing')
+    setPkSelectedSongId('')
+  }
+
+  const pkHandleAutoDownload = async () => {
+    setPkStatusMsg('')
+    if (!pkTiktokLink.trim()) return setPkStatusMsg('Isi link video TikTok dulu.')
+
+    setPkAutoFetching(true)
+    try {
+      const res = await fetch(`/api/download-tiktok-video?url=${encodeURIComponent(pkTiktokLink.trim())}`, {
+        headers: { Authorization: await authHeader() },
+      })
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || `status ${res.status}`)
+      }
+      const blob = await res.blob()
+      const file = new File([blob], `tiktok-${Date.now()}.mp4`, { type: 'video/mp4' })
+      setPkPreviewFile(file)
+      setPkStatusMsg(`✅ Video keambil otomatis (${(file.size / 1024 / 1024).toFixed(1)} MB). Nanti dikompres otomatis kalau perlu pas disimpan.`)
+    } catch (err) {
+      setPkStatusMsg(`Gagal ambil otomatis (${err.message}). Upload manual aja di bawah.`)
+    } finally {
+      setPkAutoFetching(false)
+    }
+  }
+
+  const pkHandleSave = (e) => {
+    e.preventDefault()
+    setPkStatusMsg('')
+
+    const guest = guests.find((g) => g.id === selectedGuestId)
+    if (!guest) return setPkStatusMsg('Pilih kreator khusus dulu.')
+    if (!pkMbLink.trim()) return setPkStatusMsg('Link 5MB (Alight Creative) belum diisi.')
+    if (!pkXmlLink.trim()) {
+      const lanjut = window.confirm(
+        'Link XML belum diisi. Preset ini bakal disembunyiin dari publik dan masuk tab "Link Kosong" sampe link-nya diisi. Lanjut upload?'
+      )
+      if (!lanjut) return
+    }
+    if (!pkPreviewFile) return setPkStatusMsg('Video contoh belum dipilih.')
+    if (pkSongMode === 'new' && !pkNewSongName.trim()) return setPkStatusMsg('Nama lagu baru belum diisi.')
+    if (pkSongMode === 'existing' && !pkSelectedSongId) return setPkStatusMsg('Pilih lagunya dulu.')
+
+    enqueuePresetUpload({
+      previewFile: pkPreviewFile,
+      songMode: pkSongMode,
+      selectedSongId: pkSelectedSongId,
+      newSongName: pkNewSongName.trim(),
+      xmlLink: pkXmlLink.trim(),
+      mbLink: pkMbLink.trim(),
+      tiktokLink: pkTiktokLink.trim(),
+      creatorUsername: guest.creator_username,
+      directSongCreate: true,
+      skipCompress: pkSkipCompress,
+      hideFromLatest: true, // post khusus: ngga masuk Terbaru, langsung ke lagu + halaman kreator
+    })
+
+    setPkStatusMsg(`✅ Ditambahin ke antrian upload (atas nama ${guest.display_name || guest.creator_username}). Boleh langsung post lagi.`)
+    pkResetForm()
+  }
+
+  const efekResetForm = () => {
+    setEfekTitle('')
+    setEfekCategory('overlay')
+    setEfekXmlLink('')
+    setEfekMbLink('')
+    setEfekPreviewFile(null)
+  }
+
+  const efekHandleSave = (e) => {
+    e.preventDefault()
+    setEfekStatusMsg('')
+
+    if (!efekTitle.trim()) return setEfekStatusMsg('Nama efek belum diisi.')
+    if (!efekXmlLink.trim()) return setEfekStatusMsg('Link XML belum diisi.')
+    if (!efekMbLink.trim()) return setEfekStatusMsg('Link 5MB (Alight Creative) belum diisi.')
+    if (!efekPreviewFile) return setEfekStatusMsg('Video efek belum dipilih.')
+
+    enqueueEfekUpload({
+      previewFile: efekPreviewFile,
+      title: efekTitle.trim(),
+      category: efekCategory,
+      xmlLink: efekXmlLink.trim(),
+      mbLink: efekMbLink.trim(),
+      creatorUsername: authCreatorUsername || 'admin',
+      userId: user.id,
+    })
+
+    setEfekStatusMsg('✅ Ditambahin ke antrian upload! Boleh langsung tambah efek lain.')
+    efekResetForm()
+  }
+
+  const laguHandleSave = async (e) => {
+    e.preventDefault()
+    setLaguStatusMsg('')
+    if (!laguName.trim()) return setLaguStatusMsg('Nama lagu belum diisi.')
+
+    setLaguSaving(true)
+    try {
+      const { data: existing, error: findErr } = await supabase
+        .from('songs')
+        .select('id, name')
+        .ilike('name', laguName.trim())
+        .maybeSingle()
+      if (findErr) throw findErr
+
+      if (existing) {
+        setLaguStatusMsg(`Lagu "${existing.name}" udah ada di list.`)
+        return
+      }
+
+      const color = THUMB_COLORS[Math.floor(Math.random() * THUMB_COLORS.length)]
+      const { error: insertErr } = await supabase
+        .from('songs')
+        .insert({ name: laguName.trim(), preset_count: 0, color })
+      if (insertErr) throw insertErr
+
+      setLaguStatusMsg('✅ Lagu ditambahin!')
+      setLaguName('')
+    } catch (err) {
+      console.error('Gagal nambah lagu:', err)
+      setLaguStatusMsg('❌ Gagal nambah lagu. Cek koneksi / setting Supabase.')
+    } finally {
+      setLaguSaving(false)
+    }
+  }
 
   const handleSave = (e) => {
     e.preventDefault()
@@ -717,6 +930,347 @@ export default function AdminAddPreset() {
     cancelled: 'Dibatalin',
   }
 
+  const selectedGuest = guests.find((g) => g.id === selectedGuestId)
+
+  const postKhususPanel = (
+    <div style={{ padding: '0 20px' }}>
+      <form onSubmit={pkHandleSave} className="admin-pad">
+        <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 14 }}>
+          Preset dari tab ini ngga muncul di Terbaru. Langsung masuk ke lagu dan halaman kreatornya.
+        </p>
+
+        <div className="form-field">
+          <label>Kreator</label>
+          {loadingGuests ? (
+            <p className="hint" style={{ color: 'var(--muted)' }}>Memuat...</p>
+          ) : guests.length === 0 ? (
+            <>
+              <p className="hint" style={{ color: 'var(--muted)' }}>Belum ada kreator khusus.</p>
+              <button
+                type="button"
+                className="save-btn"
+                style={{ marginTop: 8 }}
+                onClick={() => navigate('/admin/kreator-khusus')}
+              >
+                Tambah kreator khusus
+              </button>
+            </>
+          ) : (
+            <div className="custom-select" ref={guestDropdownRef}>
+              <button
+                type="button"
+                className="custom-select-trigger"
+                onClick={() => setGuestDropdownOpen((prev) => !prev)}
+              >
+                <span>
+                  {selectedGuest
+                    ? `${selectedGuest.display_name || selectedGuest.creator_username} (@${selectedGuest.creator_username})`
+                    : 'Pilih kreator...'}
+                </span>
+                <span className={guestDropdownOpen ? 'custom-select-arrow open' : 'custom-select-arrow'}>▾</span>
+              </button>
+              {guestDropdownOpen && (
+                <div className="custom-select-menu">
+                  {guests.map((g) => (
+                    <div
+                      key={g.id}
+                      className={g.id === selectedGuestId ? 'custom-select-option active' : 'custom-select-option'}
+                      onClick={() => {
+                        setSelectedGuestId(g.id)
+                        setGuestDropdownOpen(false)
+                      }}
+                    >
+                      {g.display_name || g.creator_username} (@{g.creator_username})
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="form-field">
+          <label>Link XML (satu link per baris kalau lebih dari satu)</label>
+          <div className="input-wrap">
+            <textarea
+              className="finput-real finput-multiline"
+              placeholder="Paste link XML dari AM..."
+              value={pkXmlLink}
+              onChange={(e) => setPkXmlLink(e.target.value)}
+              rows={3}
+            />
+            {pkXmlLink && (
+              <button type="button" className="input-clear-btn" onClick={() => setPkXmlLink('')} aria-label="Hapus isi">×</button>
+            )}
+          </div>
+        </div>
+
+        <div className="form-field">
+          <label>Link 5MB (satu link per baris kalau lebih dari satu)</label>
+          <div className="input-wrap">
+            <textarea
+              className="finput-real finput-multiline"
+              placeholder="Paste link 5MB / Alight Creative..."
+              value={pkMbLink}
+              onChange={(e) => setPkMbLink(e.target.value)}
+              rows={3}
+            />
+            {pkMbLink && (
+              <button type="button" className="input-clear-btn" onClick={() => setPkMbLink('')} aria-label="Hapus isi">×</button>
+            )}
+          </div>
+        </div>
+
+        <div className="form-field">
+          <label>Link video TikTok kreator</label>
+          <div className="input-wrap">
+            <input
+              className="finput-real"
+              placeholder="tiktok.com/@username/video/..."
+              value={pkTiktokLink}
+              onChange={(e) => setPkTiktokLink(e.target.value)}
+            />
+            {pkTiktokLink && (
+              <button type="button" className="input-clear-btn" onClick={() => setPkTiktokLink('')} aria-label="Hapus isi">×</button>
+            )}
+          </div>
+          <button
+            type="button"
+            className="save-btn"
+            style={{ marginTop: 10 }}
+            onClick={pkHandleAutoDownload}
+            disabled={pkAutoFetching}
+          >
+            {pkAutoFetching ? 'Mengunduh dari TikTok...' : '⚡ Ambil video otomatis dari link ini'}
+          </button>
+          <p className="hint" style={{ color: 'var(--muted)', marginTop: 6, fontSize: 11.5 }}>
+            Bisa gagal sewaktu-waktu kalau TikTok lagi rewel. Kalau gagal, upload manual di bawah.
+          </p>
+        </div>
+
+        <div className="form-field">
+          <label>Video contoh (buat preview di app)</label>
+          <label className="upload-box" style={{ display: 'block', cursor: 'pointer' }}>
+            {pkPreviewFile ? `✅ ${pkPreviewFile.name}` : '⬆ Pilih video dari HP'}
+            <input
+              type="file"
+              accept="video/*"
+              style={{ display: 'none' }}
+              onChange={(e) => setPkPreviewFile(e.target.files?.[0] || null)}
+            />
+          </label>
+          {pkPreviewFile && pkPreviewFile.size > 5 * 1024 * 1024 && (
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: 13, color: '#aaa' }}>
+              <input type="checkbox" checked={pkSkipCompress} onChange={(e) => setPkSkipCompress(e.target.checked)} />
+              Lewati kompres (upload video mentah - lebih gede, tapi gak nunggu compressor)
+            </label>
+          )}
+        </div>
+
+        <div className="form-field">
+          <label>Lagu</label>
+          <div className="song-mode-toggle">
+            <button
+              type="button"
+              className={pkSongMode === 'existing' ? 'mode-btn active' : 'mode-btn'}
+              onClick={() => setPkSongMode('existing')}
+            >
+              Pilih yang ada
+            </button>
+            <button
+              type="button"
+              className={pkSongMode === 'new' ? 'mode-btn active' : 'mode-btn'}
+              onClick={() => setPkSongMode('new')}
+            >
+              Lagu baru
+            </button>
+          </div>
+
+          {pkSongMode === 'existing' ? (
+            songs.length > 0 ? (
+              <div className="custom-select" ref={pkSongDropdownRef}>
+                <button
+                  type="button"
+                  className="custom-select-trigger"
+                  onClick={() => setPkSongDropdownOpen((prev) => !prev)}
+                >
+                  <span>{songs.find((s) => s.id === pkSelectedSongId)?.name || 'Pilih lagu...'}</span>
+                  <span className={pkSongDropdownOpen ? 'custom-select-arrow open' : 'custom-select-arrow'}>▾</span>
+                </button>
+                {pkSongDropdownOpen && (
+                  <div className="custom-select-menu">
+                    {songs.map((s) => (
+                      <div
+                        key={s.id}
+                        className={s.id === pkSelectedSongId ? 'custom-select-option active' : 'custom-select-option'}
+                        onClick={() => {
+                          setPkSelectedSongId(s.id)
+                          setPkSongDropdownOpen(false)
+                        }}
+                      >
+                        {s.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="hint" style={{ color: 'var(--muted)' }}>Belum ada lagu tersimpen. Pilih "Lagu baru" dulu.</p>
+            )
+          ) : (
+            <div className="input-wrap">
+              <input
+                className="finput-real"
+                placeholder="Nama lagu baru..."
+                value={pkNewSongName}
+                onChange={(e) => setPkNewSongName(e.target.value)}
+              />
+              {pkNewSongName && (
+                <button type="button" className="input-clear-btn" onClick={() => setPkNewSongName('')} aria-label="Hapus isi">×</button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {pkStatusMsg && (
+          <p style={{ fontSize: 12.5, marginBottom: 12, color: pkStatusMsg.startsWith('✅') ? 'var(--lime)' : 'var(--pink)' }}>
+            {pkStatusMsg}
+          </p>
+        )}
+
+        <button className="save-btn" type="submit">
+          Simpan Preset
+        </button>
+      </form>
+    </div>
+  )
+
+  const efekTambahPanel = (
+    <div style={{ padding: '0 20px' }}>
+      <form onSubmit={efekHandleSave}>
+        <div className="form-field">
+          <label>Nama efek</label>
+          <div className="input-wrap">
+            <input
+              className="finput-real"
+              placeholder="Misal: Glitch Neon..."
+              value={efekTitle}
+              onChange={(e) => setEfekTitle(e.target.value)}
+            />
+            {efekTitle && (
+              <button type="button" className="input-clear-btn" onClick={() => setEfekTitle('')} aria-label="Hapus isi">×</button>
+            )}
+          </div>
+        </div>
+
+        <div className="form-field">
+          <label>Kategori</label>
+          <div className="song-mode-toggle" style={{ flexWrap: 'wrap' }}>
+            {EFEK_CATEGORIES.map((c) => (
+              <button
+                key={c.value}
+                type="button"
+                className={efekCategory === c.value ? 'mode-btn active' : 'mode-btn'}
+                onClick={() => setEfekCategory(c.value)}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="form-field">
+          <label>Link XML (satu link per baris kalau lebih dari satu)</label>
+          <div className="input-wrap">
+            <textarea
+              className="finput-real finput-multiline"
+              placeholder="Paste link XML dari AM..."
+              value={efekXmlLink}
+              onChange={(e) => setEfekXmlLink(e.target.value)}
+              rows={3}
+            />
+            {efekXmlLink && (
+              <button type="button" className="input-clear-btn" onClick={() => setEfekXmlLink('')} aria-label="Hapus isi">×</button>
+            )}
+          </div>
+        </div>
+
+        <div className="form-field">
+          <label>Link 5MB (satu link per baris kalau lebih dari satu)</label>
+          <div className="input-wrap">
+            <textarea
+              className="finput-real finput-multiline"
+              placeholder="Paste link 5MB / Alight Creative..."
+              value={efekMbLink}
+              onChange={(e) => setEfekMbLink(e.target.value)}
+              rows={3}
+            />
+            {efekMbLink && (
+              <button type="button" className="input-clear-btn" onClick={() => setEfekMbLink('')} aria-label="Hapus isi">×</button>
+            )}
+          </div>
+        </div>
+
+        <div className="form-field">
+          <label>Video efek (ngga ada limit ukuran)</label>
+          <label className="upload-box" style={{ display: 'block', cursor: 'pointer' }}>
+            {efekPreviewFile ? `✅ ${efekPreviewFile.name}` : '⬆ Pilih video dari HP'}
+            <input
+              type="file"
+              accept="video/*"
+              style={{ display: 'none' }}
+              onChange={(e) => setEfekPreviewFile(e.target.files?.[0] || null)}
+            />
+          </label>
+          <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>
+            Video ngga dikompres, langsung diupload apa adanya - proses bisa lebih lama tergantung ukuran file & koneksi.
+          </p>
+        </div>
+
+        {efekStatusMsg && (
+          <p style={{ fontSize: 12.5, marginBottom: 12, color: efekStatusMsg.startsWith('✅') ? 'var(--lime)' : 'var(--pink)' }}>
+            {efekStatusMsg}
+          </p>
+        )}
+
+        <button className="save-btn" type="submit">
+          Simpan Efek
+        </button>
+      </form>
+    </div>
+  )
+
+  const tambahLaguPanel = (
+    <div style={{ padding: '0 20px' }}>
+      <form onSubmit={laguHandleSave}>
+        <div className="form-field">
+          <label>Nama lagu</label>
+          <div className="input-wrap">
+            <input
+              className="finput-real"
+              placeholder="Misal: Judul Lagu - Artis..."
+              value={laguName}
+              onChange={(e) => setLaguName(e.target.value)}
+            />
+            {laguName && (
+              <button type="button" className="input-clear-btn" onClick={() => setLaguName('')} aria-label="Hapus isi">×</button>
+            )}
+          </div>
+        </div>
+
+        {laguStatusMsg && (
+          <p style={{ fontSize: 12.5, marginBottom: 12, color: laguStatusMsg.startsWith('✅') ? 'var(--lime)' : 'var(--pink)' }}>
+            {laguStatusMsg}
+          </p>
+        )}
+
+        <button className="save-btn" type="submit" disabled={laguSaving}>
+          {laguSaving ? 'Nyimpen...' : 'Tambahkan Lagu'}
+        </button>
+      </form>
+    </div>
+  )
+
   const historyPanel = (
     <div style={{ padding: '0 20px' }}>
       {history.length === 0 ? (
@@ -894,7 +1448,7 @@ export default function AdminAddPreset() {
                 style={{ color: getTabColor(0) }}
                 onClick={() => goToPanel(0)}
               >
-                {editingQueueId ? 'Edit Upload' : 'Tambah Preset'}
+                <span>{editingQueueId ? 'Edit Upload' : 'Tambah Preset'}</span>
               </button>
               <button
                 ref={(el) => (tabRefs.current[1] = el)}
@@ -903,7 +1457,7 @@ export default function AdminAddPreset() {
                 style={{ color: getTabColor(1) }}
                 onClick={() => goToPanel(1)}
               >
-                Riwayat Upload{history.length > 0 ? ` (${history.length})` : ''}
+                <span>Post Khusus</span>
               </button>
               <button
                 ref={(el) => (tabRefs.current[2] = el)}
@@ -912,7 +1466,7 @@ export default function AdminAddPreset() {
                 style={{ color: getTabColor(2) }}
                 onClick={() => goToPanel(2)}
               >
-                🔗 Link Kosong{pendingLinkPresets.length > 0 ? ` (${pendingLinkPresets.length})` : ''}
+                <span>Tambah Efek</span>
               </button>
               <button
                 ref={(el) => (tabRefs.current[3] = el)}
@@ -921,13 +1475,46 @@ export default function AdminAddPreset() {
                 style={{ color: getTabColor(3) }}
                 onClick={() => goToPanel(3)}
               >
-                🖼️ Cover Lama{missingCoverPresets.length > 0 ? ` (${missingCoverPresets.length})` : ''}
+                <span>Tambah Lagu</span>
+              </button>
+              <button
+                ref={(el) => (tabRefs.current[4] = el)}
+                type="button"
+                className={`kreator-hub-tab${activePanel === 4 ? ' is-active' : ''}`}
+                style={{ color: getTabColor(4) }}
+                onClick={() => goToPanel(4)}
+              >
+                <span>Riwayat Upload</span>
+                {history.length > 0 && <span className="tab-badge">{history.length}</span>}
+              </button>
+              <button
+                ref={(el) => (tabRefs.current[5] = el)}
+                type="button"
+                className={`kreator-hub-tab${activePanel === 5 ? ' is-active' : ''}`}
+                style={{ color: getTabColor(5) }}
+                onClick={() => goToPanel(5)}
+              >
+                <span>🔗 Link Kosong</span>
+                {pendingLinkPresets.length > 0 && <span className="tab-badge">{pendingLinkPresets.length}</span>}
+              </button>
+              <button
+                ref={(el) => (tabRefs.current[6] = el)}
+                type="button"
+                className={`kreator-hub-tab${activePanel === 6 ? ' is-active' : ''}`}
+                style={{ color: getTabColor(6) }}
+                onClick={() => goToPanel(6)}
+              >
+                <span>🖼️ Cover Lama</span>
+                {missingCoverPresets.length > 0 && <span className="tab-badge">{missingCoverPresets.length}</span>}
               </button>
             </div>
 
             <div className="kreator-hub-scroller" ref={scrollerRef}>
               <div className="kreator-hub-track" style={trackStyle} {...touchHandlers}>
                 <div className="kreator-hub-page">{formPanel}</div>
+                <div className="kreator-hub-page">{postKhususPanel}</div>
+                <div className="kreator-hub-page">{efekTambahPanel}</div>
+                <div className="kreator-hub-page">{tambahLaguPanel}</div>
                 <div className="kreator-hub-page">{historyPanel}</div>
                 <div className="kreator-hub-page">{pendingLinkPanel}</div>
                 <div className="kreator-hub-page">{missingCoverPanel}</div>
