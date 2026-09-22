@@ -55,10 +55,20 @@
   z-index: 2;
   background: var(--bg);
   flex-shrink: 0;
+  /* Scrollable ala PrimaryScrollableTabRow (Tachiyomi/Mihon) - tiap tab lebarnya
+     ngikutin isinya sendiri, kalau kepanjangan row-nya di-scroll, bukan diperas rata. */
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
+.kreator-hub-tabs::-webkit-scrollbar { display: none; }
 
 .kreator-hub-tab {
-  flex: 1;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   background: none;
   border: none;
   border-radius: 10px 10px 0 0;
@@ -66,7 +76,8 @@
   font-weight: 700;
   font-size: 13.5px;
   letter-spacing: 0.1px;
-  padding: 12px 4px 14px;
+  white-space: nowrap;
+  padding: 12px 14px 14px;
   cursor: pointer;
   transition: color .2s ease, background-color .2s ease, transform .12s ease;
 }
@@ -77,6 +88,21 @@
 .kreator-hub-tab:active { transform: scale(0.96); background: rgba(255, 255, 255, 0.05); }
 @media (hover: hover) {
   .kreator-hub-tab:not(.is-active):hover { color: color-mix(in srgb, var(--text) 55%, var(--muted)); background: rgba(255, 255, 255, 0.03); }
+}
+
+/* Badge count - pill kapsul terpisah dari label, bukan angka nempel dalam kurung */
+.tab-badge {
+  flex-shrink: 0;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
 }
 
 .kreator-hub-scroller {
