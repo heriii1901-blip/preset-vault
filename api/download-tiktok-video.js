@@ -31,7 +31,65 @@ async function resolveTikwm(tiktokUrl) {
 
   const full = videoUrl.startsWith("http") ? videoUrl : `https://www.tikwm.com${videoUrl}`;
   const sizeBytes = (d.hdplay ? d.hd_size : d.size) || null;
-  return { videoUrl: full, sizeBytes, usedHd: Boolean(d.hdplay) };
+  return { videoUrl: full, sizeBytes, usedHd: Boolean(d.hdplay), provider: "tikwm" };
+}
+
+// snaptik.app: JAUH lebih rapuh dari tikwm. Situsnya ngga ngasih JSON API resmi, jadi ini
+// nge-tiru alur browser (ambil cookie + token dari halaman utama, submit link, baca HTML
+// hasilnya buat nemu link download). Struktur HTML & nama endpoint-nya sering ganti-ganti
+// tanpa pemberitahuan, jadi provider ini WAJAR kalau tiba-tiba berhenti kerja duluan
+// dibanding tikwm. Ditaruh sebagai cadangan kedua, bukan andalan utama.
+async function resolveSnaptik(tiktokUrl) {
+  const home = await fetchWithTimeout("https://snaptik.app/en", { headers: { "User-Agent": UA } });
+  if (!home.ok) throw new Error(`snaptik status ${home.status}`);
+  const cookie = (home.headers.get("set-cookie") || "").split(";")[0];
+  const homeHtml = await home.text();
+  const tokenMatch = homeHtml.match(/name=["']token["']\s+value=["']([^"']+)["']/i);
+  const token = tokenMatch ? tokenMatch[1] : "";
+
+  const body = new URLSearchParams({ url: tiktokUrl, token });
+  const r = await fetchWithTimeout("https://snaptik.app/abc2.php", {
+    method: "POST",
+    headers: {
+      "User-Agent": UA,
+      "Content-Type": "application/x-www-form-urlencoded",
+      ...(cookie ? { Cookie: cookie } : {}),
+    },
+    body: body.toString(),
+  });
+  if (!r.ok) throw new Error(`snaptik status ${r.status}`);
+
+  const raw = await r.text();
+  let html = raw;
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed?.data) html = parsed.data;
+  } catch {
+    // bukan JSON, berarti HTML langsung - dipakai apa adanya
+  }
+
+  const linkMatch =
+    html.match(/<a[^>]+href="([^"]+)"[^>]*>\s*(?:Download Server|Download MP4)/i) ||
+    html.match(/<a[^>]+class="[^"]*download-file[^"]*"[^>]+href="([^"]+)"/i);
+  if (!linkMatch) throw new Error("snaptik ngga ngasih link download (kemungkinan struktur situsnya udah ganti)");
+
+  return { videoUrl: linkMatch[1], sizeBytes: null, usedHd: true, provider: "snaptik" };
+}
+
+// Rantai provider: dicoba satu-satu dari atas ke bawah, dipake yang pertama berhasil.
+// Nambah provider baru di masa depan tinggal nambah fungsi resolve-nya lalu daftarin di sini.
+const PROVIDERS = [resolveTikwm, resolveSnaptik];
+
+async function resolveVideo(tiktokUrl) {
+  const errors = [];
+  for (const provider of PROVIDERS) {
+    try {
+      return await provider(tiktokUrl);
+    } catch (err) {
+      errors.push(`${provider.name}: ${err.message}`);
+    }
+  }
+  throw new Error(`Semua provider gagal - ${errors.join(" | ")}`);
 }
 
 export default async function handler(req, res) {
@@ -51,7 +109,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Link TikTok gak valid" });
     }
 
-    const { videoUrl, sizeBytes, usedHd } = await resolveTikwm(tiktokUrl);
+    const { videoUrl, sizeBytes, usedHd, provider } = await resolveVideo(tiktokUrl);
     if (sizeBytes && sizeBytes > MAX_BYTES) {
       return res.status(413).json({ error: "Video ini kegedean buat diunduh otomatis" });
     }
@@ -67,6 +125,7 @@ export default async function handler(req, res) {
       "Content-Type": "video/mp4",
       "Cache-Control": "no-store",
       "X-Source-Quality": usedHd ? "hd" : "normal",
+      "X-Source-Provider": provider,
     });
 
     const reader = videoRes.body.getReader();
