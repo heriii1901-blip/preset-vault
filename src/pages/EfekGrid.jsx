@@ -94,17 +94,9 @@ const FAB_ACTIONS = [
       </svg>
     ),
   },
-  {
-    label: 'Tambah Lagu',
-    to: '/admin/tambah-lagu',
-    icon: (
-      <svg {...iconProps}>
-        <path d="M9 18V5l12-2v13" />
-        <circle cx="6" cy="18" r="3" />
-        <circle cx="18" cy="16" r="3" />
-      </svg>
-    ),
-  },
+  {    
+  // Post Khusus, Tambah Efek, dan Tambah Lagu udah pindah jadi tab di dalam
+  // halaman "Tambah Preset" (biar ngga bala di menu +), jadi ngga perlu item FAB sendiri lagi.
   {
     label: 'Tambah Preset',
     to: '/admin/tambah-preset',
@@ -112,24 +104,6 @@ const FAB_ACTIONS = [
       <svg {...iconProps}>
         <line x1="12" y1="5" x2="12" y2="19" />
         <line x1="5" y1="12" x2="19" y2="12" />
-      </svg>
-    ),
-  },
-  {
-    label: 'Post Khusus',
-    to: '/admin/post-khusus',
-    icon: (
-      <svg {...iconProps}>
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-      </svg>
-    ),
-  },
-  {
-    label: 'Tambah Efek',
-    to: '/efek/tambah',
-    icon: (
-      <svg {...iconProps}>
-        <path d="M12 3l2 5.4 5.4 2-5.4 2-2 5.4-2-5.4-5.4-2 5.4-2 2-5.4z" />
       </svg>
     ),
   },
