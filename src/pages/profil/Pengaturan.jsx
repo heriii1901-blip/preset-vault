@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import { supabase } from '../supabase'
-import { applyTheme, getTheme } from '../utils/theme'
+import { useAuth } from '../../context/AuthContext'
+import { supabase } from '../../supabase'
+import { applyTheme, getTheme } from '../../utils/theme'
 
 const MoonIcon = (props) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
