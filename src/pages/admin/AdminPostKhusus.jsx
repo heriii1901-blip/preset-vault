@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../supabase'
-import { useUploadQueue } from '../context/UploadQueueContext'
+import { supabase } from '../../supabase'
+import { useUploadQueue } from '../../context/UploadQueueContext'
 
 async function authHeader() {
   const { data } = await supabase.auth.getSession()
