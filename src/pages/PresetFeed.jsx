@@ -13,7 +13,9 @@ export default function PresetFeed() {
   const isFromTerbaru = location.state?.source === 'terbaru'
   const isFromKreator = location.state?.source === 'kreator'
   const isFromFavorit = location.state?.source === 'favorit'
+  const isFromKreatorFavorit = location.state?.source === 'kreator-favorit'
   const filterCreatorUsername = location.state?.creatorUsername
+  const filterFavUserId = location.state?.favUserId
   const { user } = useAuth()
   const [presets, setPresets] = useState([])
   const [songName, setSongName] = useState('')
@@ -62,6 +64,19 @@ export default function PresetFeed() {
           setFavoritedIds(new Set(favIds))
         }
 
+        // Antrian video buat tab Favorit kreator LAIN (bukan akun yang lagi login) —
+        // query terpisah pake id akun kreator yang lagi dibuka (favUserId), biar gak
+        // ketuker sama favIds punya viewer di atas.
+        let kreatorFavIds = []
+        if (isFromKreatorFavorit && filterFavUserId) {
+          const { data: kreatorFavs } = await supabase
+            .from('favorites')
+            .select('preset_id')
+            .eq('user_id', filterFavUserId)
+            .not('preset_id', 'is', null)
+          kreatorFavIds = (kreatorFavs || []).map((f) => f.preset_id)
+        }
+
         let query = supabase.from('presets').select('*, songs(name)').eq('link_pending', false)
 
         if (isFromTerbaru) {
@@ -70,6 +85,8 @@ export default function PresetFeed() {
           query = query.eq('creator_username', filterCreatorUsername).order('created_at', { ascending: false })
         } else if (isFromFavorit) {
           query = query.in('id', favIds.length > 0 ? favIds : [presetId]).order('created_at', { ascending: false })
+        } else if (isFromKreatorFavorit) {
+          query = query.in('id', kreatorFavIds.length > 0 ? kreatorFavIds : [presetId]).order('created_at', { ascending: false })
         } else {
           query = query.eq('song_id', clickedPreset.song_id).order('created_at', { ascending: true })
         }
@@ -79,7 +96,7 @@ export default function PresetFeed() {
 
          // Dari halaman lagu: urutan full screen HARUS sama kayak urutan grid (acak per hari, bukan urutan upload)
         let finalList = allPresets || []
-        if (!isFromTerbaru && !isFromKreator && !isFromFavorit) {
+        if (!isFromTerbaru && !isFromKreator && !isFromFavorit && !isFromKreatorFavorit) {
           finalList = sortByDailyOrder(finalList, clickedPreset.song_id)
         }
         setPresets(finalList)
@@ -93,7 +110,7 @@ export default function PresetFeed() {
     hasScrolledRef.current = false
     firstApplyRef.current = true
     setFeedReady(false)
-  }, [presetId, user, isFromTerbaru, isFromKreator, filterCreatorUsername, isFromFavorit])
+  }, [presetId, user, isFromTerbaru, isFromKreator, filterCreatorUsername, isFromFavorit, isFromKreatorFavorit, filterFavUserId])
   // Ukur tinggi container sekali & tiap resize (dipake buat hitung transform px)
     
   useLayoutEffect(() => {
