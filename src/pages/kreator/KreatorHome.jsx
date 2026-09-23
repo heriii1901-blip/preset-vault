@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import Kreator from './Kreator'
+import Kreator from '../Kreator'
 
 const iconProps = {
   viewBox: '0 0 24 24',
