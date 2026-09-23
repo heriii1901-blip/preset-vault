@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import { supabase } from '../supabase'
-import { useUploadQueue } from '../context/UploadQueueContext'
+import { useAuth } from '../../context/AuthContext'
+import { supabase } from '../../supabase'
+import { useUploadQueue } from '../../context/UploadQueueContext'
 
 export default function KreatorAddPreset() {
   const { user } = useAuth()
