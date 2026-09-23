@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../supabase'
-import { safeHref } from '../utils/safeUrl'
+import { supabase } from '../../supabase'
+import { safeHref } from '../../utils/safeUrl'
 
 const THUMB_COLORS = [
   'linear-gradient(135deg,#7C5CFF,#4A32C9)',
