@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../supabase'
-import { resolveTiktokVideoId } from '../utils/tiktokLink'
-import { deleteFromR2 } from '../utils/deleteFromR2'
+import { supabase } from '../../supabase'
+import { resolveTiktokVideoId } from '../../utils/tiktokLink'
+import { deleteFromR2 } from '../../utils/deleteFromR2'
 
 export default function AdminManagePresets() {
   const navigate = useNavigate()
