@@ -120,6 +120,28 @@
 }
 .profile-tab.is-active .profile-tab-icon { transform: scale(1.07); }
 
+/* Bungkus ikon tab + badge privasi (mata disilang), dipakai di halaman
+   profil kreator publik (KreatorPresets.jsx) buat nandain tab yang diprivasiin */
+.profile-tab-icon-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.profile-tab-private-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1.4px solid var(--line);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.profile-tab-private-badge svg { width: 10px; height: 10px; }
+
 /* List baris (Lagu / Kreator) di dalam tab profil — bukan scroller sendiri,
    biar yang nge-scroll tetep .profile-tab-page */
 .profile-row-list {
