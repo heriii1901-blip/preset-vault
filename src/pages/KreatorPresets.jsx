@@ -67,12 +67,31 @@ export default function KreatorPresets() {
   const activeVideoRef = useRef(null)
   const postinganPageRef = useRef(null)
 
+  // Video favorit & efek favorit kreator ini — ada tabelnya (favorites), jadi
+  // beneran ditampilin ke publik (kecuali di-privasiin). Lagu/Kreator belum
+  // punya tabel sama sekali (belum ada fitur ikut-kreator/suka-lagu), jadi
+  // masih placeholder di bawah, sama kayak di Profil sendiri.
+  const [favPresets, setFavPresets] = useState([])
+  const [favPresetsLoaded, setFavPresetsLoaded] = useState(false)
+  const [loadingFavPresets, setLoadingFavPresets] = useState(false)
+  const [favEffects, setFavEffects] = useState([])
+  const [favEffectsLoaded, setFavEffectsLoaded] = useState(false)
+  const [loadingFavEffects, setLoadingFavEffects] = useState(false)
+
   const privacy = creatorProfile?.privacy || {}
   const isTabPrivate = (key) => !!privacy[PRIVACY_KEY_FOR[key]]
 
   const tabCount = TAB_KEYS.length
   const { activeIndex: activeTab, progress: tabProgress, trackStyle, scrollerRef, goTo: goToTab, touchHandlers } = useSwipePages(tabCount)
   const { containerRef: tabsRef, tabRefs, indicatorStyle, getTabColor } = useTabIndicator(tabProgress, tabCount)
+
+  // Reset data favorit pas ganti-ganti halaman kreator (biar gak ketuker punya kreator lain)
+  useEffect(() => {
+    setFavPresets([])
+    setFavPresetsLoaded(false)
+    setFavEffects([])
+    setFavEffectsLoaded(false)
+  }, [creatorUsername])
 
   useEffect(() => {
     async function loadData() {
@@ -103,7 +122,7 @@ export default function KreatorPresets() {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('is_creator, tiktok_link, contact_link, bio, avatar_url, account_name, account_font, account_bold, privacy')
+          .select('id, is_creator, tiktok_link, contact_link, bio, avatar_url, account_name, account_font, account_bold, privacy')
           .eq('creator_username', creatorUsername)
           .maybeSingle()
         if (error) throw error
@@ -185,6 +204,98 @@ export default function KreatorPresets() {
     return () => page.removeEventListener('scroll', onScroll)
   }, [])
 
+  // Video favorit kreator ini, publik (dipake tab index 1 = 'favorit').
+  // Guard "kalau udah loaded -> return" bikin ini cuma jalan sekali per kunjungan
+  // halaman kreator (gak query ulang tiap render/swipe), jadi egress aman.
+  useEffect(() => {
+    if (activeTab !== TAB_KEYS.indexOf('favorit')) return
+    if (favPresetsLoaded) return
+    if (!creatorProfile?.id || isTabPrivate('favorit')) return
+    let cancelled = false
+    async function loadFavPresets() {
+      setLoadingFavPresets(true)
+      try {
+        const { data, error } = await supabase
+          .from('favorites')
+          .select(`
+            preset_id,
+            presets:preset_id (
+              id,
+              preview_video_url,
+              cover_url,
+              creator_username,
+              song_id,
+              songs:song_id (name)
+            )
+          `)
+          .eq('user_id', creatorProfile.id)
+          .not('preset_id', 'is', null)
+          .order('created_at', { ascending: false })
+        if (error) throw error
+        if (cancelled) return
+        const clean = (data || []).map((f) => f.presets).filter((p) => p !== null && p !== undefined)
+        setFavPresets(clean)
+      } catch (err) {
+        console.error('Gagal ambil video favorit kreator:', err)
+      } finally {
+        if (!cancelled) {
+          setLoadingFavPresets(false)
+          setFavPresetsLoaded(true)
+        }
+      }
+    }
+    loadFavPresets()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, favPresetsLoaded, creatorProfile])
+
+  // Efek favorit kreator ini, publik (tab index 2 = 'efek'). Query 2 tahap kayak
+  // di Profile.jsx (kolom effect_id belum ada FK ke effects). Guard sama kayak di atas.
+  useEffect(() => {
+    if (activeTab !== TAB_KEYS.indexOf('efek')) return
+    if (favEffectsLoaded) return
+    if (!creatorProfile?.id || isTabPrivate('efek')) return
+    let cancelled = false
+    async function loadFavEffects() {
+      setLoadingFavEffects(true)
+      try {
+        const { data: favRows, error: favError } = await supabase
+          .from('favorites')
+          .select('effect_id, created_at')
+          .eq('user_id', creatorProfile.id)
+          .not('effect_id', 'is', null)
+          .order('created_at', { ascending: false })
+        if (favError) throw favError
+
+        const effectIds = (favRows || []).map((f) => f.effect_id)
+        if (effectIds.length === 0) {
+          if (!cancelled) setFavEffects([])
+          return
+        }
+
+        const { data: effectsData, error: effectsError } = await supabase
+          .from('effects')
+          .select('id, title, preview_video_url, cover_url')
+          .in('id', effectIds)
+        if (effectsError) throw effectsError
+
+        const effectsById = new Map((effectsData || []).map((e) => [e.id, e]))
+        const ordered = effectIds.map((id) => effectsById.get(id)).filter((e) => e !== undefined)
+        if (!cancelled) setFavEffects(ordered)
+      } catch (err) {
+        console.error('Gagal ambil efek favorit kreator:', err)
+      } finally {
+        if (!cancelled) {
+          setLoadingFavEffects(false)
+          setFavEffectsLoaded(true)
+        }
+      }
+    }
+    loadFavEffects()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, favEffectsLoaded, creatorProfile])
+
   return (
     <div className="screen">
       <div className="topbar-row">
@@ -227,7 +338,7 @@ export default function KreatorPresets() {
             <p style={{ fontSize: 12, lineHeight: 1.4, marginTop: 4, color: 'var(--text)' }}>{creatorProfile.bio}</p>
           )}
           {(creatorProfile?.is_creator || creatorProfile?.is_guest) && (creatorProfile?.contact_link || creatorProfile?.tiktok_link) && (
-            <a
+            
               href={safeHref(creatorProfile.contact_link || creatorProfile.tiktok_link)}
               target="_blank"
               rel="noreferrer"
@@ -242,7 +353,7 @@ export default function KreatorPresets() {
 
       <AvatarViewer open={avatarOpen} src={creatorProfile?.avatar_url} onClose={() => setAvatarOpen(false)} />
 
-      <div className="profile-tabs" ref={tabsRef} style={{ marginTop: 6 }}>
+      <div className="profile-tabs" ref={tabsRef} style={{ marginTop: 16 }}>
         <div className="tab-indicator" style={indicatorStyle} />
         {TAB_KEYS.map((key, i) => {
           const isPrivate = isTabPrivate(key)
@@ -298,6 +409,56 @@ export default function KreatorPresets() {
                           onHoverStart={handleHoverStart}
                           onHoverEnd={handleHoverEnd}
                         />
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : key === 'favorit' ? (
+                <>
+                  {loadingFavPresets && <div className="empty-state" style={{ padding: 30 }}>Memuat...</div>}
+                  {!loadingFavPresets && favPresetsLoaded && favPresets.length === 0 && (
+                    <div className="empty-state" style={{ padding: 30 }}>Belum ada video yang di-favoritin kreator ini.</div>
+                  )}
+                  {!loadingFavPresets && favPresets.length > 0 && (
+                    <div className="preset-grid" style={{ flex: 'none' }}>
+                      {favPresets.map((preset, i) => (
+                        <PresetVideoCell
+                          key={preset.id}
+                          preset={preset}
+                          index={i}
+                          getCache={getCache}
+                          setCache={setCache}
+                          showOverlay={false}
+                          onNavigate={(p) => navigate(`/preset/${p.id}`, { state: { source: 'favorit' } })}
+                          onHoverStart={handleHoverStart}
+                          onHoverEnd={handleHoverEnd}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : key === 'efek' ? (
+                <>
+                  {loadingFavEffects && <div className="empty-state" style={{ padding: 30 }}>Memuat...</div>}
+                  {!loadingFavEffects && favEffectsLoaded && favEffects.length === 0 && (
+                    <div className="empty-state" style={{ padding: 30 }}>Belum ada efek yang di-favoritin kreator ini.</div>
+                  )}
+                  {!loadingFavEffects && favEffects.length > 0 && (
+                    <div className="preset-grid" style={{ flex: 'none' }}>
+                      {favEffects.map((effect) => (
+                        <div
+                          key={effect.id}
+                          className="grid-cell"
+                          onClick={() => navigate(`/efek/${effect.id}`)}
+                          onContextMenu={(e) => e.preventDefault()}
+                        >
+                          {effect.preview_video_url ? (
+                            <video src={effect.preview_video_url} muted loop preload="metadata" playsInline draggable={false} poster={effect.cover_url} />
+                          ) : (
+                            <div className="grid-fallback">🎬</div>
+                          )}
+                          <div className="grid-cell-overlay">{effect.title}</div>
+                        </div>
                       ))}
                     </div>
                   )}
