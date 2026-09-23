@@ -1,8 +1,8 @@
 import LoadingScreen from "../components/LoadingScreen";
 import { useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import { savePostLoginRedirect } from '../utils/postLoginRedirect'
+import { useAuth } from '../../context/AuthContext'
+import { savePostLoginRedirect } from '../../utils/postLoginRedirect'
 
 export default function Login() {
   const { user, loginWithGoogle } = useAuth()
