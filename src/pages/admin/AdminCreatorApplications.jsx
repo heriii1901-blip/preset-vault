@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../supabase'
-import { safeHref } from '../utils/safeUrl'
+import { supabase } from '../../supabase'
+import { safeHref } from '../../utils/safeUrl'
 
 export default function AdminCreatorApplications() {
   const navigate = useNavigate()
