@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { supabase } from '../supabase'
-import { usePresetCache } from '../context/PresetCacheContext'
-import PresetVideoCell from '../components/PresetVideoCell'
+import { supabase } from '../../supabase'
+import { usePresetCache } from '../../context/PresetCacheContext'
+import PresetVideoCell from '../../components/PresetVideoCell'
 
 const CATEGORY_LABEL = {
   overlay: 'Overlay',
