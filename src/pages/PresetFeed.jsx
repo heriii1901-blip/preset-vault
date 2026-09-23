@@ -60,13 +60,16 @@ export default function PresetFeed() {
             .from('favorites')
             .select('preset_id')
             .eq('user_id', user.id)
+            .not('preset_id', 'is', null)
+            .order('created_at', { ascending: false })
           favIds = (favs || []).map((f) => f.preset_id)
           setFavoritedIds(new Set(favIds))
         }
 
         // Antrian video buat tab Favorit kreator LAIN (bukan akun yang lagi login) —
         // query terpisah pake id akun kreator yang lagi dibuka (favUserId), biar gak
-        // ketuker sama favIds punya viewer di atas.
+        // ketuker sama favIds punya viewer di atas. Diurut created_at DESCENDING di
+        // tabel favorites (kapan di-fav), sama kayak urutan grid Favorit.
         let kreatorFavIds = []
         if (isFromKreatorFavorit && filterFavUserId) {
           const { data: kreatorFavs } = await supabase
@@ -74,6 +77,7 @@ export default function PresetFeed() {
             .select('preset_id')
             .eq('user_id', filterFavUserId)
             .not('preset_id', 'is', null)
+            .order('created_at', { ascending: false })
           kreatorFavIds = (kreatorFavs || []).map((f) => f.preset_id)
         }
 
@@ -84,9 +88,11 @@ export default function PresetFeed() {
         } else if (isFromKreator && filterCreatorUsername) {
           query = query.eq('creator_username', filterCreatorUsername).order('created_at', { ascending: false })
         } else if (isFromFavorit) {
-          query = query.in('id', favIds.length > 0 ? favIds : [presetId]).order('created_at', { ascending: false })
+          // Gak di-.order() di sini sengaja — presets.created_at itu tanggal UPLOAD video,
+          // bukan tanggal di-fav. Urutan yang bener disusun ulang di bawah pake favIds.
+          query = query.in('id', favIds.length > 0 ? favIds : [presetId])
         } else if (isFromKreatorFavorit) {
-          query = query.in('id', kreatorFavIds.length > 0 ? kreatorFavIds : [presetId]).order('created_at', { ascending: false })
+          query = query.in('id', kreatorFavIds.length > 0 ? kreatorFavIds : [presetId])
         } else {
           query = query.eq('song_id', clickedPreset.song_id).order('created_at', { ascending: true })
         }
@@ -98,6 +104,12 @@ export default function PresetFeed() {
         let finalList = allPresets || []
         if (!isFromTerbaru && !isFromKreator && !isFromFavorit && !isFromKreatorFavorit) {
           finalList = sortByDailyOrder(finalList, clickedPreset.song_id)
+        } else if (isFromFavorit || isFromKreatorFavorit) {
+          // Susun ulang hasil query (yang urutannya acak dari database) biar
+          // ngikutin urutan favIds/kreatorFavIds di atas (urutan kapan di-fav)
+          const orderIds = isFromFavorit ? favIds : kreatorFavIds
+          const byId = new Map(finalList.map((p) => [p.id, p]))
+          finalList = orderIds.map((id) => byId.get(id)).filter((p) => p !== undefined)
         }
         setPresets(finalList)
       } catch (err) {
