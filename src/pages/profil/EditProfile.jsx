@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import { supabase } from '../supabase'
+import { useAuth } from '../../context/AuthContext'
+import { supabase } from '../../supabase'
 
 const CROP_SIZE = 260 // ukuran kotak crop di layar (px)
 const OUTPUT_SIZE = 480 // ukuran akhir avatar yang di-generate (px)
