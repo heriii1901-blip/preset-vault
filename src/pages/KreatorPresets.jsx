@@ -429,7 +429,7 @@ export default function KreatorPresets() {
                           getCache={getCache}
                           setCache={setCache}
                           showOverlay={false}
-                          onNavigate={(p) => navigate(`/preset/${p.id}`, { state: { source: 'favorit' } })}
+                          onNavigate={(p) => navigate(`/preset/${p.id}`, { state: { source: 'kreator-favorit', creatorUsername, favUserId: creatorProfile?.id } })}
                           onHoverStart={handleHoverStart}
                           onHoverEnd={handleHoverEnd}
                         />
