@@ -3,9 +3,43 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { usePresetCache } from '../context/PresetCacheContext'
 import { creatorNameStyle } from '../utils/creatorFont'
+import { useSwipePages } from '../hooks/useSwipePages'
+import { useTabIndicator } from '../hooks/useTabIndicator'
 import PresetVideoCell from '../components/PresetVideoCell'
+import ProfileTabIcon from '../components/ProfileTabIcon'
 import AvatarViewer from '../components/AvatarViewer'
 import { safeHref } from '../utils/safeUrl'
+
+// Tab bar publik disamain sama tab bar di Profil sendiri. Tiap tab dikunci ke
+// key privasi yang sama kayak di Pengaturan > Privasi (profiles.privacy).
+const TAB_KEYS = ['postingan', 'favorit', 'efek', 'lagu', 'kreator']
+const TAB_LABEL = {
+  postingan: 'Postingan',
+  favorit: 'Favorit',
+  efek: 'Efek',
+  lagu: 'Lagu',
+  kreator: 'Kreator',
+}
+const PRIVACY_KEY_FOR = {
+  postingan: 'uploads',
+  favorit: 'liked_videos',
+  efek: 'liked_effects',
+  lagu: 'liked_songs',
+  kreator: 'followed_creators',
+}
+
+// Badge mata-disilang, nempel di pojok atas ikon tab yang diprivasiin kreator
+function EyeOffBadge() {
+  return (
+    <span className="profile-tab-private-badge" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z" />
+        <circle cx="12" cy="12" r="2.6" />
+        <line x1="3" y1="21" x2="21" y2="3" />
+      </svg>
+    </span>
+  )
+}
 
 const THUMB_COLORS = [
   'linear-gradient(135deg,#7C5CFF,#4A32C9)',
@@ -31,7 +65,14 @@ export default function KreatorPresets() {
   const [creatorProfile, setCreatorProfile] = useState(null)
   const [avatarOpen, setAvatarOpen] = useState(false)
   const activeVideoRef = useRef(null)
-  const gridRef = useRef(null)
+  const postinganPageRef = useRef(null)
+
+  const privacy = creatorProfile?.privacy || {}
+  const isTabPrivate = (key) => !!privacy[PRIVACY_KEY_FOR[key]]
+
+  const tabCount = TAB_KEYS.length
+  const { activeIndex: activeTab, progress: tabProgress, trackStyle, scrollerRef, goTo: goToTab, touchHandlers } = useSwipePages(tabCount)
+  const { containerRef: tabsRef, tabRefs, indicatorStyle, getTabColor } = useTabIndicator(tabProgress, tabCount)
 
   useEffect(() => {
     async function loadData() {
@@ -62,7 +103,7 @@ export default function KreatorPresets() {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('is_creator, tiktok_link, contact_link, bio, avatar_url, account_name, account_font, account_bold')
+          .select('is_creator, tiktok_link, contact_link, bio, avatar_url, account_name, account_font, account_bold, privacy')
           .eq('creator_username', creatorUsername)
           .maybeSingle()
         if (error) throw error
@@ -134,14 +175,14 @@ export default function KreatorPresets() {
   }
 
   useEffect(() => {
-    const grid = gridRef.current
-    if (!grid) return
+    const page = postinganPageRef.current
+    if (!page) return
     const onScroll = () => {
       resetToCover(activeVideoRef.current)
       activeVideoRef.current = null
     }
-    grid.addEventListener('scroll', onScroll, { passive: true })
-    return () => grid.removeEventListener('scroll', onScroll)
+    page.addEventListener('scroll', onScroll, { passive: true })
+    return () => page.removeEventListener('scroll', onScroll)
   }, [])
 
   return (
@@ -186,7 +227,7 @@ export default function KreatorPresets() {
             <p style={{ fontSize: 12, lineHeight: 1.4, marginTop: 4, color: 'var(--text)' }}>{creatorProfile.bio}</p>
           )}
           {(creatorProfile?.is_creator || creatorProfile?.is_guest) && (creatorProfile?.contact_link || creatorProfile?.tiktok_link) && (
-            <a
+            
               href={safeHref(creatorProfile.contact_link || creatorProfile.tiktok_link)}
               target="_blank"
               rel="noreferrer"
@@ -201,31 +242,73 @@ export default function KreatorPresets() {
 
       <AvatarViewer open={avatarOpen} src={creatorProfile?.avatar_url} onClose={() => setAvatarOpen(false)} />
 
-      {loading && (
-        <div className="empty-state" style={{ padding: 30 }}>Memuat...</div>
-      )}
+      <div className="profile-tabs" ref={tabsRef} style={{ marginTop: 6 }}>
+        <div className="tab-indicator" style={indicatorStyle} />
+        {TAB_KEYS.map((key, i) => {
+          const isPrivate = isTabPrivate(key)
+          return (
+            <button
+              key={key}
+              ref={(el) => (tabRefs.current[i] = el)}
+              type="button"
+              className={`profile-tab${activeTab === i ? ' is-active' : ''}`}
+              style={{ color: getTabColor(i) }}
+              onClick={() => goToTab(i)}
+              aria-label={isPrivate ? `${TAB_LABEL[key]} (diprivasi)` : TAB_LABEL[key]}
+              title={isPrivate ? `${TAB_LABEL[key]} (diprivasi)` : TAB_LABEL[key]}
+            >
+              <span className="profile-tab-icon-wrap">
+                <ProfileTabIcon name={key} active={activeTab === i} />
+                {isPrivate && <EyeOffBadge />}
+              </span>
+            </button>
+          )
+        })}
+      </div>
 
-      {!loading && presets.length === 0 && (
-        <div className="empty-state" style={{ padding: 30 }}>Belum ada preset dari kreator ini.</div>
-      )}
-
-      {!loading && presets.length > 0 && (
-        <div className="preset-grid" ref={gridRef}>
-          {presets.map((preset, i) => (
-            <PresetVideoCell
-              key={preset.id}
-              preset={preset}
-              index={i}
-              getCache={getCache}
-              setCache={setCache}
-              showOverlay={false}
-              onNavigate={(p) => navigate(`/preset/${p.id}`, { state: { source: 'kreator', creatorUsername } })}
-              onHoverStart={handleHoverStart}
-              onHoverEnd={handleHoverEnd}
-            />
+      <div className="profile-tabs-scroller" ref={scrollerRef}>
+        <div className="profile-tabs-track" style={trackStyle} {...touchHandlers}>
+          {TAB_KEYS.map((key) => (
+            <div
+              className="profile-tab-page"
+              key={key}
+              ref={key === 'postingan' ? postinganPageRef : undefined}
+            >
+              {isTabPrivate(key) ? (
+                <div className="empty-state" style={{ padding: 30 }}>
+                  🔒 {TAB_LABEL[key]} diprivasi oleh kreator ini.
+                </div>
+              ) : key === 'postingan' ? (
+                <>
+                  {loading && <div className="empty-state" style={{ padding: 30 }}>Memuat...</div>}
+                  {!loading && presets.length === 0 && (
+                    <div className="empty-state" style={{ padding: 30 }}>Belum ada preset dari kreator ini.</div>
+                  )}
+                  {!loading && presets.length > 0 && (
+                    <div className="preset-grid" style={{ flex: 'none' }}>
+                      {presets.map((preset, i) => (
+                        <PresetVideoCell
+                          key={preset.id}
+                          preset={preset}
+                          index={i}
+                          getCache={getCache}
+                          setCache={setCache}
+                          showOverlay={false}
+                          onNavigate={(p) => navigate(`/preset/${p.id}`, { state: { source: 'kreator', creatorUsername } })}
+                          onHoverStart={handleHoverStart}
+                          onHoverEnd={handleHoverEnd}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="empty-state" style={{ padding: 30 }}>Belum ada isinya, segera hadir.</div>
+              )}
+            </div>
           ))}
         </div>
-      )}
+      </div>
     </div>
   )
 }
