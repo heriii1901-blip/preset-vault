@@ -82,7 +82,30 @@ export default function Profile() {
     kreator: 'Kreator',
   }
   const tabCount = tabKeys.length
-  const { activeIndex: activeTab, progress: tabProgress, trackStyle, scrollerRef, goTo: goToTabRaw, touchHandlers } = useSwipePages(tabCount)
+
+  // Tab terakhir yang dibuka diinget di sessionStorage, biar pas balik dari
+  // full screen (video/efek) navigate(-1) ngga ngereset ke tab pertama (Postingan).
+  function getInitialTabIndex() {
+    try {
+      const saved = sessionStorage.getItem('pam-profile-tab')
+      const idx = tabKeys.indexOf(saved)
+      return idx >= 0 ? idx : 0
+    } catch {
+      return 0
+    }
+  }
+
+  const { activeIndex: activeTab, progress: tabProgress, trackStyle, scrollerRef, goTo: goToTabRaw, touchHandlers } = useSwipePages(tabCount, getInitialTabIndex())
+
+  // Simpen tab aktif tiap kali ganti (swipe atau tap tab bar). Ngga manggil
+  // Supabase, jadi ngga ada resiko egress dari efek ini.
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('pam-profile-tab', tabKeys[activeTab])
+    } catch {
+      // sessionStorage diblok, tab tetep kepasang buat sesi ini aja
+    }
+  }, [activeTab])
   const { containerRef: tabsRef, tabRefs, indicatorStyle, getTabColor } = useTabIndicator(tabProgress, tabCount)
   
   function resetToCover(video) {
