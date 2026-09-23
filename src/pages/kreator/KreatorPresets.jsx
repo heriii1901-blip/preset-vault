@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { supabase } from '../supabase'
-import { usePresetCache } from '../context/PresetCacheContext'
-import { creatorNameStyle } from '../utils/creatorFont'
-import { useSwipePages } from '../hooks/useSwipePages'
-import { useTabIndicator } from '../hooks/useTabIndicator'
-import PresetVideoCell from '../components/PresetVideoCell'
-import ProfileTabIcon from '../components/ProfileTabIcon'
-import AvatarViewer from '../components/AvatarViewer'
-import { safeHref } from '../utils/safeUrl'
+import { supabase } from '../../supabase'
+import { usePresetCache } from '../../context/PresetCacheContext'
+import { creatorNameStyle } from '../../utils/creatorFont'
+import { useSwipePages } from '../../hooks/useSwipePages'
+import { useTabIndicator } from '../../hooks/useTabIndicator'
+import PresetVideoCell from '../../components/PresetVideoCell'
+import ProfileTabIcon from '../../components/ProfileTabIcon'
+import AvatarViewer from '../../components/AvatarViewer'
+import { safeHref } from '../../utils/safeUrl'
 
 // Tab bar publik disamain sama tab bar di Profil sendiri. Tiap tab dikunci ke
 // key privasi yang sama kayak di Pengaturan > Privasi (profiles.privacy).
