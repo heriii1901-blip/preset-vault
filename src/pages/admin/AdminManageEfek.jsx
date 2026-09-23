@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../supabase'
 import { usePresetCache } from '../../context/PresetCacheContext'
-import { deleteFromR2 } from '../../utils/deleteFromR2'2'
+import { deleteFromR2 } from '../../utils/deleteFromR2'
 
 const CATEGORIES = [
   { value: 'overlay', label: 'Overlay' },
