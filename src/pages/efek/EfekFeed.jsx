@@ -1,9 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { supabase } from '../supabase'
-import { useAuth } from '../context/AuthContext'
-import { useDoubleTapLike } from '../hooks/useDoubleTapLike'
-import { HEART_PATH, LoveGradientDefs, LoveBurst } from '../components/LoveBurst'
+import { supabase } from '../../supabase'
+import { useAuth } from '../../context/AuthContext'
+import { useDoubleTapLike } from '../../hooks/useDoubleTapLike'
+import { HEART_PATH, LoveGradientDefs, LoveBurst } from '../../components/LoveBurst'
 
 export default function EfekFeed() {
   const { effectId } = useParams()
