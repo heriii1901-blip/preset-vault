@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import { supabase } from '../supabase'
+import { useAuth } from '../../context/AuthContext'
+import { supabase } from '../../supabase'
 
 const TERMS_TEXT = `Dengan mengajukan diri sebagai kreator di PAM, kamu menyatakan setuju bahwa:
 
