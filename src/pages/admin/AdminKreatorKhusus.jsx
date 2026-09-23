@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../supabase'
-import { usePresetCache } from '../context/PresetCacheContext'
-import { deleteFromR2 } from '../utils/deleteFromR2'
+import { supabase } from '../../supabase'
+import { usePresetCache } from '../../context/PresetCacheContext'
+import { deleteFromR2 } from '../../utils/deleteFromR2'
 
 // Terima "@user", "user", atau link profil tiktok.com/@user -> "user" (huruf kecil, tanpa @)
 function cleanUsername(raw) {
