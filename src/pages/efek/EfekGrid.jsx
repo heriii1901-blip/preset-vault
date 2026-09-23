@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../supabase'
-import { usePresetCache } from '../context/PresetCacheContext'
-import { useAuth } from '../context/AuthContext'
-import { useAdminPending } from '../context/AdminPendingContext'
+import { supabase } from '../../supabase'
+import { usePresetCache } from '../../context/PresetCacheContext'
+import { useAuth } from '../../context/AuthContext'
+import { useAdminPending } from '../../context/AdminPendingContext'
 
 const CACHE_KEY = 'efek-grid'
 
