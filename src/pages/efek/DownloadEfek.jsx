@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import { supabase } from '../supabase'
+import { supabase } from '../../supabase'
 
 export default function DownloadEfek() {
   const { effectId } = useParams()
