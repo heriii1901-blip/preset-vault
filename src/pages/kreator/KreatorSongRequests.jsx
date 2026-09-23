@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../supabase'
-import { useAuth } from '../context/AuthContext'
+import { supabase } from '../../supabase'
+import { useAuth } from '../../context/AuthContext'
 
 const HISTORY_DAYS = 30
 
