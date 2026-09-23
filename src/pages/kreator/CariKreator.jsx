@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../supabase'
-import { usePresetCache } from '../context/PresetCacheContext'
-import PresetVideoCell from '../components/PresetVideoCell'
+import { supabase } from '../../supabase'
+import { usePresetCache } from '../../context/PresetCacheContext'
+import PresetVideoCell from '../../components/PresetVideoCell'
 
 const CACHE_KEY = 'cari-kreator'
 
