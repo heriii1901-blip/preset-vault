@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import { supabase } from '../supabase'
-import { deleteFromR2 } from '../utils/deleteFromR2'
+import { useAuth } from '../../context/AuthContext'
+import { supabase } from '../../supabase'
+import { deleteFromR2 } from '../../utils/deleteFromR2'
 
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
 const MAX_RAW_BYTES = 5 * 1024 * 1024
