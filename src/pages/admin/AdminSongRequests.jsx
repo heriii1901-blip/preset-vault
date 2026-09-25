@@ -104,17 +104,32 @@ export default function AdminSongRequests() {
   }
 
   async function handleReject(req) {
-    const reason = window.prompt(`Alasan tolak "${req.requested_song_name}" (kosongin kalau ga perlu):`, '')
+    const finalName = (editedNames[req.id] ?? req.requested_song_name).trim()
+    if (!finalName) {
+      alert('Nama lagu ga boleh kosong.')
+      return
+    }
+
+    const reason = window.prompt(`Alasan tolak "${finalName}" (kosongin kalau ga perlu):`, '')
     if (reason === null) return
     setProcessingId(req.id)
     try {
       const { error } = await supabase
         .from('song_requests')
-        .update({ status: 'rejected', admin_note: reason.trim() || null, reviewed_at: new Date().toISOString() })
+        .update({
+          status: 'rejected',
+          requested_song_name: finalName,
+          admin_note: reason.trim() || null,
+          reviewed_at: new Date().toISOString(),
+        })
         .eq('id', req.id)
       if (error) throw error
       setRequests((prev) =>
-        prev.map((r) => (r.id === req.id ? { ...r, status: 'rejected', admin_note: reason.trim() || null } : r))
+        prev.map((r) =>
+          r.id === req.id
+            ? { ...r, status: 'rejected', requested_song_name: finalName, admin_note: reason.trim() || null }
+            : r
+        )
       )
     } catch (err) {
       console.error('Gagal tolak permintaan lagu:', err)
