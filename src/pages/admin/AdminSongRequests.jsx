@@ -191,7 +191,7 @@ export default function AdminSongRequests() {
                     />
                   )}
                   {req.tiktok_link && (
-                    
+                    <a
                       href={safeHref(req.tiktok_link)}
                       target="_blank"
                       rel="noreferrer"
