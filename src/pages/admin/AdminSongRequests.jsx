@@ -18,7 +18,8 @@ export default function AdminSongRequests() {
   const [filter, setFilter] = useState('pending')
   const [processingId, setProcessingId] = useState(null)
   const [editedNames, setEditedNames] = useState({})
-
+  const [expandedId, setExpandedId] = useState(null)
+  
   useEffect(() => {
     loadRequests()
   }, [])
@@ -146,7 +147,7 @@ export default function AdminSongRequests() {
             type="button"
             className="type-opt"
             style={filter === 'pending' ? { borderColor: 'var(--pink)', color: 'var(--pink)' } : undefined}
-            onClick={() => setFilter('pending')}
+            onClick={() => { setFilter('pending'); setExpandedId(null) }}
           >
             Pending
           </button>
@@ -154,7 +155,7 @@ export default function AdminSongRequests() {
             type="button"
             className="type-opt"
             style={filter === 'approved' ? { borderColor: 'var(--lime)', color: 'var(--lime)' } : undefined}
-            onClick={() => setFilter('approved')}
+            onClick={() => { setFilter('approved'); setExpandedId(null) }}
           >
             Diterima
           </button>
@@ -162,12 +163,12 @@ export default function AdminSongRequests() {
             type="button"
             className="type-opt"
             style={filter === 'rejected' ? { borderColor: '#FF5C5C', color: '#FF5C5C' } : undefined}
-            onClick={() => setFilter('rejected')}
+            onClick={() => { setFilter('rejected'); setExpandedId(null) }}
           >
             Ditolak
           </button>
         </div>
-
+        
         {loading && <div className="empty-state">Memuat...</div>}
         {!loading && filteredRequests.length === 0 && (
           <div className="empty-state">Gak ada permintaan di kategori ini.</div>
@@ -175,75 +176,110 @@ export default function AdminSongRequests() {
 
         {!loading && filteredRequests.length > 0 && (
           <div className="preset-manage-list admin-pad">
-            {filteredRequests.map((req) => (
-              <div className="request-card" key={req.id}>
-                <div className="request-card-top">
-                  <div className="pmr-info" style={{ flex: 1, minWidth: 0 }}>
-                    {req.status === 'pending' ? (
-                      <div className="input-wrap" style={{ marginBottom: 4 }}>
-                        <input
-                          className="finput-real"
-                          value={editedNames[req.id] ?? req.requested_song_name}
-                          onChange={(e) => setEditedNames((prev) => ({ ...prev, [req.id]: e.target.value }))}
-                        />
-                      </div>
-                    ) : (
-                      <h4>{req.requested_song_name}</h4>
-                    )}
-                    <p>@{req.creator_username}</p>
-                  </div>
-
-                  {req.status === 'pending' && (
-                    <div className="pmr-actions">
-                      <button
-                        className="pmr-approve"
-                        disabled={processingId === req.id}
-                        onClick={() => handleApprove(req)}
-                      >
-                        {processingId === req.id ? '...' : 'Approve'}
-                      </button>
-                      <button
-                        className="pmr-reject"
-                        disabled={processingId === req.id}
-                        onClick={() => handleReject(req)}
-                      >
-                        {processingId === req.id ? '...' : 'Tolak'}
-                      </button>
-                    </div>
+            {filteredRequests.map((req) => {
+              // Detail: video preview, link TikTok, tanggal, alasan tolak
+              const detail = (
+                <>
+                  {req.preview_video_url && (
+                    <video
+                      src={req.preview_video_url}
+                      muted
+                      loop
+                      playsInline
+                      controls
+                      style={{ width: '100%', borderRadius: 10 }}
+                    />
                   )}
-                </div>
+                  {req.tiktok_link && (
+                    
+                      href={safeHref(req.tiktok_link)}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ fontSize: 12.5, color: 'var(--pink)', wordBreak: 'break-all', display: 'block', marginTop: 8 }}
+                    >
+                      {req.tiktok_link}
+                    </a>
+                  )}
+                  <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 8 }}>
+                    Diajukan: {new Date(req.created_at).toLocaleDateString('id-ID')}
+                  </p>
+                  {req.status === 'rejected' && req.admin_note && (
+                    <p style={{ fontSize: 12, color: '#FF5C5C', marginTop: 6 }}>Alasan: {req.admin_note}</p>
+                  )}
+                </>
+              )
 
-                {req.preview_video_url && (
-                  <video
-                    src={req.preview_video_url}
-                    muted
-                    loop
-                    playsInline
-                    controls
-                    style={{ width: '100%', borderRadius: 10, marginTop: 8 }}
-                  />
-                )}
+              // PENDING: tetep kebuka penuh kayak sebelumnya
+              if (req.status === 'pending') {
+                return (
+                  <div className="request-card" key={req.id}>
+                    <div className="request-card-top">
+                      <div className="pmr-info" style={{ flex: 1, minWidth: 0 }}>
+                        <div className="input-wrap" style={{ marginBottom: 4 }}>
+                          <input
+                            className="finput-real"
+                            value={editedNames[req.id] ?? req.requested_song_name}
+                            onChange={(e) => setEditedNames((prev) => ({ ...prev, [req.id]: e.target.value }))}
+                          />
+                        </div>
+                        <p>@{req.creator_username}</p>
+                      </div>
 
-                {req.tiktok_link && (
-                  <a
-                    href={safeHref(req.tiktok_link)}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ fontSize: 12.5, color: 'var(--pink)', wordBreak: 'break-all', display: 'block', marginTop: 8 }}
+                      <div className="pmr-actions">
+                        <button
+                          className="pmr-approve"
+                          disabled={processingId === req.id}
+                          onClick={() => handleApprove(req)}
+                        >
+                          {processingId === req.id ? '...' : 'Approve'}
+                        </button>
+                        <button
+                          className="pmr-reject"
+                          disabled={processingId === req.id}
+                          onClick={() => handleReject(req)}
+                        >
+                          {processingId === req.id ? '...' : 'Tolak'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={{ marginTop: 8 }}>{detail}</div>
+                  </div>
+                )
+              }
+
+              // DITERIMA / DITOLAK: cuma nama lagu + @kreator, video & sisanya dibuka lewat panah (v)
+              const open = expandedId === req.id
+              return (
+                <div className="app-card" key={req.id}>
+                  <button
+                    type="button"
+                    className="app-card-head"
+                    onClick={() => setExpandedId(open ? null : req.id)}
+                    aria-expanded={open}
                   >
-                    {req.tiktok_link}
-                  </a>
-                )}
-
-                <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 8 }}>
-                  Diajukan: {new Date(req.created_at).toLocaleDateString('id-ID')}
-                </p>
-
-                {req.status === 'rejected' && req.admin_note && (
-                  <p style={{ fontSize: 12, color: '#FF5C5C', marginTop: 6 }}>Alasan: {req.admin_note}</p>
-                )}
-              </div>
-            ))}
+                    <div className="app-card-head-text">
+                      <div className="app-card-name">{req.requested_song_name}</div>
+                      <div className="app-card-user">@{req.creator_username}</div>
+                    </div>
+                    <svg
+                      className={`app-card-chevron${open ? ' is-open' : ''}`}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      width="18"
+                      height="18"
+                    >
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
+                  </button>
+                  {open && <div className="app-card-body">{detail}</div>}
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
