@@ -449,7 +449,7 @@ export default function KreatorPresets() {
                         <div
                           key={effect.id}
                           className="grid-cell"
-                          onClick={() => navigate(`/efek/${effect.id}`)}
+                          onClick={() => navigate(`/efek/${effect.id}`, { state: { effects: favEffects } })}
                           onContextMenu={(e) => e.preventDefault()}
                         >
                           {effect.preview_video_url ? (
