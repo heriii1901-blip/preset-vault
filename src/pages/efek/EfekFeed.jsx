@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../supabase'
 import { useAuth } from '../../context/AuthContext'
 import { useDoubleTapLike } from '../../hooks/useDoubleTapLike'
@@ -8,6 +8,9 @@ import { HEART_PATH, LoveGradientDefs, LoveBurst } from '../../components/LoveBu
 export default function EfekFeed() {
   const { effectId } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
+  const category = searchParams.get('cat')
   const { user } = useAuth()
   const [effects, setEffects] = useState([])
   const [loading, setLoading] = useState(true)
@@ -33,6 +36,12 @@ export default function EfekFeed() {
   const [loadedIds, setLoadedIds] = useState(new Set())
 
   useEffect(() => {
+    // Dep array [effectId, user, category, location.state]: SENGAJA gak query seluruh
+    // tabel effects. Prioritas: (1) list udah dioper dari halaman asal (kategori/favorit)
+    // lewat location.state -> dipake langsung, 0 query buat list; (2) ada ?cat= di URL
+    // (misal reload manual pas lagi di kategori) -> query DIFILTER per kategori aja;
+    // (3) gak ada konteks sama sekali -> ambil 1 efek itu doang. Effect ini jalan lagi
+    // kalo effectId ganti (masuk efek lain), bukan tiap swipe di dalam feed yang sama.
     async function loadFeed() {
       setLoading(true)
       try {
@@ -45,14 +54,27 @@ export default function EfekFeed() {
           setFavoritedIds(new Set((favs || []).map((f) => f.effect_id)))
         }
 
-        const { data: allEffects, error: listErr } = await supabase
-          .from('effects')
-          .select('*')
-          .eq('link_pending', false)
-          .order('created_at', { ascending: false })
-        if (listErr) throw listErr
-
-        setEffects(allEffects || [])
+        const passedEffects = location.state?.effects
+        if (Array.isArray(passedEffects) && passedEffects.length > 0) {
+          setEffects(passedEffects)
+        } else if (category) {
+          const { data: catEffects, error: catErr } = await supabase
+            .from('effects')
+            .select('*')
+            .eq('category', category)
+            .eq('link_pending', false)
+            .order('created_at', { ascending: false })
+          if (catErr) throw catErr
+          setEffects(catEffects || [])
+        } else {
+          const { data: singleEffect, error: singleErr } = await supabase
+            .from('effects')
+            .select('*')
+            .eq('id', effectId)
+            .single()
+          if (singleErr) throw singleErr
+          setEffects(singleEffect ? [singleEffect] : [])
+        }
       } catch (err) {
         console.error('Gagal ambil feed efek:', err)
       } finally {
@@ -63,7 +85,8 @@ export default function EfekFeed() {
     hasScrolledRef.current = false
     firstApplyRef.current = true
     setFeedReady(false)
-  }, [effectId, user])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectId, user, category, location.state])
 
   useLayoutEffect(() => {
     function measure() {
