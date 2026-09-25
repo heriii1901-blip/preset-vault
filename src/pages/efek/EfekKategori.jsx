@@ -109,7 +109,7 @@ export default function EfekKategori() {
               getCache={getCache}
               setCache={setCache}
               overlayLabel={effect.title}
-              onNavigate={(e) => navigate(`/efek/${e.id}`)}
+              onNavigate={(e) => navigate(`/efek/${e.id}?cat=${category}`, { state: { effects } })}
               onHoverStart={handleHoverStart}
               onHoverEnd={handleHoverEnd}
             />
