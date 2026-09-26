@@ -61,6 +61,7 @@ export default function AdminAddPreset() {
   const [tiktokLink, setTiktokLink] = useState('')
   const [previewFile, setPreviewFile] = useState(null)
   const [skipCompress, setSkipCompress] = useState(false)
+  const [autoFetching, setAutoFetching] = useState(false)
   const [existingPreviewUrl, setExistingPreviewUrl] = useState('')
   const [saving, setSaving] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
@@ -299,6 +300,30 @@ export default function AdminAddPreset() {
     setNewSongName('')
   }
 
+  const handleAutoDownload = async () => {
+    setStatusMsg('')
+    if (!tiktokLink.trim()) return setStatusMsg('Isi link video TikTok dulu.')
+
+    setAutoFetching(true)
+    try {
+      const res = await fetch(`/api/download-tiktok-video?url=${encodeURIComponent(tiktokLink.trim())}`, {
+        headers: { Authorization: await authHeader() },
+      })
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || `status ${res.status}`)
+      }
+      const blob = await res.blob()
+      const file = new File([blob], `tiktok-${Date.now()}.mp4`, { type: 'video/mp4' })
+      setPreviewFile(file)
+      setStatusMsg(`✅ Video keambil otomatis (${(file.size / 1024 / 1024).toFixed(1)} MB). Nanti dikompres otomatis kalau perlu pas disimpan.`)
+    } catch (err) {
+      setStatusMsg(`Gagal ambil otomatis (${err.message}). Upload manual aja di bawah.`)
+    } finally {
+      setAutoFetching(false)
+    }
+  }
+
   const goToPanel = goToPanelRaw
 
   // Kreator yang dipilih SENGAJA ngga di-reset: biar enak spam post buat kreator yang sama.
@@ -532,7 +557,7 @@ export default function AdminAddPreset() {
               setSaveProgress(15 + Math.min(Math.floor(progress * 35), 35))
             })
 
-                if (cancelledRef.current) return
+        if (cancelledRef.current) return
         setSaveStage('Ngupload video contoh...')
 
         previewVideoUrl = await uploadToR2(fileToUpload, 'presets', (p) => {
@@ -860,6 +885,18 @@ export default function AdminAddPreset() {
               </button>
             )}
           </div>
+          <button
+            type="button"
+            className="save-btn"
+            style={{ marginTop: 10 }}
+            onClick={handleAutoDownload}
+            disabled={autoFetching}
+          >
+            {autoFetching ? 'Mengunduh dari TikTok...' : '⚡ Ambil video otomatis dari link ini'}
+          </button>
+          <p className="hint" style={{ color: 'var(--muted)', marginTop: 6, fontSize: 11.5 }}>
+            Bisa gagal sewaktu-waktu kalau TikTok lagi rewel. Kalau gagal, upload manual di bawah.
+          </p>
         </div>
 
         {statusMsg && (
