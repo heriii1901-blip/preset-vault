@@ -10,6 +10,7 @@ import { useTabIndicator } from '../../hooks/useTabIndicator'
 import PresetVideoCell from '../../components/PresetVideoCell'
 import ProfileTabIcon from '../../components/ProfileTabIcon'
 import AvatarViewer from '../../components/AvatarViewer'
+import Toast from '../../components/Toast'
 import { safeHref } from '../../utils/safeUrl'
 
 const COVER_TIME = 2
@@ -35,6 +36,7 @@ export default function Profile() {
   const fallbackName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Tanpa nama'
 
   const [profile, setProfile] = useState(null)
+  const [toastMsg, setToastMsg] = useState('')
   const [favorites, setFavorites] = useState([])
   const [loadingFavs, setLoadingFavs] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -650,7 +652,7 @@ export default function Profile() {
             <svg className="profile-menu-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 6 15 12 9 18" /></svg>
           </button>
 
-          <button type="button" className="profile-menu-item" onClick={() => alert('Coming Soon')}>
+          <button type="button" className="profile-menu-item" onClick={() => setToastMsg('Coming Soon')}>
             <svg className="profile-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <line x1="2" y1="12" x2="22" y2="12" />
@@ -711,6 +713,7 @@ export default function Profile() {
         </div>
       </div>
 
+      <Toast message={toastMsg} onClose={() => setToastMsg('')} />
     </div>
   )
 }
