@@ -23,18 +23,20 @@ export function useTabIndicator(progress, pageCount) {
         return
       }
 
-      const containerRect = container.getBoundingClientRect()
-      const lowerRect = elLower.getBoundingClientRect()
-      const upperRect = elUpper.getBoundingClientRect()
-
-      const left = lowerRect.left + (upperRect.left - lowerRect.left) * frac - containerRect.left
-      const width = lowerRect.width + (upperRect.width - lowerRect.width) * frac
+      const left = elLower.offsetLeft + (elUpper.offsetLeft - elLower.offsetLeft) * frac
+      const width = elLower.offsetWidth + (elUpper.offsetWidth - elLower.offsetWidth) * frac
 
       setIndicatorStyle({
         opacity: 1,
         width,
         transform: `translateX(${left}px)`,
       })
+
+      const target = left + width / 2 - container.clientWidth / 2
+      if (lastTargetRef.current !== target) {
+        lastTargetRef.current = target
+        container.scrollTo({ left: target, behavior: 'smooth' })
+      }
     }
 
     update()
