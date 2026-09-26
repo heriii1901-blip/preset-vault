@@ -67,7 +67,7 @@ const FAB_ACTIONS = [
     ),
   },
   {
-    label: 'Kelola Preset',
+    label: 'Kelola Efek',
     to: '/admin/kelola-efek',
     icon: (
       <svg {...iconProps}>
