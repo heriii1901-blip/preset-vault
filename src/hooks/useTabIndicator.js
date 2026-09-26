@@ -8,6 +8,7 @@ export function useTabIndicator(progress, pageCount) {
   const containerRef = useRef(null)
   const tabRefs = useRef([])
   const [indicatorStyle, setIndicatorStyle] = useState({ opacity: 0 })
+  const lastTargetRef = useRef(null)
 
   useLayoutEffect(() => {
     const update = () => {
