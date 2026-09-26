@@ -934,7 +934,7 @@ export default function AdminAddPreset() {
 
   const postKhususPanel = (
     <div style={{ padding: '0 20px' }}>
-      <form onSubmit={pkHandleSave} className="admin-pad">
+      <form onSubmit={pkHandleSave}>
         <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 14 }}>
           Preset dari tab ini ngga muncul di Terbaru. Langsung masuk ke lagu dan halaman kreatornya.
         </p>
