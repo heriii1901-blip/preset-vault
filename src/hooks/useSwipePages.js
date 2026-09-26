@@ -19,13 +19,34 @@ export function useSwipePages(pageCount, initialIndex = 0) {
   }, [pageCount])
 
   function handleTouchStart(e) {
-    dragRef.current = { startX: e.touches[0].clientX, dragging: true }
+    dragRef.current = {
+      startX: e.touches[0].clientX,
+      startY: e.touches[0].clientY,
+      dragging: true,
+      axis: null, // ditentuin belakangan pas gerakannya udah keliatan condong ke mana
+    }
   }
 
   function handleTouchMove(e) {
     if (!dragRef.current.dragging) return
+    const touch = e.touches[0]
+    const rawDx = touch.clientX - dragRef.current.startX
+    const rawDy = touch.clientY - dragRef.current.startY
+
+    // Direction lock: baru mutusin gesture ini horizontal (pindah tab) atau vertical
+    // (scroll biasa, misal dropdown lagu) begitu udah gerak lumayan jauh (>8px). Kalau
+    // masih ambigu (gerakannya masih kecil), belum diputusin dulu.
+    if (!dragRef.current.axis) {
+      if (Math.abs(rawDx) < 8 && Math.abs(rawDy) < 8) return
+      dragRef.current.axis = Math.abs(rawDx) > Math.abs(rawDy) * 1.2 ? 'x' : 'y'
+    }
+
+    // Kalau ternyata vertical, jangan ganggu track halaman sama sekali -- biarin
+    // scroll native jalan (misal scroll list lagu di dropdown).
+    if (dragRef.current.axis === 'y') return
+
     const width = scrollerRef.current?.clientWidth || 1
-    let dx = e.touches[0].clientX - dragRef.current.startX
+    let dx = rawDx
 
     // Kunci biar gak bisa geser ngelewatin tab pertama/terakhir
     const rawProgress = activeIndex - dx / width
@@ -39,12 +60,19 @@ export function useSwipePages(pageCount, initialIndex = 0) {
   function handleTouchEnd() {
     if (!dragRef.current.dragging) return
     dragRef.current.dragging = false
-    const width = scrollerRef.current?.clientWidth || 1
 
+    // Gesture-nya kekunci vertical (scroll biasa) -- ngk usah dianggep swipe pindah tab.
+    if (dragRef.current.axis === 'y') {
+      dragRef.current.axis = null
+      return
+    }
+
+    const width = scrollerRef.current?.clientWidth || 1
     let target = activeIndex
     if (dragOffset < -width * SWIPE_THRESHOLD_RATIO) target = activeIndex + 1
     else if (dragOffset > width * SWIPE_THRESHOLD_RATIO) target = activeIndex - 1
     goTo(target)
+    dragRef.current.axis = null
   }
 
   const trackStyle = {
