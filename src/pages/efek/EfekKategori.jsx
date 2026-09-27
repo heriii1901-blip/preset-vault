@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../supabase'
 import { usePresetCache } from '../../context/PresetCacheContext'
 import PresetVideoCell from '../../components/PresetVideoCell'
+import { useScrollRestoration } from '../../hooks/useScrollRestoration'
 
 const CATEGORY_LABEL = {
   overlay: 'Overlay',
@@ -78,6 +79,8 @@ export default function EfekKategori() {
     grid.addEventListener('scroll', onScroll, { passive: true })
     return () => grid.removeEventListener('scroll', onScroll)
   }, [])
+
+  useScrollRestoration(gridRef, cacheKey, !loading && effects.length > 0)
 
   const label = CATEGORY_LABEL[category] || category
 
