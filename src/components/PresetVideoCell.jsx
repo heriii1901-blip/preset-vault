@@ -49,6 +49,7 @@ export default function PresetVideoCell({
   onNavigate,
   onHoverStart,
   onHoverEnd,
+  onLongPress,
   showOverlay = true,
   className = 'grid-cell',
   overlayLabel,
@@ -57,6 +58,8 @@ export default function PresetVideoCell({
   const seekRetryRef = useRef(0)
   const seekTimerRef = useRef(null)
   const inQueueRef = useRef(false)
+  const longPressTimerRef = useRef(null)
+  const longPressFiredRef = useRef(false)
   const [isVisible, setIsVisible] = useState(false)
   const [failed, setFailed] = useState(false)
 
@@ -82,6 +85,7 @@ export default function PresetVideoCell({
   useEffect(() => {
     return () => {
       clearTimeout(seekTimerRef.current)
+      clearTimeout(longPressTimerRef.current)
       if (inQueueRef.current) {
         inQueueRef.current = false
         releaseSeekSlot()
@@ -134,6 +138,31 @@ export default function PresetVideoCell({
     setFailed(true)
   }
 
+  // Tekan-tahan ~500ms buat munculin aksi (mis. masuk/keluar Trending), tanpa
+  // ganggu preview video pas hover (onHoverStart tetep jalan kayak biasa).
+  function handlePointerDown(e) {
+    onHoverStart?.(e.currentTarget.querySelector('video'))
+    if (!onLongPress) return
+    longPressFiredRef.current = false
+    clearTimeout(longPressTimerRef.current)
+    longPressTimerRef.current = setTimeout(() => {
+      longPressFiredRef.current = true
+      onLongPress(preset)
+    }, 500)
+  }
+
+  function cancelLongPress() {
+    clearTimeout(longPressTimerRef.current)
+  }
+
+  function handleClick() {
+    if (longPressFiredRef.current) {
+      longPressFiredRef.current = false
+      return // abis tekan-tahan, jangan ikut nge-navigate ke halaman preset
+    }
+    onNavigate?.(preset)
+  }
+
   const snakeDelay = `${Math.min(index, 24) * 35}ms`
 
   return (
@@ -142,11 +171,16 @@ export default function PresetVideoCell({
       data-preset-id={preset.id}
       ref={cellRef}
       style={{ '--snake-delay': snakeDelay }}
-      onClick={() => onNavigate?.(preset)}
+      onClick={handleClick}
       onContextMenu={(e) => e.preventDefault()}
-      onPointerDown={(e) => onHoverStart?.(e.currentTarget.querySelector('video'))}
+      onPointerDown={handlePointerDown}
+      onPointerUp={cancelLongPress}
+      onPointerCancel={cancelLongPress}
       onMouseEnter={(e) => onHoverStart?.(e.currentTarget.querySelector('video'))}
-      onMouseLeave={(e) => onHoverEnd?.(e.currentTarget.querySelector('video'))}
+      onMouseLeave={(e) => {
+        onHoverEnd?.(e.currentTarget.querySelector('video'))
+        cancelLongPress()
+      }}
     >
             {(() => {
         const cachedThumb = getCache?.(`thumb:${preset.id}`)?.data
