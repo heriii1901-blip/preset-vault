@@ -76,7 +76,7 @@ export default function AdminManageEfek() {
       category: draft.category,
       xml_link: xmlLink || null,
       mb_link: draft.mb_link.trim() || null,
-      link_pending: !xmlLink,
+      link_pending: false,
     }
     setSavingId(effect.id)
     try {
