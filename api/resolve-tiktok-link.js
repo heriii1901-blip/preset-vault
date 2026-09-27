@@ -1,3 +1,6 @@
+const UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -20,20 +23,24 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Bukan link TikTok" });
     }
 
-    // fetch otomatis ngikutin redirect - short link (vt.tiktok.com/xxx)
-    // bakal "kebuka" di server terus balikin URL video panjang yang asli
-    const response = await fetch(target.toString(), {
-      method: "GET",
-      redirect: "follow",
-      headers: { "User-Agent": "Mozilla/5.0" },
-    });
+    // Dulu: fetch + ikutin redirect, terus nebak ID dari angka 15-20 digit pertama
+    // yang ketemu di URL akhirnya. Ternyata TikTok suka nolak/ngalihin fetch dari
+    // server ke halaman generik (bukan browser beneran), jadi angka yang ke-tebak
+    // bisa SALAH dan nabrak sama video lain (bug ID ketuker). Sekarang pake tikwm.com
+    // (API yang sama yang udah dipake di download-tiktok-video.js) - ID video diambil
+    // langsung dari data JSON-nya, bukan nebak dari URL.
+    const api = `https://www.tikwm.com/api/?url=${encodeURIComponent(target.toString())}`;
+    const r = await fetch(api, { headers: { "User-Agent": UA } });
+    if (!r.ok) throw new Error(`tikwm status ${r.status}`);
+    const j = await r.json();
 
-    const finalUrl = response.url;
-    const match = finalUrl.match(/(\d{15,20})/);
+    if (j?.code !== 0 || !j?.data?.id) {
+      return res.status(200).json({ finalUrl: null, videoId: null });
+    }
 
     return res.status(200).json({
-      finalUrl,
-      videoId: match ? match[1] : null,
+      finalUrl: j.data.play || null,
+      videoId: String(j.data.id),
     });
   } catch (err) {
     console.error("Resolve TikTok link error:", err);
