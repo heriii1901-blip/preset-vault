@@ -4,6 +4,7 @@ import { supabase } from '../supabase'
 import { useAuth } from '../context/AuthContext'
 import { usePresetCache } from '../context/PresetCacheContext'
 import { deleteFromR2 } from '../utils/deleteFromR2'
+import { useScrollRestoration } from '../hooks/useScrollRestoration'
 
 const CACHE_KEY = 'lagu-list'
 
@@ -21,6 +22,7 @@ export default function Home() {
   const { isAdmin } = useAuth()
   const longPressTimer = useRef(null)
   const longPressTriggered = useRef(false)
+  const songListRef = useRef(null)
 
   useEffect(() => {
     async function loadSongs() {
@@ -64,6 +66,8 @@ export default function Home() {
   const filteredSongs = songs.filter((song) =>
     song.name.toLowerCase().includes(query.toLowerCase())
   )
+
+  useScrollRestoration(songListRef, CACHE_KEY, !loading && songs.length > 0)
 
   const touchStartPos = useRef({ x: 0, y: 0 })
 
@@ -229,9 +233,9 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="song-list">
+        <div className="song-list" ref={songListRef}>
           {loading && <div className="empty-state">Memuat...</div>}
-
+                 
           {!loading && filteredSongs.length === 0 && songs.length === 0 && (
             <div className="empty-state">
               Belum ada lagu/preset tersimpen.
