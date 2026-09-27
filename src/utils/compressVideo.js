@@ -197,8 +197,6 @@ function getVideoDuration(file) {
 
 const SKIP_COMPRESS_BYTES = 5 * 1024 * 1024 // Di bawah ini, auto post tanpa kompres sama sekali
 const MAX_SIZE_BYTES = 5 * 1024 * 1024 // Target akhir kalau kena kompres (dulu 6MB)
-const HARD_LIMIT_BYTES = 5.5 * 1024 * 1024 // Toleransi nyelos 0.5MB, lebih dari ini DITOLAK (isi 5 * 1024 * 1024 kalau mau ketat)
-const AUDIO_BITRATE_KBPS = 64
 const MIN_VIDEO_BITRATE_KBPS = 350 // dulu 150 - kegedean turunnya buat konten gerak cepet, jadi pecah/blocky
 const SAFETY_MARGIN = 0.88 // jalur ffmpeg.wasm (dulu 0.92) - biar percobaan pertama jarang kegedean
 const HW_SAFETY_MARGIN = 0.85 // jalur WebCodecs - encoder hardware suka meleset dari bitrate target, jadi lebih longgar
@@ -393,10 +391,10 @@ async function compressWithWebCodecs(file, duration, onProgress, onStage, signal
   }
 
   if (!resultBuffer) throw new Error('Hasil kompres kosong')
-  if (resultBuffer.byteLength > HARD_LIMIT_BYTES) {
-    throw policyError(
-      `Hasil kompres masih ${(resultBuffer.byteLength / 1024 / 1024).toFixed(1)} MB (maks 5 MB). Coba video yang lebih pendek.`
-    )
+  // Sengaja gak ditolak lagi kalau masih di atas 5MB - yang penting udah diminimalisir
+  // drpd skip kompres krn "gagal" (dulu nolak di sini bikin user kepaksa upload mentah gede)
+  if (resultBuffer.byteLength > MAX_SIZE_BYTES) {
+    console.warn(`Kompres WebCodecs masih ${(resultBuffer.byteLength / 1024 / 1024).toFixed(1)}MB (target 5MB), tetep dipake`)
   }
   if (resultBuffer.byteLength >= file.size) return file
   return new File([resultBuffer], file.name.replace(/\.\w+$/, '.mp4'), { type: 'video/mp4' })
@@ -494,10 +492,9 @@ async function compressWithFFmpeg(file, duration, onProgress, onStage, signal) {
   await ffmpeg.deleteFile(outputName)
 
   if (!compressedBlob) throw new Error('Hasil kompres kosong')
-  if (compressedBlob.size > HARD_LIMIT_BYTES) {
-    throw policyError(
-      `Hasil kompres masih ${(compressedBlob.size / 1024 / 1024).toFixed(1)} MB (maks 5 MB). Coba video yang lebih pendek.`
-    )
+  // Sengaja gak ditolak lagi kalau masih di atas 5MB - yang penting udah diminimalisir
+  if (compressedBlob.size > MAX_SIZE_BYTES) {
+    console.warn(`Kompres ffmpeg masih ${(compressedBlob.size / 1024 / 1024).toFixed(1)}MB (target 5MB), tetep dipake`)
   }
   if (compressedBlob.size >= file.size) return file
   return new File([compressedBlob], file.name.replace(/\.\w+$/, '.mp4'), { type: 'video/mp4' })
