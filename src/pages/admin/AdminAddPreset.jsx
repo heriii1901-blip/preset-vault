@@ -47,8 +47,8 @@ export default function AdminAddPreset() {
   const { user, creatorUsername: authCreatorUsername } = useAuth()
   const [editingQueueId, setEditingQueueId] = useState(null)
   // 6 tab: Tambah Preset, Post Khusus, Tambah Efek, Tambah Lagu, Riwayat Upload, Cover Lama
-  const { activeIndex: activePanel, progress: panelProgress, trackStyle, scrollerRef, goTo: goToPanelRaw, touchHandlers } = useSwipePages(6)
-  const { containerRef: tabsRef, tabRefs, indicatorStyle, getTabColor } = useTabIndicator(panelProgress, 6)
+  const { activeIndex: activePanel, progress: panelProgress, trackStyle, scrollerRef, goTo: goToPanelRaw, touchHandlers } = useSwipePages(7)
+  const { containerRef: tabsRef, tabRefs, indicatorStyle, getTabColor } = useTabIndicator(panelProgress, 7)
 
   const [songs, setSongs] = useState([])
   const [songMode, setSongMode] = useState('existing')
