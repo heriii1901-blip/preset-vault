@@ -44,11 +44,9 @@ export default function AdminAddPreset() {
   const { enqueuePresetUpload, enqueueEfekUpload, history, cancelJob, resubmitQueueItem, deleteHistoryItem, getQueueItemForEdit } = useUploadQueue()
   const { user, creatorUsername: authCreatorUsername } = useAuth()
   const [editingQueueId, setEditingQueueId] = useState(null)
-  // 7 tab: Tambah Preset, Post Khusus, Tambah Efek, Tambah Lagu, Riwayat Upload, Link Kosong, Cover Lama
-  const { activeIndex: activePanel, progress: panelProgress, trackStyle, scrollerRef, goTo: goToPanelRaw, touchHandlers } = useSwipePages(7)
-  const { containerRef: tabsRef, tabRefs, indicatorStyle, getTabColor } = useTabIndicator(panelProgress, 7)
-  const [pendingLinkPresets, setPendingLinkPresets] = useState([])
-  const [loadingPendingLinks, setLoadingPendingLinks] = useState(true)
+  // 6 tab: Tambah Preset, Post Khusus, Tambah Efek, Tambah Lagu, Riwayat Upload, Cover Lama
+  const { activeIndex: activePanel, progress: panelProgress, trackStyle, scrollerRef, goTo: goToPanelRaw, touchHandlers } = useSwipePages(6)
+  const { containerRef: tabsRef, tabRefs, indicatorStyle, getTabColor } = useTabIndicator(panelProgress, 6)
 
   const [songs, setSongs] = useState([])
   const [songMode, setSongMode] = useState('existing')
@@ -370,12 +368,7 @@ export default function AdminAddPreset() {
     const guest = guests.find((g) => g.id === selectedGuestId)
     if (!guest) return setPkStatusMsg('Pilih kreator khusus dulu.')
     if (!pkMbLink.trim()) return setPkStatusMsg('Link 5MB (Alight Creative) belum diisi.')
-    if (!pkXmlLink.trim()) {
-      const lanjut = window.confirm(
-        'Link XML belum diisi. Preset ini bakal disembunyiin dari publik dan masuk tab "Link Kosong" sampe link-nya diisi. Lanjut upload?'
-      )
-      if (!lanjut) return
-    }
+    if (!isValidLink(pkMbLink)) return setPkStatusMsg('Link 5MB harus link asli (contoh: https://drive.google.com/file/d/xxx), bukan teks biasa.')
     if (!pkPreviewFile) return setPkStatusMsg('Video contoh belum dipilih.')
     if (pkSongMode === 'new' && !pkNewSongName.trim()) return setPkStatusMsg('Nama lagu baru belum diisi.')
     if (pkSongMode === 'existing' && !pkSelectedSongId) return setPkStatusMsg('Pilih lagunya dulu.')
@@ -411,8 +404,8 @@ export default function AdminAddPreset() {
     setEfekStatusMsg('')
 
     if (!efekTitle.trim()) return setEfekStatusMsg('Nama efek belum diisi.')
-    if (!efekXmlLink.trim()) return setEfekStatusMsg('Link XML belum diisi.')
     if (!efekMbLink.trim()) return setEfekStatusMsg('Link 5MB (Alight Creative) belum diisi.')
+    if (!isValidLink(efekMbLink)) return setEfekStatusMsg('Link 5MB harus link asli (contoh: https://drive.google.com/file/d/xxx), bukan teks biasa.')
     if (!efekPreviewFile) return setEfekStatusMsg('Video efek belum dipilih.')
 
     enqueueEfekUpload({
@@ -469,12 +462,7 @@ export default function AdminAddPreset() {
     setStatusMsg('')
 
     if (!mbLink.trim()) return setStatusMsg('Link 5MB (Alight Creative) belum diisi.')
-    if (!xmlLink.trim()) {
-      const lanjut = window.confirm(
-        'Link XML belum diisi. Preset ini bakal disembunyiin dari publik dan masuk tab "Link Kosong" sampe link-nya diisi. Lanjut upload?'
-      )
-      if (!lanjut) return
-    }
+    if (!isValidLink(mbLink)) return setStatusMsg('Link 5MB harus link asli (contoh: https://drive.google.com/file/d/xxx), bukan teks biasa.')
     if (!creatorUsername.trim()) return setStatusMsg('Username kreator belum diisi.')
     if (!isEditMode && !previewFile) return setStatusMsg('Video contoh belum dipilih.')
     if (songMode === 'new' && !newSongName.trim()) return setStatusMsg('Nama lagu baru belum diisi.')
