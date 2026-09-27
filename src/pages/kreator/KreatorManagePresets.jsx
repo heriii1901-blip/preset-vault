@@ -111,6 +111,12 @@ export default function KreatorManagePresets() {
                 </div>
                 <div className="pmr-actions">
                   <button
+                    className="pmr-edit"
+                    onClick={() => navigate(`/kreator/edit-preset/${preset.id}`)}
+                  >
+                    Edit
+                  </button>
+                  <button
                     className="pmr-delete"
                     disabled={deletingId === preset.id}
                     onClick={() => handleDelete(preset)}
