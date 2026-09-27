@@ -200,7 +200,10 @@ export default function AdminAddPreset() {
     }
   }, [])
 
-    useEffect(() => {
+  const [pendingLinkPresets, setPendingLinkPresets] = useState([])
+  const [loadingPendingLinks, setLoadingPendingLinks] = useState(true)
+
+  useEffect(() => {
     loadPendingLinkPresets()
   }, [])
 
