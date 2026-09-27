@@ -4,6 +4,7 @@ import { supabase } from '../supabase'
 import { usePresetCache } from '../context/PresetCacheContext'
 import PresetVideoCell from '../components/PresetVideoCell'
 import { dayKeyWIB, sortByDailyOrder } from '../utils/dailyOrder'
+import { useScrollRestoration } from '../hooks/useScrollRestoration'
 
 export default function SongPresets() {
   const { songId } = useParams()
@@ -72,6 +73,8 @@ export default function SongPresets() {
     grid.addEventListener('scroll', onScroll, { passive: true })
     return () => grid.removeEventListener('scroll', onScroll)
   }, [])
+
+  useScrollRestoration(gridRef, cacheKey, !loading && presets.length > 0)
 
   return (
     <div className="screen">
