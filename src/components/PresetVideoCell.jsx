@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useCachedImage } from '../hooks/useCachedImage'
 
 const COVER_TIME = 2
 const MAX_SEEK_RETRY = 6
@@ -62,6 +63,9 @@ export default function PresetVideoCell({
   const longPressFiredRef = useRef(false)
   const [isVisible, setIsVisible] = useState(false)
   const [failed, setFailed] = useState(false)
+  // cover_url disimpen ke IndexedDB (folder Data) biar ngga ilang pas user pencet
+  // "Hapus Cache" bawaan HP - beda sama HTTP cache browser biasa yang bisa ke-wipe.
+  const cachedCoverUrl = useCachedImage(preset.cover_url)
 
   useEffect(() => {
     const el = cellRef.current
@@ -196,15 +200,15 @@ export default function PresetVideoCell({
               disablePictureInPicture
               controlsList="nodownload"
               draggable={false}
-              poster={cachedThumb || preset.cover_url}
+              poster={cachedThumb || cachedCoverUrl}
               onLoadedMetadata={handleLoadedMetadata}
               onSeeked={handleSeeked}
               onError={handleError}
             />
           )
         }
-        if (cachedThumb || preset.cover_url) {
-          return <img src={cachedThumb || preset.cover_url} alt="" className="grid-fallback-thumb" draggable={false} />
+        if (cachedThumb || cachedCoverUrl) {
+          return <img src={cachedThumb || cachedCoverUrl} alt="" className="grid-fallback-thumb" draggable={false} />
         }
         return <div className="grid-fallback">🎬</div>
       })()}
