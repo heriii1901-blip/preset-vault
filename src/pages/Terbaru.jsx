@@ -7,6 +7,7 @@ import PresetVideoCell from '../components/PresetVideoCell'
 import { resolveTiktokVideoId } from '../utils/tiktokLink'
 import { useSwipePages } from '../hooks/useSwipePages'
 import { useTabIndicator } from '../hooks/useTabIndicator'
+import { useCachedImage } from '../hooks/useCachedImage'
 
 const CACHE_KEY = 'terbaru'
 const TRENDING_CACHE_KEY = 'terbaru-trending'
@@ -22,6 +23,7 @@ export default function Terbaru() {
   const { user, isAdmin } = useAuth()
   const { getCache, setCache } = usePresetCache()
   const [wallpaperUrl, setWallpaperUrl] = useState(null)
+  const cachedWallpaperUrl = useCachedImage(wallpaperUrl)
   const cached = getCache(CACHE_KEY)
   const [presets, setPresets] = useState(cached?.data || [])
   const [loading, setLoading] = useState(!cached)
@@ -287,7 +289,7 @@ export default function Terbaru() {
       <div className="grid-page terbaru-page">
         <div className="terbaru-banner"> {/* Hapus ref dari sini */}
           <img
-            src={wallpaperUrl || '/terbaru-banner.jpg'}
+            src={cachedWallpaperUrl || '/terbaru-banner.jpg'}
             alt=""
             draggable={false}
             onError={(e) => { e.currentTarget.style.display = 'none' }}
