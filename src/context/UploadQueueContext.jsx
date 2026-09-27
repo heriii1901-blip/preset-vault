@@ -141,7 +141,7 @@ export function UploadQueueProvider({ children }) {
           preview_video_url: previewVideoUrl,
           cover_url: coverUrl,
           uploaded_by: job.creatorUsername || null,
-          link_pending: !job.xmlLink?.trim(),
+          link_pending: false,
         })
         if (efekErr) throw efekErr
         updateItem(job.id, { status: 'done', stage: 'Beres!', progress: 100, finishedAt: Date.now() })
@@ -209,7 +209,7 @@ export function UploadQueueProvider({ children }) {
         hide_from_latest: job.hideFromLatest || false,
         preview_video_url: previewVideoUrl,
         cover_url: coverUrl,
-        link_pending: !job.xmlLink?.trim(),
+        link_pending: false,
       })
       if (presetErr) throw presetErr
 
