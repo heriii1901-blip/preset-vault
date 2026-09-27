@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../supabase'
 import { useUploadQueue } from '../../context/UploadQueueContext'
+import VideoPreview from '../../components/VideoPreview'
 
 export default function KreatorAddPreset() {
   const { user } = useAuth()
@@ -186,6 +187,7 @@ export default function KreatorAddPreset() {
                 onChange={(e) => setPreviewFile(e.target.files?.[0] || null)}
               />
             </label>
+            <VideoPreview file={previewFile} />
           </div>
 
           <div className="form-field">
