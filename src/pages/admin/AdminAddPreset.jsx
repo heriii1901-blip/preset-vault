@@ -4,7 +4,9 @@ import { supabase } from '../../supabase'
 import { resolveTiktokVideoId } from '../../utils/tiktokLink'
 import { compressVideoIfNeeded } from '../../utils/compressVideo'
 import { uploadToR2 } from '../../utils/uploadToR2'
-import { safeHref } from '../../utils/safeUrl'
+import { safeHref, isValidLink } from '../../utils/safeUrl'
+import { getInitialSongId } from '../../utils/lastSong'
+import SongPicker from '../../components/SongPicker'
 import { generateCoverFromVideo } from '../../utils/generateCoverFromVideo'
 import { useUploadQueue } from '../../context/UploadQueueContext'
 import { useAuth } from '../../context/AuthContext'
@@ -51,8 +53,6 @@ export default function AdminAddPreset() {
   const [songs, setSongs] = useState([])
   const [songMode, setSongMode] = useState('existing')
   const [selectedSongId, setSelectedSongId] = useState('')
-  const [songDropdownOpen, setSongDropdownOpen] = useState(false)
-  const songDropdownRef = useRef(null)
   const [newSongName, setNewSongName] = useState('')
   const [xmlLink, setXmlLink] = useState('')
   const [mbLink, setMbLink] = useState('')
@@ -79,8 +79,6 @@ export default function AdminAddPreset() {
   const guestDropdownRef = useRef(null)
   const [pkSongMode, setPkSongMode] = useState('existing')
   const [pkSelectedSongId, setPkSelectedSongId] = useState('')
-  const [pkSongDropdownOpen, setPkSongDropdownOpen] = useState(false)
-  const pkSongDropdownRef = useRef(null)
   const [pkNewSongName, setPkNewSongName] = useState('')
   const [pkXmlLink, setPkXmlLink] = useState('')
   const [pkMbLink, setPkMbLink] = useState('')
@@ -100,6 +98,7 @@ export default function AdminAddPreset() {
 
   // --- State tab "Tambah Lagu" (pindahan dari TambahLagu.jsx) ---
   const [laguName, setLaguName] = useState('')
+  const [laguLyrics, setLaguLyrics] = useState('')
   const [laguSaving, setLaguSaving] = useState(false)
   const [laguStatusMsg, setLaguStatusMsg] = useState('')
 
@@ -130,7 +129,8 @@ export default function AdminAddPreset() {
         if (error) throw error
         const list = [...data].sort((a, b) => a.name.localeCompare(b.name))
         setSongs(list)
-        if (list.length > 0 && !isEditMode) setSelectedSongId(list[0].id)
+        if (list.length > 0 && !isEditMode) setSelectedSongId(getInitialSongId(list))
+        if (list.length > 0) setPkSelectedSongId((prev) => prev || getInitialSongId(list))
       } catch (err) {
         console.error('Gagal ambil daftar lagu:', err)
         setStatusMsg('Gagal ambil daftar lagu. Cek koneksi / setting Supabase.')
@@ -188,14 +188,8 @@ export default function AdminAddPreset() {
 
   useEffect(() => {
     function handleClickOutside(e) {
-      if (songDropdownRef.current && !songDropdownRef.current.contains(e.target)) {
-        setSongDropdownOpen(false)
-      }
       if (guestDropdownRef.current && !guestDropdownRef.current.contains(e.target)) {
         setGuestDropdownOpen(false)
-      }
-      if (pkSongDropdownRef.current && !pkSongDropdownRef.current.contains(e.target)) {
-        setPkSongDropdownOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -334,7 +328,7 @@ export default function AdminAddPreset() {
     setPkSkipCompress(false)
     setPkNewSongName('')
     setPkSongMode('existing')
-    setPkSelectedSongId('')
+    setPkSelectedSongId(getInitialSongId(songs))
   }
 
   const pkHandleAutoDownload = async () => {
@@ -444,11 +438,12 @@ export default function AdminAddPreset() {
       const color = THUMB_COLORS[Math.floor(Math.random() * THUMB_COLORS.length)]
       const { error: insertErr } = await supabase
         .from('songs')
-        .insert({ name: laguName.trim(), preset_count: 0, color })
+        .insert({ name: laguName.trim(), preset_count: 0, color, lyrics: laguLyrics.trim() || null })
       if (insertErr) throw insertErr
 
       setLaguStatusMsg('✅ Lagu ditambahin!')
       setLaguName('')
+      setLaguLyrics('')
     } catch (err) {
       console.error('Gagal nambah lagu:', err)
       setLaguStatusMsg('❌ Gagal nambah lagu. Cek koneksi / setting Supabase.')
@@ -782,32 +777,7 @@ export default function AdminAddPreset() {
 
           {songMode === 'existing' ? (
             songs.length > 0 ? (
-              <div className="custom-select" ref={songDropdownRef}>
-                <button
-                  type="button"
-                  className="custom-select-trigger"
-                  onClick={() => setSongDropdownOpen((prev) => !prev)}
-                >
-                  <span>{songs.find((s) => s.id === selectedSongId)?.name || 'Pilih lagu...'}</span>
-                  <span className={songDropdownOpen ? 'custom-select-arrow open' : 'custom-select-arrow'}>▾</span>
-                </button>
-                {songDropdownOpen && (
-                  <div className="custom-select-menu">
-                    {songs.map((s) => (
-                      <div
-                        key={s.id}
-                        className={s.id === selectedSongId ? 'custom-select-option active' : 'custom-select-option'}
-                        onClick={() => {
-                          setSelectedSongId(s.id)
-                          setSongDropdownOpen(false)
-                        }}
-                      >
-                        {s.name}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+            <SongPicker songs={songs} selectedSongId={selectedSongId} onSelect={setSelectedSongId} />
             ) : (
               <p className="hint" style={{ color: 'var(--muted)' }}>Belum ada lagu tersimpen. Pilih "Lagu baru" dulu.</p>
             )
@@ -1155,32 +1125,7 @@ export default function AdminAddPreset() {
 
           {pkSongMode === 'existing' ? (
             songs.length > 0 ? (
-              <div className="custom-select" ref={pkSongDropdownRef}>
-                <button
-                  type="button"
-                  className="custom-select-trigger"
-                  onClick={() => setPkSongDropdownOpen((prev) => !prev)}
-                >
-                  <span>{songs.find((s) => s.id === pkSelectedSongId)?.name || 'Pilih lagu...'}</span>
-                  <span className={pkSongDropdownOpen ? 'custom-select-arrow open' : 'custom-select-arrow'}>▾</span>
-                </button>
-                {pkSongDropdownOpen && (
-                  <div className="custom-select-menu">
-                    {songs.map((s) => (
-                      <div
-                        key={s.id}
-                        className={s.id === pkSelectedSongId ? 'custom-select-option active' : 'custom-select-option'}
-                        onClick={() => {
-                          setPkSelectedSongId(s.id)
-                          setPkSongDropdownOpen(false)
-                        }}
-                      >
-                        {s.name}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+            <SongPicker songs={songs} selectedSongId={pkSelectedSongId} onSelect={setPkSelectedSongId} />
             ) : (
               <p className="hint" style={{ color: 'var(--muted)' }}>Belum ada lagu tersimpen. Pilih "Lagu baru" dulu.</p>
             )
@@ -1323,6 +1268,17 @@ export default function AdminAddPreset() {
               <button type="button" className="input-clear-btn" onClick={() => setLaguName('')} aria-label="Hapus isi">×</button>
             )}
           </div>
+        </div>
+
+        <div className="form-field">
+          <label>Lirik (opsional, biar bisa dicari lewat lirik)</label>
+          <textarea
+            className="finput-real"
+            style={{ minHeight: 110, resize: 'vertical', fontFamily: 'var(--font-sans)' }}
+            placeholder="Tempel lirik lagu di sini..."
+            value={laguLyrics}
+            onChange={(e) => setLaguLyrics(e.target.value)}
+          />
         </div>
 
         {laguStatusMsg && (
