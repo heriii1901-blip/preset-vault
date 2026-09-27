@@ -10,6 +10,7 @@ import { useUploadQueue } from '../../context/UploadQueueContext'
 import { useAuth } from '../../context/AuthContext'
 import { useSwipePages } from '../../hooks/useSwipePages'
 import { useTabIndicator } from '../../hooks/useTabIndicator'
+import VideoPreview from '../../components/VideoPreview'
 
 const THUMB_COLORS = [
   'linear-gradient(135deg,#7C5CFF,#4A32C9)',
@@ -761,6 +762,7 @@ export default function AdminAddPreset() {
               onChange={(e) => setPreviewFile(e.target.files?.[0] || null)}
             />
           </label>
+          <VideoPreview file={previewFile} />
           {previewFile && previewFile.size > 5 * 1024 * 1024 && (
             <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: 13, color: '#aaa' }}>
               <input type="checkbox" checked={skipCompress} onChange={(e) => setSkipCompress(e.target.checked)} />
@@ -1096,6 +1098,7 @@ export default function AdminAddPreset() {
               onChange={(e) => setPkPreviewFile(e.target.files?.[0] || null)}
             />
           </label>
+          <VideoPreview file={pkPreviewFile} />
           {pkPreviewFile && pkPreviewFile.size > 5 * 1024 * 1024 && (
             <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: 13, color: '#aaa' }}>
               <input type="checkbox" checked={pkSkipCompress} onChange={(e) => setPkSkipCompress(e.target.checked)} />
