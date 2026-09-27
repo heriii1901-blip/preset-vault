@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../supabase'
 import { useUploadQueue } from '../../context/UploadQueueContext'
 import VideoPreview from '../../components/VideoPreview'
+import SongPicker from '../../components/SongPicker'
+import { getInitialSongId } from '../../utils/lastSong'
 
 export default function KreatorAddPreset() {
   const { user } = useAuth()
@@ -16,8 +18,6 @@ export default function KreatorAddPreset() {
   const [songs, setSongs] = useState([])
   const [songMode, setSongMode] = useState('existing')
   const [selectedSongId, setSelectedSongId] = useState('')
-  const [songDropdownOpen, setSongDropdownOpen] = useState(false)
-  const songDropdownRef = useRef(null)
   const [newSongName, setNewSongName] = useState('')
   const [xmlLink, setXmlLink] = useState('')
   const [mbLink, setMbLink] = useState('')
@@ -52,26 +52,12 @@ export default function KreatorAddPreset() {
         if (error) throw error
         const list = [...data].sort((a, b) => a.name.localeCompare(b.name))
         setSongs(list)
-        if (list.length > 0) setSelectedSongId(list[0].id)
+        if (list.length > 0) setSelectedSongId(getInitialSongId(list))
       } catch (err) {
         console.error('Gagal ambil daftar lagu:', err)
       }
     }
     loadSongs()
-  }, [])
-
-  useEffect(() => {
-    function handleClickOutside(e) {
-      if (songDropdownRef.current && !songDropdownRef.current.contains(e.target)) {
-        setSongDropdownOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    document.addEventListener('touchstart', handleClickOutside)
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-      document.removeEventListener('touchstart', handleClickOutside)
-    }
   }, [])
 
   const resetForm = () => {
@@ -211,32 +197,7 @@ export default function KreatorAddPreset() {
 
             {songMode === 'existing' ? (
               songs.length > 0 ? (
-                <div className="custom-select" ref={songDropdownRef}>
-                  <button
-                    type="button"
-                    className="custom-select-trigger"
-                    onClick={() => setSongDropdownOpen((prev) => !prev)}
-                  >
-                    <span>{songs.find((s) => s.id === selectedSongId)?.name || 'Pilih lagu...'}</span>
-                    <span className={songDropdownOpen ? 'custom-select-arrow open' : 'custom-select-arrow'}>▾</span>
-                  </button>
-                  {songDropdownOpen && (
-                    <div className="custom-select-menu">
-                      {songs.map((s) => (
-                        <div
-                          key={s.id}
-                          className={s.id === selectedSongId ? 'custom-select-option active' : 'custom-select-option'}
-                          onClick={() => {
-                            setSelectedSongId(s.id)
-                            setSongDropdownOpen(false)
-                          }}
-                        >
-                          {s.name}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+              <SongPicker songs={songs} selectedSongId={selectedSongId} onSelect={setSelectedSongId} />
               ) : (
                 <p className="hint" style={{ color: 'var(--muted)' }}>Belum ada lagu tersimpen. Pilih "Request lagu baru" dulu.</p>
               )
