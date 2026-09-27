@@ -112,7 +112,7 @@ export default function AdminAddPreset() {
       try {
         const { data, error } = await supabase
           .from('guest_creators')
-          .select('id, creator_username, display_name')
+          .select('id, creator_username, display_name, avatar_url')
           .order('created_at', { ascending: true })
         if (error) throw error
         setGuests(data || [])
@@ -1001,10 +1001,31 @@ export default function AdminAddPreset() {
                 className="custom-select-trigger"
                 onClick={() => setGuestDropdownOpen((prev) => !prev)}
               >
-                <span>
-                  {selectedGuest
-                    ? `${selectedGuest.display_name || selectedGuest.creator_username} (@${selectedGuest.creator_username})`
-                    : 'Pilih kreator...'}
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                  {selectedGuest && (
+                    selectedGuest.avatar_url ? (
+                      <img
+                        src={selectedGuest.avatar_url}
+                        alt=""
+                        style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                      />
+                    ) : (
+                      <span
+                        style={{
+                          width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+                          background: 'var(--line)', display: 'flex', alignItems: 'center',
+                          justifyContent: 'center', fontSize: 11, fontWeight: 700,
+                        }}
+                      >
+                        {(selectedGuest.display_name || selectedGuest.creator_username).charAt(0).toUpperCase()}
+                      </span>
+                    )
+                  )}
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {selectedGuest
+                      ? `${selectedGuest.display_name || selectedGuest.creator_username} (@${selectedGuest.creator_username})`
+                      : 'Pilih kreator...'}
+                  </span>
                 </span>
                 <span className={guestDropdownOpen ? 'custom-select-arrow open' : 'custom-select-arrow'}>▾</span>
               </button>
@@ -1018,8 +1039,26 @@ export default function AdminAddPreset() {
                         setSelectedGuestId(g.id)
                         setGuestDropdownOpen(false)
                       }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 8 }}
                     >
-                      {g.display_name || g.creator_username} (@{g.creator_username})
+                      {g.avatar_url ? (
+                        <img
+                          src={g.avatar_url}
+                          alt=""
+                          style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                        />
+                      ) : (
+                        <span
+                          style={{
+                            width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+                            background: 'var(--line)', display: 'flex', alignItems: 'center',
+                            justifyContent: 'center', fontSize: 11, fontWeight: 700,
+                          }}
+                        >
+                          {(g.display_name || g.creator_username).charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                      <span>{g.display_name || g.creator_username} (@{g.creator_username})</span>
                     </div>
                   ))}
                 </div>
