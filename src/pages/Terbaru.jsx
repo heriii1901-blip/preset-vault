@@ -5,8 +5,11 @@ import { useAuth } from '../context/AuthContext'
 import { usePresetCache } from '../context/PresetCacheContext'
 import PresetVideoCell from '../components/PresetVideoCell'
 import { resolveTiktokVideoId } from '../utils/tiktokLink'
+import { useSwipePages } from '../hooks/useSwipePages'
+import { useTabIndicator } from '../hooks/useTabIndicator'
 
 const CACHE_KEY = 'terbaru'
+const TRENDING_CACHE_KEY = 'terbaru-trending'
 const SEARCH_COLLAPSE_DISTANCE = 120
 const LERP_FACTOR = 0.18 // laju di ~60fps; dinormalisasi ke deltaTime di tick()
 
@@ -16,13 +19,22 @@ function easeOutCubic(x) {
 
 export default function Terbaru() {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, isAdmin } = useAuth()
   const { getCache, setCache } = usePresetCache()
   const [wallpaperUrl, setWallpaperUrl] = useState(null)
   const cached = getCache(CACHE_KEY)
   const [presets, setPresets] = useState(cached?.data || [])
   const [loading, setLoading] = useState(!cached)
   const activeVideoRef = useRef(null)
+
+  // Tab Terbaru/Trending
+  const { activeIndex: activeTab, progress: tabProgress, trackStyle: tabTrackStyle, scrollerRef: tabViewportRef, goTo: goToTab, touchHandlers: tabTouchHandlers } = useSwipePages(2)
+  const { containerRef: tabBarRef, tabRefs, indicatorStyle: tabIndicatorStyle, getTabColor } = useTabIndicator(tabProgress, 2)
+  const trendingCached = getCache(TRENDING_CACHE_KEY)
+  const [trendingPresets, setTrendingPresets] = useState(trendingCached?.data || [])
+  const [loadingTrending, setLoadingTrending] = useState(!trendingCached)
+  const [trendingMsg, setTrendingMsg] = useState('')
+  const trendingMsgTimerRef = useRef(null)
 
   const bannerRef = useRef(null)
   const searchRef = useRef(null)
@@ -84,6 +96,59 @@ export default function Terbaru() {
     loadWallpaper()
     return () => { cancelled = true }
   }, [user?.id])
+
+  useEffect(() => {
+    async function loadTrendingPresets() {
+      if (!getCache(TRENDING_CACHE_KEY)) setLoadingTrending(true)
+      try {
+        const { data, error } = await supabase
+          .from('presets')
+          .select('*')
+          .eq('link_pending', false)
+          .eq('is_trending', true)
+          .order('created_at', { ascending: false })
+        if (error) throw error
+        setTrendingPresets(data || [])
+        setCache(TRENDING_CACHE_KEY, data || [])
+      } catch (err) {
+        console.error('Gagal ambil preset trending:', err)
+      } finally {
+        setLoadingTrending(false)
+      }
+    }
+    loadTrendingPresets()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function flashTrendingMsg(text) {
+    setTrendingMsg(text)
+    clearTimeout(trendingMsgTimerRef.current)
+    trendingMsgTimerRef.current = setTimeout(() => setTrendingMsg(''), 2000)
+  }
+
+  async function handleAddToTrending(preset) {
+    if (!isAdmin || preset.is_trending) return
+    setTrendingPresets((prev) => [preset, ...prev])
+    flashTrendingMsg('✅ Dimasukin ke Trending')
+    const { error } = await supabase.from('presets').update({ is_trending: true }).eq('id', preset.id)
+    if (error) {
+      console.error('Gagal masukin ke trending:', error)
+      setTrendingPresets((prev) => prev.filter((p) => p.id !== preset.id))
+      flashTrendingMsg('❌ Gagal, coba lagi')
+    }
+  }
+
+  async function handleRemoveFromTrending(preset) {
+    if (!isAdmin) return
+    setTrendingPresets((prev) => prev.filter((p) => p.id !== preset.id))
+    flashTrendingMsg('🗑️ Dikeluarin dari Trending')
+    const { error } = await supabase.from('presets').update({ is_trending: false }).eq('id', preset.id)
+    if (error) {
+      console.error('Gagal keluarin dari trending:', error)
+      setTrendingPresets((prev) => [preset, ...prev])
+      flashTrendingMsg('❌ Gagal, coba lagi')
+    }
+  }
 
   function resetToCover(video) {
     if (!video) return
@@ -281,37 +346,98 @@ export default function Terbaru() {
               )}
             </div>
 
-            {loading && (
-              <div className="empty-state" style={{ padding: 30 }}>Memuat...</div>
-            )}
+            <div className="terbaru-tabbar" ref={tabBarRef}>
+              <button
+                type="button"
+                ref={(el) => (tabRefs.current[0] = el)}
+                className="terbaru-tab"
+                style={{ color: getTabColor(0) }}
+                onClick={() => goToTab(0)}
+              >
+                Terbaru
+              </button>
+              <button
+                type="button"
+                ref={(el) => (tabRefs.current[1] = el)}
+                className="terbaru-tab"
+                style={{ color: getTabColor(1) }}
+                onClick={() => goToTab(1)}
+              >
+                Trending
+              </button>
+              <div className="terbaru-tabbar-indicator" style={tabIndicatorStyle} />
+            </div>
 
-            {!loading && presets.length === 0 && (
-              <div className="empty-state" style={{ padding: 30 }}>Belum ada preset terbaru.</div>
-            )}
+            {trendingMsg && <p className="terbaru-trending-toast">{trendingMsg}</p>}
 
-            {!loading && presets.length > 0 && (
-              <div className="preset-grid preset-grid--static">
-                {presets.map((preset, i) => (
-                  <PresetVideoCell
-                    key={preset.id}
-                    preset={preset}
-                    index={i}
-                    getCache={getCache}
-                    setCache={setCache}
-                    onNavigate={(p) => navigate(`/preset/${p.id}`, { state: { source: 'terbaru' } })}
-                    onHoverStart={handleHoverStart}
-                    onHoverEnd={handleHoverEnd}
-                  />
-                ))}
-                <div
-                  className="grid-cell grid-cell-viewall"
-                  onClick={() => navigate('/lagu')}
-                >
-                  <div className="grid-fallback" style={{ fontSize: 28 }}>🎵</div>
-                  <div className="grid-cell-overlay">Lihat Semua</div>
+            <div className="terbaru-swipe-viewport" ref={tabViewportRef}>
+              <div className="terbaru-swipe-track" style={tabTrackStyle} {...tabTouchHandlers}>
+                <div className="terbaru-swipe-page">
+                  {loading && (
+                    <div className="empty-state" style={{ padding: 30 }}>Memuat...</div>
+                  )}
+
+                  {!loading && presets.length === 0 && (
+                    <div className="empty-state" style={{ padding: 30 }}>Belum ada preset terbaru.</div>
+                  )}
+
+                  {!loading && presets.length > 0 && (
+                    <div className="preset-grid preset-grid--static">
+                      {presets.map((preset, i) => (
+                        <PresetVideoCell
+                          key={preset.id}
+                          preset={preset}
+                          index={i}
+                          getCache={getCache}
+                          setCache={setCache}
+                          onNavigate={(p) => navigate(`/preset/${p.id}`, { state: { source: 'terbaru' } })}
+                          onHoverStart={handleHoverStart}
+                          onHoverEnd={handleHoverEnd}
+                          onLongPress={isAdmin ? handleAddToTrending : undefined}
+                        />
+                      ))}
+                      <div
+                        className="grid-cell grid-cell-viewall"
+                        onClick={() => navigate('/lagu')}
+                      >
+                        <div className="grid-fallback" style={{ fontSize: 28 }}>🎵</div>
+                        <div className="grid-cell-overlay">Lihat Semua</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="terbaru-swipe-page">
+                  {loadingTrending && (
+                    <div className="empty-state" style={{ padding: 30 }}>Memuat...</div>
+                  )}
+
+                  {!loadingTrending && trendingPresets.length === 0 && (
+                    <div className="empty-state" style={{ padding: 30 }}>
+                      Belum ada video trending.{isAdmin ? ' Tekan-tahan video di tab Terbaru buat masukin.' : ''}
+                    </div>
+                  )}
+
+                  {!loadingTrending && trendingPresets.length > 0 && (
+                    <div className="preset-grid preset-grid--static">
+                      {trendingPresets.map((preset, i) => (
+                        <PresetVideoCell
+                          key={preset.id}
+                          preset={preset}
+                          index={i}
+                          getCache={getCache}
+                          setCache={setCache}
+                          onNavigate={(p) => navigate(`/preset/${p.id}`, { state: { source: 'terbaru' } })}
+                          onHoverStart={handleHoverStart}
+                          onHoverEnd={handleHoverEnd}
+                          onLongPress={isAdmin ? handleRemoveFromTrending : undefined}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
