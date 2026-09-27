@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabase'
 import { usePresetCache } from '../context/PresetCacheContext'
+import { useCachedImage } from '../hooks/useCachedImage'
 
 const CACHE_KEY = 'kreator-list'
 const REGISTERED_CACHE_KEY = 'kreator-list-registered'
@@ -24,11 +25,12 @@ function colorFor(username) {
 }
 
 function CreatorAvatar({ displayKey, avatarUrl }) {
+  const cachedAvatarUrl = useCachedImage(avatarUrl)
   if (avatarUrl) {
     return (
       <div className="song-thumb" style={{ padding: 0, overflow: 'hidden' }}>
         <img
-          src={avatarUrl}
+          src={cachedAvatarUrl}
           alt=""
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
         />
