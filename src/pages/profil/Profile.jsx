@@ -7,6 +7,7 @@ import { usePresetCache } from '../../context/PresetCacheContext'
 import { creatorNameStyle } from '../../utils/creatorFont'
 import { useSwipePages } from '../../hooks/useSwipePages'
 import { useTabIndicator } from '../../hooks/useTabIndicator'
+import { useCachedImage } from '../../hooks/useCachedImage'
 import PresetVideoCell from '../../components/PresetVideoCell'
 import ProfileTabIcon from '../../components/ProfileTabIcon'
 import AvatarViewer from '../../components/AvatarViewer'
@@ -337,6 +338,7 @@ export default function Profile() {
   const nameStyle = isCreator ? creatorNameStyle(profile?.account_font, profile?.account_bold) : undefined
 
   const photoUrl = profile?.avatar_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture
+  const cachedPhotoUrl = useCachedImage(photoUrl)
 
   const initials = (displayName || '?')
     .split(' ')
@@ -392,7 +394,7 @@ export default function Profile() {
 
         <div className="profile-header">
           {photoUrl ? (
-            <img className="avatar-img" style={{ width: 64, height: 64, minWidth: 64, minHeight: 64, aspectRatio: '1 / 1', objectFit: 'cover', flexShrink: 0, cursor: 'pointer' }} src={photoUrl} alt="Foto profil" onClick={() => setAvatarOpen(true)} />
+            <img className="avatar-img" style={{ width: 64, height: 64, minWidth: 64, minHeight: 64, aspectRatio: '1 / 1', objectFit: 'cover', flexShrink: 0, cursor: 'pointer' }} src={cachedPhotoUrl} alt="Foto profil" onClick={() => setAvatarOpen(true)} />
           ) : (
             <div className="avatar" style={{ width: 64, height: 64, minWidth: 64, minHeight: 64, aspectRatio: '1 / 1', fontSize: 19, flexShrink: 0 }}>{initials}</div>
           )}
@@ -615,7 +617,7 @@ export default function Profile() {
         </div>
       </div>
 
-      <AvatarViewer open={avatarOpen} src={photoUrl} onClose={() => setAvatarOpen(false)} />
+      
 
       <div className={`profile-menu-backdrop${menuOpen ? ' is-open' : ''}`} onClick={() => setMenuOpen(false)}>
         <div className={`profile-menu-drawer${menuOpen ? ' is-open' : ''}`} onClick={(e) => e.stopPropagation()}>
