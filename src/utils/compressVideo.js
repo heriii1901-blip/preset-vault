@@ -198,6 +198,7 @@ function getVideoDuration(file) {
 const SKIP_COMPRESS_BYTES = 5 * 1024 * 1024 // Di bawah ini, auto post tanpa kompres sama sekali
 const MAX_SIZE_BYTES = 5 * 1024 * 1024 // Target akhir kalau kena kompres (dulu 6MB)
 const MIN_VIDEO_BITRATE_KBPS = 350 // dulu 150 - kegedean turunnya buat konten gerak cepet, jadi pecah/blocky
+const AUDIO_BITRATE_KBPS = 96 // bitrate audio AAC, dipotong dari total budget sebelum sisanya buat video
 const SAFETY_MARGIN = 0.88 // jalur ffmpeg.wasm (dulu 0.92) - biar percobaan pertama jarang kegedean
 const HW_SAFETY_MARGIN = 0.85 // jalur WebCodecs - encoder hardware suka meleset dari bitrate target, jadi lebih longgar
 const RESOLUTION_STEPS = [1280, 960, 720, 540] // sisi terpanjang (px)
