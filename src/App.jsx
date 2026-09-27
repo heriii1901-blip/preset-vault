@@ -27,6 +27,7 @@ import KreatorPresets from './pages/kreator/KreatorPresets'
 import AdminCreatorApplications from './pages/admin/AdminCreatorApplications'
 import DownloadPage from './pages/DownloadPage'
 import KreatorAddPreset from './pages/kreator/KreatorAddPreset'
+import KreatorEditPreset from './pages/kreator/KreatorEditPreset'
 import KreatorManagePresets from './pages/kreator/KreatorManagePresets'
 import KreatorSongRequests from './pages/kreator/KreatorSongRequests'
 import AdminSongRequests from './pages/admin/AdminSongRequests'
@@ -239,6 +240,14 @@ export default function App() {
                   element={
                     <ProtectedRoute>
                       <KreatorAddPreset />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/kreator/edit-preset/:presetId"
+                  element={
+                    <ProtectedRoute>
+                      <KreatorEditPreset />
                     </ProtectedRoute>
                   }
                 />
