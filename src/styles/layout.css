@@ -337,7 +337,7 @@
 }
 
 .terbaru-search-wrap {
-  padding: 26px 16px 20px;
+  padding: 20px 16px 12px;
   transform-origin: top center;
   will-change: transform, opacity;
 }
@@ -417,28 +417,26 @@
 .terbaru-tabbar {
   position: relative;
   display: flex;
-  gap: 4px;
-  padding: 2px 24px 12px;
+  gap: 2px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line);
 }
 .terbaru-tab {
   flex: 1;
   background: none;
   border: none;
-  padding: 8px 0;
-  font-weight: 800;
+  border-radius: 10px 10px 0 0;
+  color: var(--muted);
+  font-weight: 700;
   font-size: 13.5px;
   letter-spacing: 0.1px;
+  padding: 9px 4px 12px;
+  min-height: 40px;
   cursor: pointer;
-  transition: color 0.2s ease;
+  transition: color .2s ease, background-color .2s ease, transform .12s ease;
 }
-.terbaru-tab:active { transform: scale(0.97); }
-.terbaru-tabbar-indicator {
-  position: absolute;
-  bottom: 6px;
-  height: 3px;
-  border-radius: 999px;
-  background: var(--lime);
-}
+.terbaru-tab.is-active { font-weight: 800; }
+.terbaru-tab:active { transform: scale(0.96); background: rgba(255, 255, 255, 0.05); }
 .terbaru-trending-toast {
   text-align: center;
   font-size: 12.5px;
