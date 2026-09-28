@@ -23,7 +23,7 @@
   /* Rasio banner Terbaru (dipake juga di preview halaman Ubah Wallpaper biar konsisten).
      Sebelumnya 16/9 kerasa kegedean, sekarang 2.15/1 — dikit lebih tinggi dari
      percobaan 2.5/1 kemarin sesuai revisi. */
-  --terbaru-banner-ratio: 1.75 / 1;
+  --terbaru-banner-ratio: 2.1 / 1;
 }
 
 :root[data-theme='dark'] { color-scheme: dark; }
