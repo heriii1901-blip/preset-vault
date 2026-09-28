@@ -210,6 +210,13 @@ export default function Terbaru() {
       sEl.parentElement.style.background = `color-mix(in srgb, var(--bg) ${Math.max(0, lambatPudar) * 100}%, transparent)`
     }
 
+    // Teks tab Terbaru/Trending ikut memudar, kurvanya disamain sm search bar & blok hitam
+    const tEl = tabBarRef.current
+    if (tEl) {
+      tEl.style.opacity = `${Math.max(0, 1 - sVal * sVal)}`
+      tEl.style.pointerEvents = sVal > 0.8 ? 'none' : 'auto'
+    }
+
     // Banner (area gelap + judul Terbaru) lenyap barengan, kurvanya disamain sm search bar.
     const bEl = bannerRef.current
     if (bEl) {
@@ -349,10 +356,11 @@ export default function Terbaru() {
             </div>
 
             <div className="terbaru-tabbar" ref={tabBarRef}>
+              <div className="tab-indicator" style={tabIndicatorStyle} />
               <button
                 type="button"
                 ref={(el) => (tabRefs.current[0] = el)}
-                className="terbaru-tab"
+                className={`terbaru-tab${activeTab === 0 ? ' is-active' : ''}`}
                 style={{ color: getTabColor(0) }}
                 onClick={() => goToTab(0)}
               >
@@ -361,13 +369,12 @@ export default function Terbaru() {
               <button
                 type="button"
                 ref={(el) => (tabRefs.current[1] = el)}
-                className="terbaru-tab"
+                className={`terbaru-tab${activeTab === 1 ? ' is-active' : ''}`}
                 style={{ color: getTabColor(1) }}
                 onClick={() => goToTab(1)}
               >
                 Trending
               </button>
-              <div className="terbaru-tabbar-indicator" style={tabIndicatorStyle} />
             </div>
 
             {trendingMsg && <p className="terbaru-trending-toast">{trendingMsg}</p>}
