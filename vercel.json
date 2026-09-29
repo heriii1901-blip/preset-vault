@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/((?!sw\\.js).*)", "destination": "/index.html" }
+    { "source": "/((?!sw\\.js|privacy\\.html).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
