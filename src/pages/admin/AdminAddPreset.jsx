@@ -55,6 +55,9 @@ export default function AdminAddPreset() {
   const [selectedSongId, setSelectedSongId] = useState('')
   const [newSongName, setNewSongName] = useState('')
   const [xmlLink, setXmlLink] = useState('')
+  const [genBusy, setGenBusy] = useState(false)
+  const [genMsg, setGenMsg] = useState('')
+  const [genLog, setGenLog] = useState([])
   const [mbLink, setMbLink] = useState('')
   const [creatorUsername, setCreatorUsername] = useState('')
   const [tiktokLink, setTiktokLink] = useState('')
@@ -663,6 +666,58 @@ export default function AdminAddPreset() {
     }
   }
 
+  // Generate XML dari link Creative (kolom "Link 5MB / Alight Creative") -> Drive.
+  // Hasilnya (link Drive) ditambahin ke kolom Link XML. Bukan useEffect, cuma jalan
+  // pas tombol diklik, jadi ngga ada resiko loop / query Supabase berulang.
+  const handleGenerateXml = async () => {
+    const links = mbLink.split('\n').map((s) => s.trim()).filter(Boolean)
+    if (!links.length) return setGenMsg('Isi link Creative dulu.')
+
+    const songName =
+      songMode === 'new'
+        ? newSongName.trim()
+        : songs.find((s) => s.id === selectedSongId)?.name || ''
+    const uname = creatorUsername.trim()
+    const baseName = [songName, uname && `@${uname}`].filter(Boolean).join(' - ')
+
+    setGenBusy(true)
+    setGenMsg('')
+    setGenLog([])
+    try {
+      const { data } = await supabase.auth.getSession()
+      const results = []
+      for (let i = 0; i < links.length; i++) {
+        setGenMsg(`Generate ${i + 1}/${links.length}...`)
+        const res = await fetch('/api/creative-to-xml', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${data?.session?.access_token || ''}`,
+          },
+          body: JSON.stringify({
+            url: links[i],
+            name: links.length > 1 && baseName ? `${baseName} ${i + 1}` : baseName,
+          }),
+        })
+        const j = await res.json().catch(() => ({}))
+        if (!res.ok || !j.ok) {
+          setGenLog(j.log || [])
+          throw new Error(j.error || `Gagal generate (status ${res.status})`)
+        }
+        results.push(j.link)
+      }
+      setXmlLink((prev) => {
+        const have = prev.split('\n').map((s) => s.trim()).filter(Boolean)
+        return [...have, ...results.filter((l) => !have.includes(l))].join('\n')
+      })
+      setGenMsg(`Berhasil: ${results.length} link XML masuk ke kolom Link XML.`)
+    } catch (err) {
+      setGenMsg(err.message)
+    } finally {
+      setGenBusy(false)
+    }
+  }
+
   const handleCancelSave = () => {
     cancelledRef.current = true
     if (progressIntervalRef.current) clearInterval(progressIntervalRef.current)
@@ -729,6 +784,32 @@ export default function AdminAddPreset() {
               </button>
             )}
           </div>
+        </div>
+
+        <div className="form-field">
+          <button
+            type="button"
+            onClick={handleGenerateXml}
+            disabled={genBusy || !mbLink.trim()}
+            style={{
+              width: '100%',
+              padding: '11px 14px',
+              borderRadius: 12,
+              border: 'none',
+              background: 'var(--violet)',
+              color: '#fff',
+              fontWeight: 700,
+              opacity: genBusy || !mbLink.trim() ? 0.5 : 1,
+            }}
+          >
+            {genBusy ? 'Lagi generate...' : 'Generate XML dari link Creative'}
+          </button>
+          {genMsg && <div className="queue-history-hint">{genMsg}</div>}
+          {genLog.length > 0 && (
+            <pre style={{ fontSize: 11, color: '#aaa', whiteSpace: 'pre-wrap', marginTop: 6 }}>
+              {genLog.join('\n')}
+            </pre>
+          )}
         </div>
 
         <div className="form-field">
