@@ -17,7 +17,11 @@ const FB_BASE = `https://firebasestorage.googleapis.com/v0/b/${FB_BUCKET}/o`;
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
 // Tebakan nama file kalau folder ga bisa di-list (BELUM TERBUKTI, cuma cadangan)
-const GUESS_NAMES = ["project.zip", "package.zip", "project.xml", "package.xml", "project.alightmotion", "p.zip"];
+const GUESS_NAMES = [
+  "project.zip", "package.zip", "project.xml", "package.xml", "project.alightmotion", "p.zip",
+  "package", "project", "package.alightmotion", "share.alightmotion", "data.zip",
+  "bundle.zip", "share.zip", "export.zip", "pkg.zip", "package.bin", "p",
+];
 
 const enc = encodeURIComponent;
 
@@ -122,7 +126,7 @@ async function fetchXmlFromCreative({ uid, pid }, log) {
   let names = await listFolder(prefix, log);
   if (!names.length) {
     log.push("Folder ga bisa di-list, coba tebak nama file...");
-    names = GUESS_NAMES.map((n) => prefix + n);
+    names = [...GUESS_NAMES, pid, `${pid}.zip`, `${pid}.alightmotion`].map((n) => prefix + n);
   }
   const files = names.filter((n) => !/\.(jpe?g|png|webp|gif)$/i.test(n));
   for (const name of files) {
