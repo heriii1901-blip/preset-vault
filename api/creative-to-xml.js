@@ -96,8 +96,29 @@ async function downloadObject(name, log) {
   return Buffer.from(await r.arrayBuffer());
 }
 
+async function sniffSharePage({ uid, pid }, log) {
+  try {
+    const url = `https://alightcreative.com/am/share/u/${uid}/p/${pid}`;
+    const r = await fetch(url, { headers: { "User-Agent": UA } });
+    const html = await r.text();
+    log.push(`Halaman share: status ${r.status}, ${html.length} karakter`);
+    const urls = [...new Set(html.match(/https?:\/\/[^\s"'<>)\\]+/g) || [])];
+    urls
+      .filter((u) => !/apple\.com|play\.google|badge/.test(u))
+      .slice(0, 25)
+      .forEach((u) => log.push(`URL: ${u.slice(0, 220)}`));
+    const scripts = [...html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)].map((m) => m[1]);
+    log.push(`Script: ${scripts.join(", ") || "(tidak ada)"}`);
+    const hints = [...new Set(html.match(/[\w\-./%]*\.(zip|xml|alightmotion|json)[\w\-./%?=&]*/gi) || [])];
+    log.push(`Petunjuk nama file: ${hints.slice(0, 15).join(", ") || "(tidak ada)"}`);
+  } catch (e) {
+    log.push(`Sniff gagal: ${e.message}`);
+  }
+}
+
 async function fetchXmlFromCreative({ uid, pid }, log) {
   const prefix = `share/u/${uid}/p/${pid}/`;
+  await sniffSharePage({ uid, pid }, log);
   let names = await listFolder(prefix, log);
   if (!names.length) {
     log.push("Folder ga bisa di-list, coba tebak nama file...");
