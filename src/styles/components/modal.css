@@ -48,6 +48,8 @@
   font-size: 12px;
   margin-bottom: 12px;
   outline: none;
+  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 
 .link-modal-textarea {
