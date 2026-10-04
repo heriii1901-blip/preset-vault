@@ -323,8 +323,38 @@ export default function AdminAddPreset() {
     }
   }
 
-  const goToPanel = goToPanelRaw
+  const [findingLinks, setFindingLinks] = useState(false)
 
+  const handleFindCreativeLinks = async () => {
+    setStatusMsg('')
+    if (!tiktokLink.trim()) return setStatusMsg('Isi link video TikTok dulu.')
+    setFindingLinks(true)
+    try {
+      const res = await fetch('/api/find-creative-links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: await authHeader() },
+        body: JSON.stringify({ url: tiktokLink.trim() }),
+      })
+      const j = await res.json().catch(() => ({}))
+      if (!res.ok || !j.ok) throw new Error(j.error || `status ${res.status}`)
+      const info = Object.entries(j.sources || {}).map(([k, v]) => `${k}: ${v}`).join(' · ')
+      if (!j.links.length) {
+        setStatusMsg(`Gak nemu link Creative. (${info})`)
+        return
+      }
+      setMbLink((prev) => {
+        const have = prev.split('\n').map((s) => s.trim()).filter(Boolean)
+        return [...have, ...j.links.filter((l) => !have.includes(l))].join('\n')
+      })
+      setStatusMsg(`✅ Nemu ${j.links.length} link Creative, masuk ke kolom Link 5MB. (${info})`)
+    } catch (err) {
+      setStatusMsg(`Gagal nyari link (${err.message}).`)
+    } finally {
+      setFindingLinks(false)
+    }
+  }
+
+  const goToPanel = goToPanelRaw
   // Kreator yang dipilih SENGAJA ngga di-reset: biar enak spam post buat kreator yang sama.
   const pkResetForm = () => {
     setPkXmlLink('')
@@ -937,6 +967,15 @@ export default function AdminAddPreset() {
             disabled={autoFetching}
           >
             {autoFetching ? 'Mengunduh dari TikTok...' : '⚡ Ambil video otomatis dari link ini'}
+          </button>
+          <button
+            type="button"
+            className="save-btn"
+            style={{ marginTop: 8 }}
+            onClick={handleFindCreativeLinks}
+            disabled={findingLinks}
+          >
+            {findingLinks ? 'Nyari link Creative...' : '🔎 Cari link Creative dari link ini'}
           </button>
           <p className="hint" style={{ color: 'var(--muted)', marginTop: 6, fontSize: 11.5 }}>
             Bisa gagal sewaktu-waktu kalau TikTok lagi rewel. Kalau gagal, upload manual di bawah.
