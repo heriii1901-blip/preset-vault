@@ -813,32 +813,6 @@ export default function AdminAddPreset() {
         </div>
 
         <div className="form-field">
-          <label>
-            Video contoh {isEditMode ? '(kosongin biar video lama tetep dipake)' : '(opsional, buat preview di app)'}
-          </label>
-          <label className="upload-box" style={{ display: 'block', cursor: 'pointer' }}>
-            {previewFile
-              ? `✅ ${previewFile.name}`
-              : existingPreviewUrl
-              ? '🎬 Ada video lama · pilih file buat ganti'
-              : '⬆ Pilih video dari HP'}
-            <input
-              type="file"
-              accept="video/*"
-              style={{ display: 'none' }}
-              onChange={(e) => setPreviewFile(e.target.files?.[0] || null)}
-            />
-          </label>
-          <VideoPreview file={previewFile} />
-          {previewFile && previewFile.size > 5 * 1024 * 1024 && (
-            <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: 13, color: '#aaa' }}>
-              <input type="checkbox" checked={skipCompress} onChange={(e) => setSkipCompress(e.target.checked)} />
-              Lewati kompres (upload video mentah - lebih gede, tapi gak nunggu compressor)
-            </label>
-          )}
-        </div>
-
-        <div className="form-field">
           <label>Lagu</label>
           {!isEditMode && (
             <div className="song-mode-toggle">
@@ -886,6 +860,32 @@ export default function AdminAddPreset() {
             </div>
           )}
           </div>
+
+        <div className="form-field">
+          <label>
+            Video contoh {isEditMode ? '(kosongin biar video lama tetep dipake)' : '(opsional, buat preview di app)'}
+          </label>
+          <label className="upload-box" style={{ display: 'block', cursor: 'pointer' }}>
+            {previewFile
+              ? `✅ ${previewFile.name}`
+              : existingPreviewUrl
+              ? '🎬 Ada video lama · pilih file buat ganti'
+              : '⬆ Pilih video dari HP'}
+            <input
+              type="file"
+              accept="video/*"
+              style={{ display: 'none' }}
+              onChange={(e) => setPreviewFile(e.target.files?.[0] || null)}
+            />
+          </label>
+          <VideoPreview file={previewFile} />
+          {previewFile && previewFile.size > 5 * 1024 * 1024 && (
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: 13, color: '#aaa' }}>
+              <input type="checkbox" checked={skipCompress} onChange={(e) => setSkipCompress(e.target.checked)} />
+              Lewati kompres (upload video mentah - lebih gede, tapi gak nunggu compressor)
+            </label>
+          )}
+        </div>
 
         <div className="form-field">
           <label>Username kreator</label>
