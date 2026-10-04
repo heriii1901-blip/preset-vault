@@ -45,16 +45,31 @@
   flex: none;
   min-height: 0;
   overflow: visible;
-  gap: 0;
 }
 
-.preset-grid--static .grid-cell::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border: 0.5px solid rgba(255, 255, 255, 0.85);
-  pointer-events: none;
-  z-index: 3;
+/* HP: garis putih tipis cuma di sisi dalam grid (3 kolom), tepi luar bersih */
+@media (max-width: 767px) {
+  .preset-grid--static {
+    gap: 0;
+  }
+
+  .preset-grid--static .grid-cell::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  /* garis kanan: semua sel kecuali kolom ke-3 */
+  .preset-grid--static .grid-cell:not(:nth-child(3n))::after {
+    border-right: 1px solid rgba(255, 255, 255, 0.85);
+  }
+
+  /* garis atas: semua sel kecuali baris pertama */
+  .preset-grid--static .grid-cell:nth-child(n + 4)::after {
+    border-top: 1px solid rgba(255, 255, 255, 0.85);
+  }
 }
 
 .grid-cell {
