@@ -17,6 +17,9 @@
   "functions": {
     "api/download-tiktok-video.js": {
       "maxDuration": 60
+    },
+    "api/find-creative-links.js": {
+      "maxDuration": 30
     }
   }
 }
