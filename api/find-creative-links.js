@@ -3,9 +3,8 @@ import { getCaller, isAdminOrCreator } from "../lib/apiAuth.js";
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-// Cuma ambil link Alight Creative. Link XML (Drive dll) sengaja diabaikan:
-// kalau cuma ada XML tanpa link Creative, hasilnya dianggap kosong.
-const CREATIVE_RE = /(?:https?:\/\/)?(?:www\.)?alightcreative\.com\/am\/share\/[^\s"'<>\]+/gi;
+// Filter longgar: cukup "alightcreative.com/am/share/", scheme boleh gak ada
+const CREATIVE_RE = /(?:https?:\/\/)?(?:www\.)?alightcreative\.com\/am\/share\/[^\s"'<>\\]+/gi;
 
 async function getJson(url, ms = 12000) {
   const ctrl = new AbortController();
@@ -21,7 +20,7 @@ async function getJson(url, ms = 12000) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// tikwm gratis dibatasi 1 request/detik: kasih jeda, dan ulang sekali kalau tetap kena limit
+// tikwm gratis dibatasi 1 request/detik: kasih jeda, ulang sekali kalau tetap kena limit
 async function getJsonPaced(url) {
   await sleep(1150);
   let j = await getJson(url);
@@ -59,7 +58,7 @@ export default async function handler(req, res) {
     const sources = {};
     const enc = encodeURIComponent(url);
 
-    // 1) Deskripsi video (+ id video buat komentar)
+    // 1) Deskripsi video
     let videoId = null;
     try {
       const j = await getJson(`https://www.tikwm.com/api/?url=${enc}`);
@@ -71,12 +70,12 @@ export default async function handler(req, res) {
       sources.deskripsi = `gagal: ${e.message}`;
     }
 
-    // 2) Komentar (endpoint tikwm, BELUM TERBUKTI - kalau gagal dilewati aja)
+    // 2) Komentar (scan utuh, termasuk balasan kalau ikut terkirim)
     try {
       let cursor = 0;
       let total = 0;
       let replyCount = 0;
-      for (let page = 0; page < 3; page++) {
+      for (let page = 0; page < 2; page++) {
         const j = await getJsonPaced(
           `https://www.tikwm.com/api/comment/list/?url=${enc}&count=50&cursor=${cursor}`
         );
