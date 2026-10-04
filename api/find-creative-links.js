@@ -5,7 +5,7 @@ const UA =
 
 // Cuma ambil link Alight Creative. Link XML (Drive dll) sengaja diabaikan:
 // kalau cuma ada XML tanpa link Creative, hasilnya dianggap kosong.
-const CREATIVE_RE = /https?:\/\/(?:www\.)?alightcreative\.com\/am\/share\/u\/[^\/\s"'<>]+\/p\/[^\/\s?#"'<>)\]]+/gi;
+const CREATIVE_RE = /(?:https?:\/\/)?(?:www\.)?alightcreative\.com\/am\/share\/[^\s"'<>\]+/gi;
 
 async function getJson(url, ms = 12000) {
   const ctrl = new AbortController();
@@ -33,7 +33,11 @@ async function getJsonPaced(url) {
 }
 
 function extractLinks(text, into) {
-  for (const m of String(text || "").matchAll(CREATIVE_RE)) into.add(m[0]);
+  for (const m of String(text || "").matchAll(CREATIVE_RE)) {
+    let l = m[0].split(/[?#]/)[0].replace(/[.,;:!?)\]}]+$/, "");
+    if (!/^https?:\/\//i.test(l)) l = `https://${l}`;
+    into.add(l.replace(/^http:/i, "https:"));
+  }
 }
 
 export default async function handler(req, res) {
@@ -71,6 +75,7 @@ export default async function handler(req, res) {
     try {
       let cursor = 0;
       let total = 0;
+      let replyCount = 0;
       for (let page = 0; page < 3; page++) {
         const j = await getJsonPaced(
           `https://www.tikwm.com/api/comment/list/?url=${enc}&count=50&cursor=${cursor}`
@@ -78,14 +83,14 @@ export default async function handler(req, res) {
         if (j?.code !== 0 || !j?.data) throw new Error(j?.msg || "komentar gak bisa diambil");
         const list = j.data.comments || [];
         for (const c of list) {
-          extractLinks(c.text, links);
-          for (const r of c.reply_comment_list || c.replies || []) extractLinks(r.text, links);
+          extractLinks(JSON.stringify(c), links);
+          if (Number(c.reply_total) > 0) replyCount++;
         }
         total += list.length;
         if (!j.data.hasMore) break;
         cursor = j.data.cursor ?? cursor + 50;
       }
-      sources.komentar = `ok (${total} komentar dicek)`;
+      sources.komentar = `ok (${total} komentar dicek, ${replyCount} punya balasan)`;
     } catch (e) {
       sources.komentar = `gagal: ${e.message}`;
     }
