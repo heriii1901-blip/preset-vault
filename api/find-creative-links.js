@@ -19,6 +19,19 @@ async function getJson(url, ms = 12000) {
   }
 }
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// tikwm gratis dibatasi 1 request/detik: kasih jeda, dan ulang sekali kalau tetap kena limit
+async function getJsonPaced(url) {
+  await sleep(1150);
+  let j = await getJson(url);
+  if (j?.code !== 0 && /limit/i.test(String(j?.msg || ""))) {
+    await sleep(1500);
+    j = await getJson(url);
+  }
+  return j;
+}
+
 function extractLinks(text, into) {
   for (const m of String(text || "").matchAll(CREATIVE_RE)) into.add(m[0]);
 }
@@ -59,7 +72,7 @@ export default async function handler(req, res) {
       let cursor = 0;
       let total = 0;
       for (let page = 0; page < 3; page++) {
-        const j = await getJson(
+        const j = await getJsonPaced(
           `https://www.tikwm.com/api/comment/list/?url=${enc}&count=50&cursor=${cursor}`
         );
         if (j?.code !== 0 || !j?.data) throw new Error(j?.msg || "komentar gak bisa diambil");
