@@ -45,6 +45,16 @@
   flex: none;
   min-height: 0;
   overflow: visible;
+  gap: 0;
+}
+
+.preset-grid--static .grid-cell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 0.5px solid rgba(255, 255, 255, 0.85);
+  pointer-events: none;
+  z-index: 3;
 }
 
 .grid-cell {
