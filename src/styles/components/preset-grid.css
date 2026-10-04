@@ -66,10 +66,11 @@
     border-right: 1px solid rgba(255, 255, 255, 0.35);
   }
 
-  /* garis atas: semua sel kecuali baris pertama */
+    /* garis atas: semua sel kecuali baris pertama */
   .preset-grid--static .grid-cell:nth-child(n + 4)::after {
     border-top: 1px solid rgba(255, 255, 255, 0.35);
   }
+}
 
 .grid-cell {
   position: relative;
