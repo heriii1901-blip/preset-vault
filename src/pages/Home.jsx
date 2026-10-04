@@ -63,10 +63,11 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const filteredSongs = songs.filter((song) =>
-    song.name.toLowerCase().includes(query.toLowerCase())
-  )
-
+  const filteredSongs = songs.filter((song) => {
+    const q = query.toLowerCase()
+    return song.name.toLowerCase().includes(q) || (song.lyrics || '').toLowerCase().includes(q)
+  })
+  
   useScrollRestoration(songListRef, CACHE_KEY, !loading && songs.length > 0)
 
   const touchStartPos = useRef({ x: 0, y: 0 })
