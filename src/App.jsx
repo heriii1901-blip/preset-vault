@@ -36,6 +36,7 @@ import TentangAplikasi from './pages/profil/TentangAplikasi'
 import WallpaperSettings from './pages/profil/WallpaperSettings'
 import Pengaturan from './pages/profil/Pengaturan'
 import AdminKreatorKhusus from './pages/admin/AdminKreatorKhusus'
+import AdminSongAudio from './pages/admin/AdminSongAudio'
 
 export default function App() {
   const location = useLocation()
@@ -280,6 +281,14 @@ export default function App() {
                   element={
                     <ProtectedRoute>
                       <DownloadPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/suara-lagu"
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <AdminSongAudio />
                     </ProtectedRoute>
                   }
                 />
