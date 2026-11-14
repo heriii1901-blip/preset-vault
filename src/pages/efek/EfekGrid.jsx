@@ -31,6 +31,17 @@ const iconProps = {
 // badge = angka merah antrian yang nunggu keputusan admin.
 const FAB_ACTIONS = [
   {
+    label: 'Suara Lagu',
+    to: '/admin/suara-lagu',
+    icon: (
+      <svg {...iconProps}>
+        <path d="M11 5L6 9H2v6h4l5 4V5z" />
+        <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+        <path d="M19 5a10 10 0 0 1 0 14" />
+      </svg>
+    ),
+  },
+  {
     label: 'Request Lagu',
     to: '/admin/song-requests',
     badge: 'songCount',
