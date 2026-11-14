@@ -277,16 +277,50 @@ export default function PresetFeed() {
       setActiveIndex(newIndex)
     }
 
+    // Pindah ke video tertentu (dipakai wheel mouse + tombol keyboard)
+    function goTo(newIndex) {
+      const next = Math.max(0, Math.min(newIndex, presets.length - 1))
+      if (next === activeIndex) return
+      applyTransform(next, true)
+      setActiveIndex(next)
+    }
+
+    // Wheel mouse/trackpad: 1x gulir = pindah 1 video. Ada jeda 500ms biar gulir
+    // yang masih "meluncur" (inertia) gak bikin loncat banyak video sekaligus.
+    function handleWheel(e) {
+      e.preventDefault()
+      const now = Date.now()
+      if (now < (dragRef.current.wheelLockUntil || 0) || Math.abs(e.deltaY) < 8) return
+      dragRef.current.wheelLockUntil = now + 500
+      goTo(activeIndex + (e.deltaY > 0 ? 1 : -1))
+    }
+
+    // Panah atas/bawah (dan PageUp/PageDown) di keyboard. Dilewatin kalau lagi fokus di slider/input.
+    function handleKeyDown(e) {
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName || '')) return
+      if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+        e.preventDefault()
+        goTo(activeIndex + 1)
+      } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+        e.preventDefault()
+        goTo(activeIndex - 1)
+      }
+    }
+
     el.addEventListener('touchstart', handleTouchStart, { passive: true })
     el.addEventListener('touchmove', handleTouchMove, { passive: false })
     el.addEventListener('touchend', handleTouchEnd, { passive: true })
     el.addEventListener('touchcancel', handleTouchEnd, { passive: true })
+    el.addEventListener('wheel', handleWheel, { passive: false })
+    window.addEventListener('keydown', handleKeyDown)
 
     return () => {
       el.removeEventListener('touchstart', handleTouchStart)
       el.removeEventListener('touchmove', handleTouchMove)
       el.removeEventListener('touchend', handleTouchEnd)
       el.removeEventListener('touchcancel', handleTouchEnd)
+      el.removeEventListener('wheel', handleWheel)
+      window.removeEventListener('keydown', handleKeyDown)
     }
   }, [activeIndex, presets.length, applyTransform])
 
