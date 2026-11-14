@@ -1,6 +1,6 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { getCaller, isAdminOrCreator } from "../lib/apiAuth.js";
+import { getCaller, isAdminOrCreator, ADMIN_EMAIL } from "../lib/apiAuth.js";
 
 const s3 = new S3Client({
   region: "auto",
@@ -12,8 +12,8 @@ const s3 = new S3Client({
 });
 
 // Cuma folder & tipe file ini yang boleh di-upload lewat izin presigned
-const ALLOWED_FOLDERS = ["presets", "covers", "effects", "effects-covers"];
-const ALLOWED_TYPE = /^(video\/[a-z0-9.+-]+|image\/(jpeg|png|webp|gif))$/i;
+const ALLOWED_FOLDERS = ["presets", "covers", "effects", "effects-covers", "audio"];
+const ALLOWED_TYPE = /^(video\/[a-z0-9.+-]+|audio\/[a-z0-9.+-]+|image\/(jpeg|png|webp|gif))$/i;
 
 // Buang path & karakter aneh dari nama file
 function safeFileName(name) {
@@ -41,6 +41,10 @@ export default async function handler(req, res) {
     const targetFolder = folder || "presets";
     if (!ALLOWED_FOLDERS.includes(targetFolder)) {
       return res.status(400).json({ error: "Folder upload gak valid" });
+    }
+    // Folder audio (suara lagu) khusus admin, kreator biasa gak boleh
+    if (targetFolder === "audio" && caller.email !== ADMIN_EMAIL) {
+      return res.status(403).json({ error: "Cuma admin yang boleh upload suara lagu" });
     }
     const type = contentType || "video/mp4";
     if (!ALLOWED_TYPE.test(type)) {
