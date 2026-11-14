@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { usePresetCache } from '../context/PresetCacheContext'
 import { deleteFromR2 } from '../utils/deleteFromR2'
 import { useScrollRestoration } from '../hooks/useScrollRestoration'
+import SongPlayerModal from '../components/SongPlayerModal'
 
 const CACHE_KEY = 'lagu-list'
 
@@ -18,6 +19,7 @@ export default function Home() {
   const [selectedIds, setSelectedIds] = useState([])
   const [menuSong, setMenuSong] = useState(null)
   const [menuPos, setMenuPos] = useState(null)
+  const [playerSongId, setPlayerSongId] = useState(null)
   const navigate = useNavigate()
   const { isAdmin } = useAuth()
   const longPressTimer = useRef(null)
@@ -113,6 +115,14 @@ export default function Home() {
     navigate(`/lagu/${song.id}`)
   }
 
+  // Tap PP lagu = buka kotak pemutar suara (kalau lagunya udah punya suara).
+  // Belum punya suara / lagi mode pilih: dibiarin, jatuhnya sama kayak tap baris biasa.
+  function handleThumbClick(song, e) {
+    if (selectionMode || longPressTriggered.current || !song.audio_url) return
+    e.stopPropagation()
+    setPlayerSongId(song.id)
+  }
+
   function exitSelectionMode() {
     setSelectionMode(false)
     setSelectedIds([])
@@ -197,7 +207,8 @@ export default function Home() {
       if (presetErr) throw presetErr
       const { error: songErr } = await supabase.from('songs').delete().in('id', ids)
       if (songErr) throw songErr
-      const fileUrls = (doomed || []).flatMap((p) => [p.preview_video_url, p.cover_url]).filter(Boolean)
+      const audioUrls = songs.filter((s) => ids.includes(s.id)).map((s) => s.audio_url)
+      const fileUrls = [...(doomed || []).flatMap((p) => [p.preview_video_url, p.cover_url]), ...audioUrls].filter(Boolean)
       for (let i = 0; i < fileUrls.length; i += 20) {
         await deleteFromR2(fileUrls.slice(i, i + 20))
       }
@@ -265,8 +276,17 @@ export default function Home() {
               {selectionMode && (
                 <span className={`song-radio${selectedIds.includes(song.id) ? ' is-checked' : ''}`} />
               )}
-              <div className="song-thumb" style={{ background: song.color }}>
+              <div
+                className={`song-thumb${song.audio_url ? ' has-audio' : ''}`}
+                style={{ background: song.color }}
+                onClick={(e) => handleThumbClick(song, e)}
+              >
                 {song.coverUrl ? <img src={song.coverUrl} alt="" draggable={false} /> : '♪'}
+                {song.audio_url && (
+                  <span className="song-thumb-play" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                  </span>
+                )}
               </div>
               <div className="song-text">
                 <h4>{song.name}</h4>
@@ -290,6 +310,14 @@ export default function Home() {
           ))}
         </div>
       </div>
+
+      {playerSongId && (
+        <SongPlayerModal
+          songs={filteredSongs.filter((s) => s.audio_url)}
+          startId={playerSongId}
+          onClose={() => setPlayerSongId(null)}
+        />
+      )}
 
       {selectionMode && (
         <div className="selection-bar">
