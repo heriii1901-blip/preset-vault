@@ -72,7 +72,7 @@
 .kreator-profile-header {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 20px;
   padding: 14px 18px 16px;
 }
 .kreator-profile-avatar {
@@ -89,21 +89,37 @@
 }
 .kreator-profile-info h3 {
   font-family: var(--font-sans);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
 }
 .kreator-profile-info p {
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--muted);
-  margin-top: 2px;
+  margin-top: 4px;
+}
+/* Username: tap buat nyalin, tanpa ikon */
+.kreator-profile-info .kreator-profile-username {
+  width: fit-content;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+/* Bio lebih gede + warna teks biasa, biar gak nyatu sama username */
+.kreator-profile-info .kreator-profile-bio {
+  font-size: 14px;
+  line-height: 1.45;
+  margin-top: 8px;
+  color: var(--text);
 }
 .kreator-profile-link {
   display: inline-block;
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--pink);
+  margin-top: 8px;
+  padding: 2px 0;
+  font-size: 13.5px;
+  color: #6fc3ff;
+  text-decoration: none;
+  word-break: break-all;
 }
-
 .failed-job-card {
   background: var(--card-bg, rgba(255,255,255,0.04));
   border: 1px solid rgba(255,255,255,0.08);
