@@ -110,7 +110,15 @@
   line-height: 1.45;
   margin-top: 8px;
   color: var(--text);
+  /* Bio panjang gak ndorong tab bar ke bawah: tinggi dibatasi, sisanya digeser di dalam */
+  max-height: 92px; /* ±4,5 baris, setengah baris sengaja kepotong buat ngasih tanda bisa digeser */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  overflow-wrap: anywhere;
+  scrollbar-width: none;
 }
+.kreator-profile-info .kreator-profile-bio::-webkit-scrollbar { display: none; }
 .kreator-profile-link {
   display: inline-block;
   margin-top: 8px;
