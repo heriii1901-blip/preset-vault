@@ -10,7 +10,7 @@ Gratis, mobile-first, tersedia sebagai web app dan APK Android.
 
 | Web App | APK Android | Status |
 |:-------:|:-----------:|:------:|
-| [![Web](https://img.shields.io/badge/web-preset--vault.vercel.app-7C5CFF?labelColor=1e2327)](https://preset-vault.vercel.app) | [![Download](https://img.shields.io/github/v/release/heriii1901-blip/preset-vault?label=download&color=FF3D7F&labelColor=1e2327)](https://github.com/heriii1901-blip/preset-vault/releases/latest) | ![Status](https://img.shields.io/badge/status-aktif_dikembangkan-D4FF3D?labelColor=1e2327) |
+| [![Web](https://img.shields.io/badge/web-preset--vault.vercel.app-7C5CFF?labelColor=1e2327)](https://preset-vault.vercel.app) | [![Download](https://img.shields.io/github/v/release/heriii1901-blip/preset-vault?label=download&color=FF3D7F&labelColor=1e2327)](https://github.com/heriii1901-blip/preset-vault/releases/latest) | ![Status](https://img.shields.io/badge/status-kadang_dikembangkan-D4FF3D?labelColor=1e2327) |
 
 <!--
 Screenshot: taruh gambar di .github/readme-images/ lalu hapus tanda komentar ini.
