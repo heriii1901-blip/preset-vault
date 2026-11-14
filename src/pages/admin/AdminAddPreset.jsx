@@ -730,7 +730,7 @@ export default function AdminAddPreset() {
           </div>
         </div>
 
-        <div className="form-field">
+        <div className="form-field song-field-first">
           <label>Lagu</label>
           {!isEditMode && (
             <div className="song-mode-toggle">
@@ -1106,7 +1106,7 @@ export default function AdminAddPreset() {
           )}
         </div>
 
-        <div className="form-field">
+        <div className="form-field song-field-first">
           <label>Lagu</label>
           <div className="song-mode-toggle">
             <button
