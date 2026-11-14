@@ -176,7 +176,7 @@ export default function KreatorAddPreset() {
             <VideoPreview file={previewFile} />
           </div>
 
-          <div className="form-field">
+          <div className="form-field song-field-first">
             <label>Lagu</label>
             <div className="song-mode-toggle">
               <button
