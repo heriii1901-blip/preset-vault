@@ -13,6 +13,7 @@ import ProfileTabIcon from '../../components/ProfileTabIcon'
 import AvatarViewer from '../../components/AvatarViewer'
 import Toast from '../../components/Toast'
 import { safeHref } from '../../utils/safeUrl'
+import { copyText, shortLinkLabel } from '../../utils/profileText'
 
 const COVER_TIME = 2
 
@@ -259,6 +260,13 @@ export default function Profile() {
     loadFavoriteEffects()
   }, [user])
 
+  // Tap username = otomatis tersalin (tanpa ikon), kayak TikTok. Yang disalin: persis yang tampil (@username)
+  async function handleCopyUsername() {
+    if (!creatorUsername) return
+    const ok = await copyText(`@${creatorUsername}`)
+    setToastMsg(ok ? 'Username disalin' : 'Gagal menyalin username')
+  }
+
   const handleLogout = async () => {
     await logout()
     navigate('/login', { replace: true })
@@ -394,14 +402,14 @@ export default function Profile() {
 
         <div className="profile-header">
           {photoUrl ? (
-            <img className="avatar-img" style={{ width: 64, height: 64, minWidth: 64, minHeight: 64, aspectRatio: '1 / 1', objectFit: 'cover', flexShrink: 0, cursor: 'pointer' }} src={cachedPhotoUrl} alt="Foto profil" onClick={() => setAvatarOpen(true)} />
+            <img className="avatar-img" style={{ width: 80, height: 80, minWidth: 80, minHeight: 80, aspectRatio: '1 / 1', objectFit: 'cover', flexShrink: 0, cursor: 'pointer' }} src={cachedPhotoUrl} alt="Foto profil" onClick={() => setAvatarOpen(true)} />
           ) : (
-            <div className="avatar" style={{ width: 64, height: 64, minWidth: 64, minHeight: 64, aspectRatio: '1 / 1', fontSize: 19, flexShrink: 0 }}>{initials}</div>
+            <div className="avatar" style={{ width: 80, height: 80, minWidth: 80, minHeight: 80, aspectRatio: '1 / 1', fontSize: 24, flexShrink: 0 }}>{initials}</div>
           )}
           <div className="profile-info">
             <h4 style={nameStyle}>{displayName}</h4>
             {isCreator ? (
-              <p>@{creatorUsername}</p>
+              <p className="profile-username" onClick={handleCopyUsername}>@{creatorUsername}</p>
             ) : (
               <p>{user?.email}</p>
             )}
@@ -414,7 +422,7 @@ export default function Profile() {
                 className="profile-link"
                 onClick={(e) => e.stopPropagation()}
               >
-                🔗 Buka link
+                {shortLinkLabel(profile.contact_link)}
               </a>
             )}
           </div>
