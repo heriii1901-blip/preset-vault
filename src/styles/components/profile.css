@@ -16,7 +16,7 @@
 .profile-header {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 18px;
   margin-bottom: 18px;
   padding: 0 18px;
   flex-shrink: 0;
@@ -39,13 +39,20 @@
 }
 .profile-info h4 {
   font-family: var(--font-sans);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 .profile-info p {
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--muted);
+}
+/* Username: tap buat nyalin, tanpa ikon */
+.profile-username {
+  width: fit-content;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
  
 .section-label { margin-bottom: 14px; padding: 0 18px; }
@@ -56,20 +63,21 @@
   margin-top: 4px;
 }
 
-.profile-bio {
-  font-size: 13px;
+/* Selector diperpanjang (.profile-info .profile-bio) biar ngalahin `.profile-info p`
+   yang tadinya bikin bio ikut kecil dan abu-abu kayak username */
+.profile-info .profile-bio {
+  font-size: 14px;
   color: var(--text);
-  line-height: 1.4;
+  line-height: 1.45;
   white-space: pre-wrap;
-  margin: 10px 2px 0;
+  margin: 10px 0 0;
 }
 .profile-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12.5px;
+  display: inline-block;
+  font-size: 13.5px;
   color: #6fc3ff;
-  margin: 6px 2px 0;
+  margin: 8px 0 0;
+  padding: 2px 0;
   text-decoration: none;
   word-break: break-all;
 }
@@ -91,7 +99,7 @@
   display: flex;
   gap: 2px;
   padding: 6px 12px 0;
-  margin-top: 30px;
+  margin-top: 46px;
   border-bottom: 1px solid var(--line);
   flex-shrink: 0;
 }
@@ -113,8 +121,8 @@
   justify-content: center;
 }
 .profile-tab-icon {
-  width: 27px;
-  height: 27px;
+  width: 22px;
+  height: 22px;
   display: block;
   transition: transform .18s ease;
 }
@@ -273,8 +281,8 @@
 .profile-tab-main { padding: 11px 2px 13px 8px; }
 .profile-tab-caret { padding: 11px 8px 13px 2px; }
 .profile-tab-caret svg {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   transition: transform .2s ease;
 }
 .profile-tab-caret.is-open svg { transform: rotate(180deg); }
