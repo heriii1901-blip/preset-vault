@@ -9,6 +9,8 @@ import PresetVideoCell from '../../components/PresetVideoCell'
 import ProfileTabIcon from '../../components/ProfileTabIcon'
 import AvatarViewer from '../../components/AvatarViewer'
 import { safeHref } from '../../utils/safeUrl'
+import { copyText, shortLinkLabel } from '../../utils/profileText'
+import Toast from '../../components/Toast'
 
 // Tab bar publik disamain sama tab bar di Profil sendiri. Tiap tab dikunci ke
 // key privasi yang sama kayak di Pengaturan > Privasi (profiles.privacy).
@@ -64,6 +66,7 @@ export default function KreatorPresets() {
   const [loading, setLoading] = useState(!cached)
   const [creatorProfile, setCreatorProfile] = useState(null)
   const [avatarOpen, setAvatarOpen] = useState(false)
+  const [toastMsg, setToastMsg] = useState('')
   const activeVideoRef = useRef(null)
   const postinganPageRef = useRef(null)
 
@@ -154,6 +157,12 @@ export default function KreatorPresets() {
     }
     if (creatorUsername) loadCreatorProfile()
   }, [creatorUsername])
+
+  // Tap username = otomatis tersalin (tanpa ikon), kayak TikTok
+  async function handleCopyUsername() {
+    const ok = await copyText(`@${creatorUsername}`)
+    setToastMsg(ok ? 'Username disalin' : 'Gagal menyalin username')
+  }
 
   // Tombol share: bagiin link halaman kreator ini
   async function handleShareCreator() {
@@ -318,11 +327,11 @@ export default function KreatorPresets() {
             src={creatorProfile.avatar_url}
             alt=""
             className="kreator-profile-avatar"
-            style={{ width: 72, height: 72, objectFit: 'cover', cursor: 'pointer' }}
+            style={{ width: 88, height: 88, objectFit: 'cover', cursor: 'pointer' }}
             onClick={() => setAvatarOpen(true)}
           />
         ) : (
-          <div className="kreator-profile-avatar" style={{ width: 72, height: 72, background: colorFor(creatorUsername) }}>
+          <div className="kreator-profile-avatar" style={{ width: 88, height: 88, fontSize: 26, background: colorFor(creatorUsername) }}>
             {creatorUsername.charAt(0).toUpperCase()}
           </div>
         )}
@@ -331,11 +340,11 @@ export default function KreatorPresets() {
             {creatorProfile?.account_name || `@${creatorUsername}`}
           </h3>
           {creatorProfile?.account_name && (
-            <p style={{ fontSize: 11, color: 'var(--muted)', margin: '2px 0 0' }}>@{creatorUsername}</p>
+            <p className="kreator-profile-username" onClick={handleCopyUsername}>@{creatorUsername}</p>
           )}
           <p>{presets.length} preset</p>
           {creatorProfile?.bio && (
-            <p style={{ fontSize: 12, lineHeight: 1.4, marginTop: 4, color: 'var(--text)' }}>{creatorProfile.bio}</p>
+            <p className="kreator-profile-bio">{creatorProfile.bio}</p>
           )}
           {(creatorProfile?.is_creator || creatorProfile?.is_guest) && (creatorProfile?.contact_link || creatorProfile?.tiktok_link) && (
            <a
@@ -345,14 +354,15 @@ export default function KreatorPresets() {
               className="kreator-profile-link"
               onClick={(e) => e.stopPropagation()}
             >
-              {creatorProfile.is_guest ? '🔗 TikTok' : '🔗 Link Kontak'}
+              {shortLinkLabel(creatorProfile.contact_link || creatorProfile.tiktok_link)}
             </a>
           )}
         </div>
       </div>
 
       <AvatarViewer open={avatarOpen} src={creatorProfile?.avatar_url} onClose={() => setAvatarOpen(false)} />
-
+      <Toast message={toastMsg} onClose={() => setToastMsg('')} />
+      
       <div className="profile-tabs" ref={tabsRef} style={{ marginTop: 16 }}>
         <div className="tab-indicator" style={indicatorStyle} />
         {TAB_KEYS.map((key, i) => {
