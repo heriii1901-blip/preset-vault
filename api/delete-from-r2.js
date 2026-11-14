@@ -13,7 +13,7 @@ const s3 = new S3Client({
 // - avatar : foto profil & wallpaper (boleh dihapus user yang login)
 // - media  : video preview + cover preset/efek (KHUSUS admin)
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "heriii1901@gmail.com";
-const MEDIA_PREFIXES = ["presets/", "covers/", "effects/", "effects-covers/"];
+const MEDIA_PREFIXES = ["presets/", "covers/", "effects/", "effects-covers/", "audio/"];
 const MAX_URLS = 20;
 
 function resolveTarget(rawUrl) {
