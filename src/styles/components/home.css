@@ -12,7 +12,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--surface-2);
+  background: var(--search-bg);
   border: 1.5px solid var(--line);
   border-radius: 14px;
   padding: 14px 16px;
@@ -54,6 +54,7 @@
   margin-bottom: 8px;
   border-radius: 14px;
   background: var(--card-bg, rgba(255,255,255,0.04));
+  box-shadow: var(--row-shadow);
   cursor: pointer;
   transition: background .15s ease;
   user-select: none;
@@ -61,7 +62,12 @@
   -webkit-touch-callout: none;
   touch-action: manipulation;
 }
+
 .song-row.selected { background: rgba(124, 92, 255, 0.15); }
+/* Bayangan kartu ke-clip kalau list gak punya ruang kiri-kanan. Ruangnya dikasih di HP aja. */
+@media (max-width: 767px) {
+  .list-content .song-list { padding: 2px 8px 0; margin: 0 -8px; }
+}
 .song-row:hover { background: var(--surface); }
 .song-row:active { transform: scale(0.98); opacity: 0.85; transition: 80ms ease; }
 
