@@ -19,6 +19,8 @@
   --text: #F7F6FA;
   --muted: #A9AEB6;
   --line: #2A2F36;
+  --search-bg: var(--surface-2);          /* warna kotak search (Lagu, Kreator, Cari Kreator) */
+  --row-shadow: 0 2px 8px rgba(0, 0, 0, 0.28); /* bayangan kartu list lagu/efek/kreator */
 
   /* Rasio banner Terbaru (dipake juga di preview halaman Ubah Wallpaper biar konsisten).
      Sebelumnya 16/9 kerasa kegedean, sekarang 2.15/1 — dikit lebih tinggi dari
@@ -40,7 +42,9 @@
   --card-bg: rgba(22, 21, 28, 0.05);
   /* Hijau stabilo gak kebaca di background terang -> pakai ungu (kebalikan hijau stabilo di roda warna) */
   --accent: #6A45FF;
-  --accent-soft: rgba(106, 69, 255, 0.14);
+  --accent-soft: rgba(106, 69, 255, 0.26); /* pill nav dibikin lebih pekat biar kelihatan di background putih */
+  --search-bg: #DEDFE6;                     /* abu, bukan putih */
+  --row-shadow: 0 1px 2px rgba(22, 21, 28, 0.08), 0 4px 14px rgba(22, 21, 28, 0.10);
 }
 
 * {
