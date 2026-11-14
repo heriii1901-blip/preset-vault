@@ -8,8 +8,8 @@
   background: var(--surface-2);
   border: 1.5px solid var(--line);
   border-radius: 11px;
-  padding: 12px 13px;
-  font-size: 12.5px;
+  padding: 13px 14px;
+  font-size: 14.5px;
   font-weight: 600;
   color: var(--text);
   font-family: var(--font-sans);
@@ -41,20 +41,20 @@
   top: calc(100% + 6px);
   left: 0;
   right: 0;
-  max-height: 220px;
+  max-height: 320px;
   overflow-y: auto;
   background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: 11px;
   z-index: 20;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  padding: 4px;
+  padding: 0 4px 4px; /* atas 0 biar search bar nempel penuh di atas, gak ada celah buat lagu nongol */
 }
 
 .custom-select-option {
-  padding: 10px 12px;
+  padding: 12px 14px;
   border-radius: 8px;
-  font-size: 12.5px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--text);
   cursor: pointer;
@@ -66,7 +66,7 @@
 
 .custom-select-option.active {
   background: rgba(124, 92, 255, 0.2);
-  color: var(--lime);
+  color: var(--accent); /* dulu --lime, gak kebaca di mode terang */
   font-weight: 600;
 }
 
@@ -75,8 +75,8 @@
   top: 0;
   z-index: 1;
   background: var(--surface-2);
-  padding: 2px 2px 6px;
-  margin-bottom: 4px;
+  padding: 8px;
+  margin: 0 -4px 4px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -85,8 +85,8 @@
   background: var(--surface);
   border: 1.5px solid var(--line);
   border-radius: 9px;
-  padding: 9px 11px;
-  font-size: 12.5px;
+  padding: 10px 12px;
+  font-size: 14.5px;
   font-weight: 600;
   color: var(--text);
   font-family: var(--font-sans);
@@ -98,7 +98,7 @@
 }
 
 .custom-select-option-lyric-hint {
-  font-size: 11px;
+  font-size: 12.5px;
   font-weight: 500;
   color: var(--muted);
   margin-top: 2px;
@@ -126,7 +126,7 @@
   padding: 14px 18px;
   border-radius: 22px;
   border: 1.5px solid var(--line);
-  background: var(--surface-2);
+  background: var(--search-bg);
   color: var(--text);
   font-size: 15px;
   font-weight: 600;
