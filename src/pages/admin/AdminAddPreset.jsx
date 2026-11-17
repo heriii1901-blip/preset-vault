@@ -101,6 +101,8 @@ export default function AdminAddPreset() {
   const [laguLyrics, setLaguLyrics] = useState('')
   const [laguSaving, setLaguSaving] = useState(false)
   const [laguStatusMsg, setLaguStatusMsg] = useState('')
+  const [laguMode, setLaguMode] = useState('new') // 'new' = lagu baru, 'existing' = pilih lagu yang sudah ada
+  const [laguSelectedId, setLaguSelectedId] = useState('')
 
   // Ambil daftar kreator khusus SEKALI pas halaman dibuka (dep array kosong) -> ngga ada
   // resiko loop / query berulang, sama kayak pola loadSongs/loadPendingLinkPresets di bawah.
@@ -418,9 +420,47 @@ export default function AdminAddPreset() {
     efekResetForm()
   }
 
+  // Pilih lagu yang sudah ada -> kolom lirik langsung keisi lirik lamanya (tinggal edit/tambah)
+  const laguHandleSelect = (id) => {
+    setLaguSelectedId(id)
+    setLaguLyrics(songs.find((s) => s.id === id)?.lyrics || '')
+    setLaguStatusMsg('')
+  }
+
+  const laguHandleModeChange = (mode) => {
+    setLaguMode(mode)
+    setLaguStatusMsg('')
+    setLaguLyrics(mode === 'existing' ? (songs.find((s) => s.id === laguSelectedId)?.lyrics || '') : '')
+  }
+
   const laguHandleSave = async (e) => {
     e.preventDefault()
     setLaguStatusMsg('')
+    const lyrics = laguLyrics.trim()
+
+    // Mode "Pilih yang ada": cuma ngisi/ganti lirik lagu yang dipilih (judul, id & preset tetap aman)
+    if (laguMode === 'existing') {
+      if (!laguSelectedId) return setLaguStatusMsg('Pilih lagunya dulu.')
+      if (!lyrics) return setLaguStatusMsg('Liriknya belum diisi.')
+      setLaguSaving(true)
+      try {
+        const { error: updErr } = await supabase
+          .from('songs')
+          .update({ lyrics })
+          .eq('id', laguSelectedId)
+        if (updErr) throw updErr
+        setSongs((prev) => prev.map((s) => (s.id === laguSelectedId ? { ...s, lyrics } : s)))
+        setLaguStatusMsg('✅ Lirik disimpan!')
+      } catch (err) {
+        console.error('Gagal simpan lirik:', err)
+        setLaguStatusMsg('❌ Gagal nyimpen lirik. Cek koneksi / setting Supabase.')
+      } finally {
+        setLaguSaving(false)
+      }
+      return
+    }
+
+    // Mode "Lagu baru"
     if (!laguName.trim()) return setLaguStatusMsg('Nama lagu belum diisi.')
 
     setLaguSaving(true)
@@ -429,20 +469,25 @@ export default function AdminAddPreset() {
         .from('songs')
         .select('id, name')
         .ilike('name', laguName.trim())
+        .order('id')
+        .limit(1)
         .maybeSingle()
       if (findErr) throw findErr
 
       if (existing) {
-        setLaguStatusMsg(`Lagu "${existing.name}" udah ada di list.`)
+        setLaguStatusMsg(`Lagu "${existing.name}" udah ada. Pakai "Pilih yang ada" buat nambah/ganti liriknya.`)
         return
       }
 
       const color = THUMB_COLORS[Math.floor(Math.random() * THUMB_COLORS.length)]
-      const { error: insertErr } = await supabase
+      const { data: newSong, error: insertErr } = await supabase
         .from('songs')
-        .insert({ name: laguName.trim(), preset_count: 0, color, lyrics: laguLyrics.trim() || null })
+        .insert({ name: laguName.trim(), preset_count: 0, color, lyrics: lyrics || null })
+        .select()
+        .single()
       if (insertErr) throw insertErr
 
+      setSongs((prev) => [...prev, newSong].sort((a, b) => a.name.localeCompare(b.name)))
       setLaguStatusMsg('✅ Lagu ditambahin!')
       setLaguName('')
       setLaguLyrics('')
@@ -1260,22 +1305,47 @@ export default function AdminAddPreset() {
     <div style={{ padding: '0 20px' }}>
       <form onSubmit={laguHandleSave}>
         <div className="form-field">
-          <label>Nama lagu</label>
-          <div className="input-wrap">
-            <input
-              className="finput-real"
-              placeholder="Misal: Judul Lagu - Artis..."
-              value={laguName}
-              onChange={(e) => setLaguName(e.target.value)}
-            />
-            {laguName && (
-              <button type="button" className="input-clear-btn" onClick={() => setLaguName('')} aria-label="Hapus isi">×</button>
-            )}
+          <label>Lagu</label>
+          <div className="song-mode-toggle">
+            <button
+              type="button"
+              className={laguMode === 'existing' ? 'mode-btn active' : 'mode-btn'}
+              onClick={() => laguHandleModeChange('existing')}
+            >
+              Pilih yang ada
+            </button>
+            <button
+              type="button"
+              className={laguMode === 'new' ? 'mode-btn active' : 'mode-btn'}
+              onClick={() => laguHandleModeChange('new')}
+            >
+              Lagu baru
+            </button>
           </div>
+
+          {laguMode === 'existing' ? (
+            songs.length > 0 ? (
+              <SongPicker songs={songs} selectedSongId={laguSelectedId} onSelect={laguHandleSelect} showLyricMark />
+            ) : (
+              <p className="hint" style={{ color: 'var(--muted)' }}>Belum ada lagu tersimpen. Pilih "Lagu baru" dulu.</p>
+            )
+          ) : (
+            <div className="input-wrap">
+              <input
+                className="finput-real"
+                placeholder="Misal: Judul Lagu - Artis..."
+                value={laguName}
+                onChange={(e) => setLaguName(e.target.value)}
+              />
+              {laguName && (
+                <button type="button" className="input-clear-btn" onClick={() => setLaguName('')} aria-label="Hapus isi">×</button>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="form-field">
-          <label>Lirik (opsional, biar bisa dicari lewat lirik)</label>
+          <label>{laguMode === 'existing' ? 'Lirik (isi baru / ganti lirik lama)' : 'Lirik (opsional, biar bisa dicari lewat lirik)'}</label>
           <textarea
             className="finput-real"
             style={{ minHeight: 110, resize: 'vertical', fontFamily: 'var(--font-sans)' }}
