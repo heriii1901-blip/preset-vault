@@ -53,7 +53,9 @@ export default function AdminSongRequests() {
       const { data: existing, error: findErr } = await supabase
         .from('songs')
         .select('id, preset_count')
-        .eq('name', finalName)
+        .ilike('name', finalName)
+        .order('id')
+        .limit(1)
         .maybeSingle()
       if (findErr) throw findErr
 
