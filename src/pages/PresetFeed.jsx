@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { useDoubleTapLike } from '../hooks/useDoubleTapLike'
 import { HEART_PATH, LoveGradientDefs, LoveBurst } from '../components/LoveBurst'
 import { sortByDailyOrder } from '../utils/dailyOrder'
+import { getSiblingSongIds } from '../utils/songGroup'
 
 export default function PresetFeed() {
   const { presetId } = useParams()
@@ -81,8 +82,9 @@ export default function PresetFeed() {
           kreatorFavIds = (kreatorFavs || []).map((f) => f.preset_id)
         }
 
+        let songScope = clickedPreset.song_id // kunci urutan acak harian (lagu utama kalau digabung)
         let query = supabase.from('presets').select('*, songs(name)').eq('link_pending', false)
-
+        
         if (isFromTerbaru) {
           query = query.eq('hide_from_latest', false).order('created_at', { ascending: false }).limit(20)
         } else if (isFromKreator && filterCreatorUsername) {
@@ -94,7 +96,9 @@ export default function PresetFeed() {
         } else if (isFromKreatorFavorit) {
           query = query.in('id', kreatorFavIds.length > 0 ? kreatorFavIds : [presetId])
         } else {
-          query = query.eq('song_id', clickedPreset.song_id).order('created_at', { ascending: true })
+          const { ids, primaryId } = await getSiblingSongIds(clickedPreset.song_id)
+          songScope = primaryId
+          query = query.in('song_id', ids).order('created_at', { ascending: true })
         }
 
         const { data: allPresets, error: listErr } = await query
@@ -103,7 +107,7 @@ export default function PresetFeed() {
          // Dari halaman lagu: urutan full screen HARUS sama kayak urutan grid (acak per hari, bukan urutan upload)
         let finalList = allPresets || []
         if (!isFromTerbaru && !isFromKreator && !isFromFavorit && !isFromKreatorFavorit) {
-          finalList = sortByDailyOrder(finalList, clickedPreset.song_id)
+          finalList = sortByDailyOrder(finalList, songScope)
         } else if (isFromFavorit || isFromKreatorFavorit) {
           // Susun ulang hasil query (yang urutannya acak dari database) biar
           // ngikutin urutan favIds/kreatorFavIds di atas (urutan kapan di-fav)
