@@ -128,12 +128,6 @@ export default function AdminPostKhusus() {
     const guest = guests.find((g) => g.id === selectedGuestId)
     if (!guest) return setStatusMsg('Pilih kreator khusus dulu.')
     if (!mbLink.trim()) return setStatusMsg('Link 5MB (Alight Creative) belum diisi.')
-    if (!xmlLink.trim()) {
-      const lanjut = window.confirm(
-        'Link XML belum diisi. Preset ini bakal disembunyiin dari publik dan masuk tab "Link Kosong" sampe link-nya diisi. Lanjut upload?'
-      )
-      if (!lanjut) return
-    }
     if (!previewFile) return setStatusMsg('Video contoh belum dipilih.')
     if (songMode === 'new' && !newSongName.trim()) return setStatusMsg('Nama lagu baru belum diisi.')
     if (songMode === 'existing' && !selectedSongId) return setStatusMsg('Pilih lagunya dulu.')
