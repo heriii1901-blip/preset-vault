@@ -11,11 +11,19 @@ import { useCachedImage } from '../hooks/useCachedImage'
 
 const CACHE_KEY = 'terbaru'
 const TRENDING_CACHE_KEY = 'terbaru-trending'
-const SEARCH_COLLAPSE_DISTANCE = 120
-const LERP_FACTOR = 0.18 // laju di ~60fps; dinormalisasi ke deltaTime di tick()
+const LERP_FACTOR = 0.12 // laju di ~60fps; dinormalisasi ke deltaTime di tick(). Makin kecil = makin pelan/halus
 
-function easeOutCubic(x) {
-  return 1 - Math.pow(1 - x, 3)
+// Kapan pudar mulai & selesai, dalam pecahan tinggi banner
+// (0 = awal scroll, 1 = sudah di-scroll sejauh tinggi banner).
+const FADE_START = 0.3 // search bar, tab bar & background-nya
+const FADE_END = 1.0
+const TITLE_BG_START = 0.4 // background judul "Terbaru" muncul menyusul
+const TITLE_BG_END = 1.0
+
+// Kurva S: pelan di awal, pelan di akhir
+function smoothstep(x) {
+  const t = Math.min(Math.max(x, 0), 1)
+  return t * t * (3 - 2 * t)
 }
 
 export default function Terbaru() {
@@ -40,6 +48,7 @@ export default function Terbaru() {
 
   const bannerRef = useRef(null)
   const titleBarRef = useRef(null)
+  const spacerRef = useRef(null)
   const searchRef = useRef(null)
   const scrollTargetRef = useRef(0)
   const searchCurrentRef = useRef(0)
@@ -189,54 +198,47 @@ export default function Terbaru() {
     // di refresh rate berapa pun (60/90/120Hz).
     const smoothing = 1 - Math.pow(1 - LERP_FACTOR, dt / 16.67)
 
-    const scrollTop = scrollTargetRef.current
-    const searchTarget = easeOutCubic(Math.min(scrollTop / SEARCH_COLLAPSE_DISTANCE, 1))
+    // Tinggi banner jadi patokan jarak scroll (dibaca dulu sebelum nulis style apa pun)
+    const bannerH = spacerRef.current?.offsetHeight || 190
 
-    searchCurrentRef.current += (searchTarget - searchCurrentRef.current) * smoothing
+    // searchCurrentRef sekarang nyimpen posisi scroll yang dihaluskan (px), bukan angka 0..1
+    const target = scrollTargetRef.current
+    searchCurrentRef.current += (target - searchCurrentRef.current) * smoothing
+    const cur = searchCurrentRef.current
 
-    const sVal = searchCurrentRef.current
+    const range = (start, end) => smoothstep((cur / bannerH - start) / (end - start))
+    const fade = range(FADE_START, FADE_END)
+    const titleBg = range(TITLE_BG_START, TITLE_BG_END)
 
-    // Mengecil + naik ke atas + lenyap + larut (blur), barengan.
+    // Search bar: gak ada lagi mengecil/naik sendiri. Dia ikut scroll apa adanya,
+    // lalu pudar bareng background-nya (sheet).
     const sEl = searchRef.current
     if (sEl) {
-      sEl.style.transform = `scale(${1 - sVal * 0.24}) translateY(${-sVal * 50}px)`
-      
-      // Bikin variabel baru khusus efek pudar yang dilambatin
-      const lambatPudar = 1 - (sVal * sVal);
-      
-      sEl.style.opacity = `${Math.max(0, lambatPudar)}`
-      sEl.style.pointerEvents = sVal > 0.8 ? 'none' : 'auto'
-      
-      // Blok hitam juga dipakein rumus yang sama
-      sEl.parentElement.style.background = `color-mix(in srgb, var(--bg) ${Math.max(0, lambatPudar) * 100}%, transparent)`
+      sEl.style.opacity = `${1 - fade}`
+      sEl.style.pointerEvents = fade > 0.8 ? 'none' : 'auto'
+      sEl.parentElement.style.background = `color-mix(in srgb, var(--bg) ${(1 - fade) * 100}%, transparent)`
     }
 
-    // Teks tab Terbaru/Trending ikut memudar, kurvanya disamain sm search bar & blok hitam
+    // Tab Terbaru/Trending pudar barengan search bar
     const tEl = tabBarRef.current
     if (tEl) {
-      tEl.style.opacity = `${Math.max(0, 1 - sVal * sVal)}`
-      tEl.style.pointerEvents = sVal > 0.8 ? 'none' : 'auto'
+      tEl.style.opacity = `${1 - fade}`
+      tEl.style.pointerEvents = fade > 0.8 ? 'none' : 'auto'
     }
 
-    // Banner (area gelap + judul Terbaru) lenyap barengan, kurvanya disamain sm search bar.
     const bEl = bannerRef.current
-    if (bEl) {
-      bEl.style.opacity = `${Math.max(0, 1 - sVal * 1)}`
-    }
+    if (bEl) bEl.style.opacity = `${1 - fade}`
 
-    // Judul "Terbaru" kebalikannya search bar: makin lenyap search bar, makin muncul
-    // background-nya (warna --bg), jadi grid lewat di belakangnya, bukan nutupin.
+    // Background judul "Terbaru": kebalikan search bar, muncul menyusul pelan-pelan
+    // setelah sheet sempat nutupin banner.
     const hEl = titleBarRef.current
     if (hEl) {
-      const bgAmount = sVal * sVal // kebalikan dari lambatPudar (1 - sVal²) milik search bar
-      hEl.style.background = `color-mix(in srgb, var(--bg) ${bgAmount * 100}%, transparent)`
-      hEl.style.setProperty('--title-shadow', `${1 - bgAmount}`)
-      hEl.style.pointerEvents = sVal > 0.8 ? 'auto' : 'none'
+      hEl.style.background = `color-mix(in srgb, var(--bg) ${titleBg * 100}%, transparent)`
+      hEl.style.setProperty('--title-shadow', `${1 - titleBg}`)
+      hEl.style.pointerEvents = titleBg > 0.8 ? 'auto' : 'none'
     }
 
-    const stillMoving = Math.abs(searchTarget - sVal) > 0.001
-
-    if (stillMoving) {
+    if (Math.abs(target - cur) > 0.5) {
       animFrameRef.current = requestAnimationFrame(tick)
     } else {
       animFrameRef.current = null
@@ -322,7 +324,7 @@ export default function Terbaru() {
         </div>
 
         <div className="terbaru-scroller" onScroll={handleGridScroll}>
-          <div className="terbaru-spacer" />
+          <div className="terbaru-spacer" ref={spacerRef} />
 
           <div className="terbaru-sheet">
             <div className="terbaru-search-wrap" ref={searchRef}>
