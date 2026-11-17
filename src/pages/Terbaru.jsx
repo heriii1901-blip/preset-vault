@@ -39,6 +39,7 @@ export default function Terbaru() {
   const trendingMsgTimerRef = useRef(null)
 
   const bannerRef = useRef(null)
+  const titleBarRef = useRef(null)
   const searchRef = useRef(null)
   const scrollTargetRef = useRef(0)
   const searchCurrentRef = useRef(0)
@@ -223,6 +224,16 @@ export default function Terbaru() {
       bEl.style.opacity = `${Math.max(0, 1 - sVal * 1)}`
     }
 
+    // Judul "Terbaru" kebalikannya search bar: makin lenyap search bar, makin muncul
+    // background-nya (warna --bg), jadi grid lewat di belakangnya, bukan nutupin.
+    const hEl = titleBarRef.current
+    if (hEl) {
+      const bgAmount = sVal * sVal // kebalikan dari lambatPudar (1 - sVal²) milik search bar
+      hEl.style.background = `color-mix(in srgb, var(--bg) ${bgAmount * 100}%, transparent)`
+      hEl.style.setProperty('--title-shadow', `${1 - bgAmount}`)
+      hEl.style.pointerEvents = sVal > 0.8 ? 'auto' : 'none'
+    }
+
     const stillMoving = Math.abs(searchTarget - sVal) > 0.001
 
     if (stillMoving) {
@@ -303,6 +314,10 @@ export default function Terbaru() {
           />
           {/* Pindahkan ref ke sini supaya cuma gradien gelapnya yang berefek */}
           <div className="terbaru-banner-gradient" ref={bannerRef} />
+        </div>
+
+        {/* Judul nempel di atas scroller, jadi grid yang di-scroll lewat di belakangnya */}
+        <div className="terbaru-titlebar" ref={titleBarRef}>
           <h3 className="terbaru-banner-title">Terbaru</h3>
         </div>
 
