@@ -5,6 +5,7 @@ import { usePresetCache } from '../context/PresetCacheContext'
 import PresetVideoCell from '../components/PresetVideoCell'
 import { dayKeyWIB, sortByDailyOrder } from '../utils/dailyOrder'
 import { useScrollRestoration } from '../hooks/useScrollRestoration'
+import { getSiblingSongIds } from '../utils/songGroup'
 
 export default function SongPresets() {
   const { songId } = useParams()
@@ -24,15 +25,17 @@ export default function SongPresets() {
       if (getCache(cacheKey)) return
       setLoading(true)
       try {
+        // Lagu bernama sama digabung: ambil preset dari semua id kembarannya
+        const { ids, primaryId } = await getSiblingSongIds(songId)
         const [{ data: songData }, { data: presetsData, error }] = await Promise.all([
           supabase.from('songs').select('*').eq('id', songId).single(),
-          supabase.from('presets').select('*').eq('song_id', songId).eq('link_pending', false),
+          supabase.from('presets').select('*').in('song_id', ids).eq('link_pending', false),
         ])
         if (error) throw error
         setSong(songData)
 
         // Urutan acak tapi tetap seharian, ganti tiap jam 12 malam WIB (sama persis dgn urutan di full screen)
-        const ordered = sortByDailyOrder(presetsData || [], songId)
+        const ordered = sortByDailyOrder(presetsData || [], primaryId)
         setPresets(ordered)
         setCache(cacheKey, { song: songData, presets: ordered })
       } catch (err) {
