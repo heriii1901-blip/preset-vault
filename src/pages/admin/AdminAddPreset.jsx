@@ -512,7 +512,9 @@ export default function AdminAddPreset() {
         const { data: existing, error: findErr } = await supabase
           .from('songs')
           .select('id')
-          .eq('name', newSongName.trim())
+          .ilike('name', newSongName.trim())
+          .order('id')
+          .limit(1)
           .maybeSingle()
         if (findErr) throw findErr
         if (cancelledRef.current) return
