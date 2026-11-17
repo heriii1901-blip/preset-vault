@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 
 // Nyimpen posisi scroll per "key" (biasanya cache key halaman) di luar siklus
 // render React, jadi walaupun komponennya di-unmount terus remount lagi (misal
@@ -9,7 +9,7 @@ export function useScrollRestoration(ref, key, ready = true) {
   const restoredKeyRef = useRef(null)
 
   // Pulihin posisi scroll begitu kontennya udah siap (baru ada tinggi buat discroll)
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!ready || !key) return
     const el = ref.current
     if (!el) return
@@ -27,7 +27,6 @@ export function useScrollRestoration(ref, key, ready = true) {
     const handleScroll = () => scrollPositions.set(key, el.scrollTop)
     el.addEventListener('scroll', handleScroll, { passive: true })
     return () => {
-      scrollPositions.set(key, el.scrollTop)
       el.removeEventListener('scroll', handleScroll)
     }
   }, [key])
