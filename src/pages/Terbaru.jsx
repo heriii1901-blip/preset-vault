@@ -17,8 +17,9 @@ const LERP_FACTOR = 0.12 // laju di ~60fps; dinormalisasi ke deltaTime di tick()
 // (0 = awal scroll, 1 = sudah di-scroll sejauh tinggi banner).
 const FADE_START = 0.3 // search bar, tab bar & background-nya
 const FADE_END = 1.0
-const TITLE_BG_START = 0.4 // background judul "Terbaru" muncul menyusul
-const TITLE_BG_END = 1.0
+// Background judul "Terbaru" harus udah SOLID sebelum search bar sampai di bawah judul,
+// biar search bar kelihatan lewat DI BELAKANG judul (kayak grid), bukan tembus di depannya.
+const TITLE_BG_DISTANCE = 80 // px scroll yang dipakai buat nebel dari bening ke solid
 
 // Kurva S: pelan di awal, pelan di akhir
 function smoothstep(x) {
@@ -208,7 +209,11 @@ export default function Terbaru() {
 
     const range = (start, end) => smoothstep((cur / bannerH - start) / (end - start))
     const fade = range(FADE_START, FADE_END)
-    const titleBg = range(TITLE_BG_START, TITLE_BG_END)
+    // Scroll (px) saat tepi atas search bar nyentuh bawah bar judul. Bar judul harus
+    // udah solid pas itu, jadi search bar lewat di BELAKANG judul yang solid.
+    const titleH = titleBarRef.current?.offsetHeight || 50
+    const solidAt = bannerH - titleH
+    const titleBg = smoothstep((cur - (solidAt - TITLE_BG_DISTANCE)) / TITLE_BG_DISTANCE)
 
     // Search bar: gak ada lagi mengecil/naik sendiri. Dia ikut scroll apa adanya,
     // lalu pudar bareng background-nya (sheet).
