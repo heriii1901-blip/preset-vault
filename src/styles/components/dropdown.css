@@ -156,6 +156,33 @@
   0%, 100% { transform: scaleY(0.3); }
   50% { transform: scaleY(1); }
 }
+
+/* Penanda "lagu ini sudah ada liriknya": logo garis-garis PAM versi DIEM (gak gerak),
+   biar ratusan baris sekaligus tetap ringan. */
+.custom-select-option.has-lyric-mark { padding-right: 44px; }
+
+.song-lyric-mark {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 16px;
+  pointer-events: none;
+}
+
+.song-lyric-mark i {
+  width: 3px;
+  border-radius: 99px;
+  background: linear-gradient(180deg, #7C5CFF, #FF3D7F);
+}
+.song-lyric-mark i:nth-child(1) { height: 40%; }
+.song-lyric-mark i:nth-child(2) { height: 75%; }
+.song-lyric-mark i:nth-child(3) { height: 100%; }
+.song-lyric-mark i:nth-child(4) { height: 60%; }
+.song-lyric-mark i:nth-child(5) { height: 30%; }
 .home-tagline {
   font-family: var(--font-sans);
   font-size: 21px;
