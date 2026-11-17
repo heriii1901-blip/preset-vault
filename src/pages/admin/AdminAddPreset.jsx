@@ -4,7 +4,7 @@ import { supabase } from '../../supabase'
 import { resolveTiktokVideoId } from '../../utils/tiktokLink'
 import { compressVideoIfNeeded } from '../../utils/compressVideo'
 import { uploadToR2 } from '../../utils/uploadToR2'
-import { safeHref, isValidLink } from '../../utils/safeUrl'
+import { isValidLink } from '../../utils/safeUrl'
 import { getInitialSongId } from '../../utils/lastSong'
 import SongPicker from '../../components/SongPicker'
 import { generateCoverFromVideo } from '../../utils/generateCoverFromVideo'
@@ -47,8 +47,8 @@ export default function AdminAddPreset() {
   const { user, creatorUsername: authCreatorUsername } = useAuth()
   const [editingQueueId, setEditingQueueId] = useState(null)
   // 6 tab: Tambah Preset, Post Khusus, Tambah Efek, Tambah Lagu, Riwayat Upload, Cover Lama
-  const { activeIndex: activePanel, progress: panelProgress, trackStyle, scrollerRef, goTo: goToPanelRaw, touchHandlers } = useSwipePages(7)
-  const { containerRef: tabsRef, tabRefs, indicatorStyle, getTabColor } = useTabIndicator(panelProgress, 7)
+  const { activeIndex: activePanel, progress: panelProgress, trackStyle, scrollerRef, goTo: goToPanelRaw, touchHandlers } = useSwipePages(6)
+  const { containerRef: tabsRef, tabRefs, indicatorStyle, getTabColor } = useTabIndicator(panelProgress, 6)
 
   const [songs, setSongs] = useState([])
   const [songMode, setSongMode] = useState('existing')
@@ -626,7 +626,7 @@ export default function AdminAddPreset() {
             tiktok_link: tiktokLink.trim(),
             tiktok_video_id: tiktokVideoId,
             preview_video_url: previewVideoUrl,
-            link_pending: !xmlLink.trim(),
+            link_pending: false,
             ...(coverUrl ? { cover_url: coverUrl } : {}),
           })
           .eq('id', presetId)
@@ -673,7 +673,7 @@ export default function AdminAddPreset() {
           tiktok_video_id: tiktokVideoId,
           preview_video_url: previewVideoUrl,
           cover_url: coverUrl,
-          link_pending: !xmlLink.trim(),
+          link_pending: false,
         })
         
         if (presetErr) throw presetErr
@@ -1591,16 +1591,6 @@ export default function AdminAddPreset() {
                 style={{ color: getTabColor(5) }}
                 onClick={() => goToPanel(5)}
               >
-                <span>🔗 Link Kosong</span>
-                {pendingLinkPresets.length > 0 && <span className="tab-badge">{pendingLinkPresets.length}</span>}
-              </button>
-              <button
-                ref={(el) => (tabRefs.current[6] = el)}
-                type="button"
-                className={`kreator-hub-tab${activePanel === 6 ? ' is-active' : ''}`}
-                style={{ color: getTabColor(6) }}
-                onClick={() => goToPanel(6)}
-              >
                 <span>🖼️ Cover Lama</span>
                 {missingCoverPresets.length > 0 && <span className="tab-badge">{missingCoverPresets.length}</span>}
               </button>
@@ -1613,7 +1603,6 @@ export default function AdminAddPreset() {
                 <div className="kreator-hub-page">{efekTambahPanel}</div>
                 <div className="kreator-hub-page">{tambahLaguPanel}</div>
                 <div className="kreator-hub-page">{historyPanel}</div>
-                <div className="kreator-hub-page">{pendingLinkPanel}</div>
                 <div className="kreator-hub-page">{missingCoverPanel}</div>
               </div>
             </div>
