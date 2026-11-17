@@ -11,7 +11,7 @@ function lyricSnippet(lyrics, q) {
   return `${start > 0 ? '…' : ''}${lyrics.slice(start, end)}${end < lyrics.length ? '…' : ''}`
 }
 
-export default function SongPicker({ songs, selectedSongId, onSelect }) {
+export default function SongPicker({ songs, selectedSongId, onSelect, showLyricMark = false }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [previewId, setPreviewId] = useState(null) // lagu yang lagi "kepilih buat didengerin"
@@ -149,12 +149,19 @@ export default function SongPicker({ songs, selectedSongId, onSelect }) {
             let cls = 'custom-select-option'
             if (s.id === selectedSongId) cls += ' active'
             if (isPreviewing) cls += ' previewing'
+            const hasLyric = showLyricMark && !!s.lyrics?.trim()
+            if (hasLyric) cls += ' has-lyric-mark'
             return (
               <div key={s.id} className={cls} onClick={() => handleRowClick(s)}>
                 <span className={isPreviewing && playing ? 'custom-select-wave is-playing' : 'custom-select-wave'} aria-hidden="true">
                   <i /><i /><i /><i /><i />
                 </span>
                 <div>{s.name}</div>
+                {hasLyric && (
+                  <span className="song-lyric-mark" title="Sudah ada lirik" aria-label="Sudah ada lirik">
+                    <i /><i /><i /><i /><i />
+                  </span>
+                )}
                 {lyricHit && <div className="custom-select-option-lyric-hint">{lyricSnippet(s.lyrics, q)}</div>}
               </div>
             )
