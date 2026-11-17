@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import { useAuth } from '../context/AuthContext'
@@ -6,6 +6,7 @@ import { usePresetCache } from '../context/PresetCacheContext'
 import { deleteFromR2 } from '../utils/deleteFromR2'
 import { useScrollRestoration } from '../hooks/useScrollRestoration'
 import SongPlayerModal from '../components/SongPlayerModal'
+import { groupSongs } from '../utils/songGroup'
 
 const CACHE_KEY = 'lagu-list'
 
@@ -65,7 +66,10 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const filteredSongs = songs.filter((song) => {
+  // Lagu bernama sama (beda huruf besar/kecil) digabung jadi satu baris
+  const groupedSongs = useMemo(() => groupSongs(songs), [songs])
+
+  const filteredSongs = groupedSongs.filter((song) => {
     const q = query.toLowerCase()
     return song.name.toLowerCase().includes(q) || (song.lyrics || '').toLowerCase().includes(q)
   })
@@ -173,13 +177,15 @@ export default function Home() {
       return
     }
     try {
+      // Kalau lagunya gabungan, semua anggotanya ikut diganti namanya
+      const memberIds = groupedSongs.find((g) => g.id === song.id)?.ids || [song.id]
       const { error } = await supabase
         .from('songs')
         .update({ name: newName.trim() })
-        .eq('id', song.id)
+        .in('id', memberIds)
       if (error) throw error
       setSongs((prev) =>
-        prev.map((s) => (s.id === song.id ? { ...s, name: newName.trim() } : s))
+        prev.map((s) => (memberIds.includes(s.id) ? { ...s, name: newName.trim() } : s))
       )
     } catch (err) {
       console.error('Gagal ganti nama lagu:', err)
@@ -189,8 +195,10 @@ export default function Home() {
     }
   }
 
-  async function handleDeleteSelected(ids = selectedIds) {
-    const count = ids.length
+  async function handleDeleteSelected(groupIds = selectedIds) {
+    // Lagu yang digabung dihapus semua anggotanya sekaligus
+    const ids = groupIds.flatMap((id) => groupedSongs.find((g) => g.id === id)?.ids || [id])
+    const count = groupIds.length
     const ok = window.confirm(
       count === 1
         ? 'Yakin mau hapus lagu ini? Semua preset di dalamnya ikut kehapus.'
